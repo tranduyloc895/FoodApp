@@ -8,14 +8,16 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:networkSecurityConfig="@xml/network_security_config"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppFood"
         tools:targetApi="31">
-
+        <activity
+            android:name=".EmailInput"
+            android:exported="false" />
         <activity
             android:name=".UserProfileActivity"
             android:exported="false" />
@@ -34,6 +36,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".VerifyOTPActivity"
+            android:exported="false" />
+        <activity
+            android:name=".PasswordChangeConfirmActivity"
+            android:exported="false" />
+        <activity
+            android:name=".NewPasswordActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

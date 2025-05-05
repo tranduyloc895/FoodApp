@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -19,6 +20,7 @@ import retrofit2.Response;
 public class SignInActivity extends AppCompatActivity {
     private EditText etEmail, etPassword;
     private Button btnSignIn;
+    private TextView forgotPassword;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,6 +30,7 @@ public class SignInActivity extends AppCompatActivity {
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
         btnSignIn = findViewById(R.id.btnSignIn);
+        forgotPassword = findViewById(R.id.tvForgotPassword);
 
         btnSignIn.setOnClickListener(v -> {
             String email = etEmail.getText().toString().trim();
@@ -46,6 +49,11 @@ public class SignInActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
+    public void ForgotPassword(View view) {
+        Intent intent = new Intent(SignInActivity.this, EmailInput.class);
+        startActivity(intent);
+    }
+
     private void loginUser(String email, String password) {
         ApiService apiService = RetrofitClient.getApiService();
         Call<ModelResponse.LoginResponse> call = apiService.login(email, password);
@@ -54,9 +62,28 @@ public class SignInActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<ModelResponse.LoginResponse> call, Response<ModelResponse.LoginResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    Toast.makeText(SignInActivity.this, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show();
-                    startActivity(new Intent(SignInActivity.this, HomeActivity.class));
-                    finish();
+                    ModelResponse.LoginResponse loginResponse = response.body();
+
+                    // Check if login was successful based on status
+                    if (loginResponse.getMessage() != null && loginResponse.getMessage().equals("success")) {
+                        // Save token and session id if needed
+                        String token = loginResponse.getToken();
+                        String sessionId = loginResponse.getSessionId();
+
+                        // You might want to save these in SharedPreferences
+                        // SharedPreferences preferences = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+                        // preferences.edit().putString("token", token).apply();
+                        // preferences.edit().putString("sessionId", sessionId).apply();
+
+                        Toast.makeText(SignInActivity.this, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show();
+
+                        Intent intent = new Intent(SignInActivity.this, HomeActivity.class);
+                        intent.putExtra("token", token);
+                        startActivity(intent);
+                        finish();
+                    } else {
+                        Toast.makeText(SignInActivity.this, "Đăng nhập thất bại", Toast.LENGTH_SHORT).show();
+                    }
                 } else {
                     Toast.makeText(SignInActivity.this, "Sai tài khoản hoặc mật khẩu", Toast.LENGTH_SHORT).show();
                 }
@@ -66,6 +93,7 @@ public class SignInActivity extends AppCompatActivity {
             public void onFailure(Call<ModelResponse.LoginResponse> call, Throwable t) {
                 Toast.makeText(SignInActivity.this, "Không thể kết nối đến máy chủ: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
+
         });
     }
 }

@@ -28,7 +28,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="8dp"
-            android:background="@drawable/rating_background"
             android:paddingStart="8dp"
             android:paddingTop="2dp"
             android:paddingEnd="8dp"

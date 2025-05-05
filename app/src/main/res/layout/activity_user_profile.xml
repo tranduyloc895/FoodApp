@@ -29,6 +29,20 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!-- Logout Button -->
+    <ImageButton
+        android:id="@+id/btn_logout"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="@dimen/activity_vertical_margin"
+        android:layout_marginEnd="@dimen/activity_horizontal_margin"
+        android:background="@null"
+        android:padding="12dp"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_logout"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <!-- Title -->
     <TextView
         android:id="@+id/tv_title"
@@ -151,7 +165,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/form_margin_top"
-                android:text="Country"
+                android:text="Date of Birth"
                 android:textColor="@color/black"
                 android:textSize="@dimen/form_field_text_size" />
 
@@ -169,7 +183,7 @@
                     android:layout_centerVertical="true"
                     android:layout_marginStart="12dp"
                     android:layout_toStartOf="@+id/iv_dropdown"
-                    android:text="English"
+                    android:text=""
                     android:textColor="#BBBBBB"
                     android:textSize="16sp" />
 

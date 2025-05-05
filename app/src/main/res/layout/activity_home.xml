@@ -82,7 +82,7 @@
                 android:layout_marginStart="8dp"
                 android:layout_weight="1"
                 android:background="@null"
-                app:hint="Search recipe"
+                android:hint="Search recipe"
                 android:textColorHint="#AAAAAA"
                 android:textSize="16sp" />
 
