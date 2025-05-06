@@ -36,10 +36,16 @@ public interface ApiService {
             @Field("email") String email
     );
     @FormUrlEncoded
-    @PATCH("verify-otp/")
-    Call<ModelResponse.LoginResponse> verifyOtp(
+    @POST("verify-otp/")
+    Call<ModelResponse.VerifyOtpResponse> verifyOtp(
             @Field("email") String email,
-            @Field("otp") String otp,
+            @Field("otp") String otp
+    );
+
+    @FormUrlEncoded
+    @PATCH("reset-password/")
+    Call<ModelResponse.LoginResponse> resetPassword(
+            @Field("email") String email,
             @Field("password") String password,
             @Field("confirmPassword") String confirmPassword
     );

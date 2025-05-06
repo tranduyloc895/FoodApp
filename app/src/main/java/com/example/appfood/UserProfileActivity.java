@@ -2,6 +2,7 @@ package com.example.appfood;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -24,6 +25,10 @@ public class UserProfileActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().setFlags(
+                WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN
+        );
         setContentView(R.layout.activity_user_profile);
 
         etName = findViewById(R.id.et_username);
@@ -58,25 +63,8 @@ public class UserProfileActivity extends AppCompatActivity {
         // Set up logout button
         btnLogout = findViewById(R.id.btn_logout);
         btnLogout.setOnClickListener(v -> {
-            ApiService apiService = RetrofitClient.getApiService();
-            Call<Void> call = apiService.logout("Bearer " + token);
-            call.enqueue(new Callback<Void>() {
-                @Override
-                public void onResponse(Call<Void> call, Response<Void> response) {
-                    if (response.isSuccessful()) {
-                        Intent intent = new Intent(UserProfileActivity.this, SignInActivity.class);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(intent);
-                    } else {
-                        Toast.makeText(UserProfileActivity.this, "Logout failed.", Toast.LENGTH_SHORT).show();
-                    }
-                }
-
-                @Override
-                public void onFailure(Call<Void> call, Throwable t) {
-                    Toast.makeText(UserProfileActivity.this, "Connection failed. Please try again.", Toast.LENGTH_SHORT).show();
-                }
-            });
+            LogoutDialogFragment.newInstance(token)
+                    .show(getSupportFragmentManager(), "logoutDialog");
         });
 
     }

@@ -83,10 +83,11 @@
             android:textSize="13sp" />
 
         <TextView
-            android:id="@+id/tvReturnToLogin"
+            android:id="@+id/tvSignIn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Sign in"
+            android:onClick="returnToLogin"
             android:textColor="#00C853"
             android:textSize="13sp"
             android:textStyle="bold" />

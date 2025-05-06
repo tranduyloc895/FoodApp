@@ -1,9 +1,11 @@
 package com.example.appfood;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -11,90 +13,76 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import api.ApiService;
+import api.ModelResponse;
+import api.RetrofitClient;
+import retrofit2.Call;
+import retrofit2.Callback;
+
 public class VerifyOTPActivity extends AppCompatActivity {
-    private EditText[] otpDigits;
-    private TextView tvEmailSent;
-    private TextView tvResendEmail;
+    EditText etOtpCode;
+    Button btnVerifyOTP;
+    ImageButton btnBack;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_verify_otp);
 
-        // Initialize views
-        otpDigits = new EditText[]{
-                findViewById(R.id.etDigit1),
-                findViewById(R.id.etDigit2),
-                findViewById(R.id.etDigit3),
-                findViewById(R.id.etDigit4),
-                findViewById(R.id.etDigit5)
-        };
-        tvEmailSent = findViewById(R.id.tvEmailSent);
-        tvResendEmail = findViewById(R.id.tvResendEmail);
-        ImageButton btnBack = findViewById(R.id.btnBack);
-
-        // Get email from intent
+        // Get the email from the intent
         String email = getIntent().getStringExtra("email");
-        if (email != null) {
-            tvEmailSent.setText("We sent a link to " + email);
-        }
 
-        // Set up OTP input handling
-        setupOTPInputs();
+        etOtpCode = findViewById(R.id.etOtpCode);
+        btnVerifyOTP = findViewById(R.id.btnVerifyOtp);
 
-        // Back button click handler
-        btnBack.setOnClickListener(v -> finish());
-
-        // Resend email click handler
-        tvResendEmail.setOnClickListener(v -> {
-            Toast.makeText(this, "Verification code resent", Toast.LENGTH_SHORT).show();
-            // Add your resend logic here
-        });
-
-        // Verify button click handler
-        findViewById(R.id.btnVerifyCode).setOnClickListener(v -> verifyCode());
-    }
-
-    private void setupOTPInputs() {
-        for (int i = 0; i < otpDigits.length; i++) {
-            final int currentIndex = i;
-            otpDigits[i].addTextChangedListener(new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
-                @Override
-                public void onTextChanged(CharSequence s, int start, int before, int count) {}
-
-                @Override
-                public void afterTextChanged(Editable s) {
-                    if (s.length() == 1 && currentIndex < otpDigits.length - 1) {
-                        otpDigits[currentIndex + 1].requestFocus();
-                    } else if (s.length() == 0 && currentIndex > 0) {
-                        otpDigits[currentIndex - 1].requestFocus();
-                    }
-                }
-            });
-        }
-    }
-
-    private void verifyCode() {
-        StringBuilder otp = new StringBuilder();
-        boolean isComplete = true;
-
-        for (EditText digit : otpDigits) {
-            String text = digit.getText().toString();
-            if (text.isEmpty()) {
-                isComplete = false;
-                break;
+        // Handle back button click
+        btnBack = findViewById(R.id.btnBack);
+        btnBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
             }
-            otp.append(text);
-        }
-
-        if (isComplete) {
-            // Add your verification logic here
-            Toast.makeText(this, "Verifying code: " + otp.toString(), Toast.LENGTH_SHORT).show();
-        } else {
-            Toast.makeText(this, "Please enter the complete verification code", Toast.LENGTH_SHORT).show();
-        }
+        });
+        // Handle button verify OTP click
+        btnVerifyOTP.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String otp = etOtpCode.getText().toString().trim();
+                if (otp.isEmpty()) {
+                    Toast.makeText(VerifyOTPActivity.this, "Please enter the OTP", Toast.LENGTH_SHORT).show();
+                } else {
+                    verifyOTP(email, otp);
+                }
+            }
+        });
     }
+
+    private void verifyOTP(String email, String otp) {
+        ApiService apiService = RetrofitClient.getApiService();
+        Call<ModelResponse.VerifyOtpResponse> call = apiService.verifyOtp(email, otp);
+        call.enqueue(new Callback<ModelResponse.VerifyOtpResponse>() {
+            @Override
+            public void onResponse(Call<ModelResponse.VerifyOtpResponse> call, retrofit2.Response<ModelResponse.VerifyOtpResponse> response) {
+                if (response.isSuccessful()) {
+                    // Handle success
+                    Toast.makeText(VerifyOTPActivity.this, "OTP verified successfully!", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(VerifyOTPActivity.this, NewPasswordActivity.class);
+                    intent.putExtra("email", email);
+                    startActivity(intent);
+                    finish();
+                } else {
+                    // Handle failure
+                    Toast.makeText(VerifyOTPActivity.this, "Invalid OTP", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ModelResponse.VerifyOtpResponse> call, Throwable t) {
+                // Handle network failure
+                Toast.makeText(VerifyOTPActivity.this, "Network error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+
 } 

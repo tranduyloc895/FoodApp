@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,6 +18,7 @@ public class SignUpActivity extends AppCompatActivity {
 
     EditText etUsername, etEmail, etPassword, etConfirmPassword;
     Button btnSignUp;
+    TextView tvSignIn;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -27,6 +29,7 @@ public class SignUpActivity extends AppCompatActivity {
         etPassword = findViewById(R.id.etPassword);
         etConfirmPassword = findViewById(R.id.etConfirmPassword);
         btnSignUp = findViewById(R.id.btnSignUp);
+        tvSignIn = findViewById(R.id.tvSignIn);
 
         btnSignUp.setOnClickListener(v -> {
             String username = etUsername.getText().toString().trim();
@@ -41,6 +44,12 @@ public class SignUpActivity extends AppCompatActivity {
             } else {
                 signUpUser(username, email, password, confirmPassword);
             }
+        });
+
+        tvSignIn.setOnClickListener(v -> {
+            Intent intent = new Intent(SignUpActivity.this, SignInActivity.class);
+            startActivity(intent);
+            finish();
         });
     }
     private void signUpUser(String username, String email, String password, String confirmPassword) {

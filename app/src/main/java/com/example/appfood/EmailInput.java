@@ -4,6 +4,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -20,6 +22,8 @@ import retrofit2.Call;
 public class EmailInput extends AppCompatActivity {
     EditText etEmailInput;
     Button btnSendCode;
+    ImageButton btnBack;
+    TextView signIn;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -27,6 +31,8 @@ public class EmailInput extends AppCompatActivity {
 
         etEmailInput = findViewById(R.id.etEmail);
         btnSendCode = findViewById(R.id.btnSendCode);
+        signIn = findViewById(R.id.tvSignIn);
+        btnBack = findViewById(R.id.btn_back);
 
         btnSendCode.setOnClickListener(v -> {
             String email = etEmailInput.getText().toString().trim();
@@ -35,6 +41,10 @@ public class EmailInput extends AppCompatActivity {
             } else {
                 sendEmail(email);
             }
+        });
+
+        btnBack.setOnClickListener(v -> {
+            returnToLogin();
         });
     }
 
@@ -47,7 +57,7 @@ public class EmailInput extends AppCompatActivity {
                 if (response.isSuccessful()) {
                     // Handle success
                     Toast.makeText(EmailInput.this, "Please check your email!", Toast.LENGTH_SHORT).show();
-                    Intent intent = new Intent(EmailInput.this, NewPasswordActivity.class);
+                    Intent intent = new Intent(EmailInput.this, VerifyOTPActivity.class);
                     intent.putExtra("email", email);
                     startActivity(intent);
                     finish();
@@ -62,6 +72,13 @@ public class EmailInput extends AppCompatActivity {
                 // Handle error
             }
         });
+    }
+
+    //Return to login
+    public void returnToLogin() {
+        Intent intent = new Intent(EmailInput.this, SignInActivity.class);
+        startActivity(intent);
+        finish();
     }
 
 }

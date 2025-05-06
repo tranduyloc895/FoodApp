@@ -16,7 +16,7 @@ import api.RetrofitClient;
 import retrofit2.Call;
 
 public class NewPasswordActivity extends AppCompatActivity {
-    private EditText etPassword, etConfirmPassword, etOtp;
+    private EditText etPassword, etConfirmPassword;
     ImageButton btnBack;
     Button btnUpdatePassword;
 
@@ -28,7 +28,6 @@ public class NewPasswordActivity extends AppCompatActivity {
         // Initialize views
         etPassword = findViewById(R.id.etPassword);
         etConfirmPassword = findViewById(R.id.etConfirmPassword);
-        etOtp = findViewById(R.id.etOtpCode);
         btnUpdatePassword = findViewById(R.id.btnUpdatePassword);
         btnBack = findViewById(R.id.btnBack);
 
@@ -40,29 +39,17 @@ public class NewPasswordActivity extends AppCompatActivity {
 
         // Update password button click handler
         btnUpdatePassword.setOnClickListener(v -> {
-            String otp = etOtp.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
             String confirmPassword = etConfirmPassword.getText().toString().trim();
 
-            updatePassword(email, otp, password, confirmPassword);
+            updatePassword(email, password, confirmPassword);
         });
         ;
     }
 
-    private void updatePassword(String email, String otp, String password, String confirmPassword) {
-        // Input validation
-        if (TextUtils.isEmpty(otp) || TextUtils.isEmpty(password) || TextUtils.isEmpty(confirmPassword)) {
-            Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (!password.equals(confirmPassword)) {
-            Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
+    private void updatePassword(String email, String password, String confirmPassword) {
         ApiService apiService = RetrofitClient.getApiService();
-        Call<ModelResponse.LoginResponse> call = apiService.verifyOtp(email, otp, password, confirmPassword);
+        Call<ModelResponse.LoginResponse> call = apiService.resetPassword(email, password, confirmPassword);
         call.enqueue(new retrofit2.Callback<ModelResponse.LoginResponse>() {
             @Override
             public void onResponse(Call<ModelResponse.LoginResponse> call, retrofit2.Response<ModelResponse.LoginResponse> response) {
@@ -77,7 +64,9 @@ public class NewPasswordActivity extends AppCompatActivity {
                         Toast.makeText(NewPasswordActivity.this, loginResponse.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    Toast.makeText(NewPasswordActivity.this, "Failed to update password", Toast.LENGTH_SHORT).show();
+                    // Handle error response
+                    String errorMessage = "Error: " + response.code();
+                    Toast.makeText(NewPasswordActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
                 }
             }
 
