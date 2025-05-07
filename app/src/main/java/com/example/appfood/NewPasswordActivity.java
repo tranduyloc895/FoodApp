@@ -56,7 +56,7 @@ public class NewPasswordActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     ModelResponse.LoginResponse loginResponse = response.body();
                     if (loginResponse.getMessage().equals("success")) {
-                        Toast.makeText(NewPasswordActivity.this, "Password updated successfully", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(NewPasswordActivity.this, "Mật khẩu cập nhật thành công", Toast.LENGTH_SHORT).show();
                         Intent intent = new Intent(NewPasswordActivity.this, SignInActivity.class);
                         startActivity(intent);
                         finish();
@@ -72,7 +72,7 @@ public class NewPasswordActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<ModelResponse.LoginResponse> call, Throwable t) {
-                Toast.makeText(NewPasswordActivity.this, "Network error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(NewPasswordActivity.this, "Lỗi mạng: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }

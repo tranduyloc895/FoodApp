@@ -22,7 +22,7 @@ public class PasswordChangeConfirmActivity extends AppCompatActivity {
         findViewById(R.id.btnConfirm).setOnClickListener(v -> {
             // Here you would typically navigate to the new password setup screen
             // For now, we'll just show a toast
-            Toast.makeText(this, "Navigating to password setup...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Đã xác nhận thay đổi mật khẩu", Toast.LENGTH_SHORT).show();
             // Intent intent = new Intent(this, SetNewPasswordActivity.class);
             // startActivity(intent);
         });

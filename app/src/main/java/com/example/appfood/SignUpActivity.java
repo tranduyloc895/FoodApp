@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -18,6 +19,7 @@ public class SignUpActivity extends AppCompatActivity {
 
     EditText etUsername, etEmail, etPassword, etConfirmPassword;
     Button btnSignUp;
+    ImageButton btnBack;
     TextView tvSignIn;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,6 +32,9 @@ public class SignUpActivity extends AppCompatActivity {
         etConfirmPassword = findViewById(R.id.etConfirmPassword);
         btnSignUp = findViewById(R.id.btnSignUp);
         tvSignIn = findViewById(R.id.tvSignIn);
+        btnBack = findViewById(R.id.btnBack);
+
+        btnBack.setOnClickListener(v -> finish());
 
         btnSignUp.setOnClickListener(v -> {
             String username = etUsername.getText().toString().trim();
@@ -38,9 +43,9 @@ public class SignUpActivity extends AppCompatActivity {
             String confirmPassword = etConfirmPassword.getText().toString().trim();
 
             if (username.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
-                // Show error message
+                Toast.makeText(this, "Vui lòng nhập đầy đủ thông tin đăng ký", Toast.LENGTH_SHORT).show();
             } else if (!password.equals(confirmPassword)) {
-                // Show error message
+                Toast.makeText(this, "Mật khẩu không khớp", Toast.LENGTH_SHORT).show();
             } else {
                 signUpUser(username, email, password, confirmPassword);
             }

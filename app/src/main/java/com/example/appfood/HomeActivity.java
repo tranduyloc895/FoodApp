@@ -4,10 +4,11 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.viewpager2.widget.ViewPager2;
 
-import java.io.IOException;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.tabs.TabLayout;
 
 import api.ApiService;
 import api.ModelResponse;
@@ -19,11 +20,45 @@ import retrofit2.Response;
 public class HomeActivity extends AppCompatActivity {
     private TextView tvGreeting;
     private ImageView ivProfile;
+    private ViewPager2 viewPager_home;
+    private TabAdapter_Home tabAdapter_home;
+    private BottomNavigationView bottomNavigationView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_home);
+        setContentView(R.layout.activity_main);
+
+        viewPager_home = findViewById(R.id.viewPager_home);
+        bottomNavigationView = findViewById(R.id.bottom_navigation);
+        tabAdapter_home = new TabAdapter_Home(this);
+
+        viewPager_home.setAdapter(tabAdapter_home);
+
+        bottomNavigationView.setOnItemSelectedListener(item -> {
+            int itemId = item.getItemId();
+            if (itemId == R.id.nav_home) {
+                viewPager_home.setCurrentItem(0);
+                return true;
+            } else if (itemId == R.id.nav_saved) {
+                viewPager_home.setCurrentItem(1);
+                return true;
+            } else if (itemId == R.id.nav_notifications) {
+                viewPager_home.setCurrentItem(2);
+                return true;
+            } else if (itemId == R.id.nav_profile) {
+                viewPager_home.setCurrentItem(3);
+                return true;
+            }
+            return false;
+        });
+
+        viewPager_home.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                bottomNavigationView.getMenu().getItem(position).setChecked(true);
+            }
+        });
 
         tvGreeting = findViewById(R.id.tv_greeting);
         ivProfile = findViewById(R.id.iv_profile);
