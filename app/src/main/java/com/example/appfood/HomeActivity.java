@@ -33,6 +33,7 @@ public class HomeActivity extends AppCompatActivity {
         bottomNavigationView = findViewById(R.id.bottom_navigation);
         tabAdapter_home = new TabAdapter_Home(this);
 
+
         viewPager_home.setAdapter(tabAdapter_home);
 
         bottomNavigationView.setOnItemSelectedListener(item -> {

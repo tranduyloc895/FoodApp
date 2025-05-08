@@ -49,4 +49,14 @@ public interface ApiService {
             @Field("password") String password,
             @Field("confirmPassword") String confirmPassword
     );
+
+    @FormUrlEncoded
+    @PATCH("update-profile/")
+    Call<ModelResponse.UpdateUserResponse> updateProfile(
+            @retrofit2.http.Header("Authorization") String token,
+            @Field("name") String name,
+            @Field("email") String email,
+            @Field("date_of_birth") String dateOfBirth,
+            @Field("country") String country
+    );
 }

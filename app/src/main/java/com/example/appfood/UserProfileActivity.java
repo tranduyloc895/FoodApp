@@ -22,6 +22,7 @@ public class UserProfileActivity extends AppCompatActivity {
 
     EditText etName, etEmail;
     ImageButton btnBack, btnLogout;
+    Button btnUpdate;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -34,6 +35,7 @@ public class UserProfileActivity extends AppCompatActivity {
         etName = findViewById(R.id.et_username);
         etEmail = findViewById(R.id.et_email);
         btnBack = findViewById(R.id.btn_back);
+        btnUpdate = findViewById(R.id.btn_update);
 
         // Set up back button
         btnBack.setOnClickListener(v -> {
@@ -67,6 +69,16 @@ public class UserProfileActivity extends AppCompatActivity {
                     .show(getSupportFragmentManager(), "logoutDialog");
         });
 
+        // Handle event update
+        btnUpdate.setOnClickListener( v -> {
+            String name = etName.getText().toString();
+            String email = etEmail.getText().toString();
+            String dateOfBirth = "1990-01-01";
+            String country = "USA";
+
+            updateProfile(token, name, email, dateOfBirth, country);
+        });
+
     }
 
     public void getUserInfo(String token, HomeActivity.OnUserInfoCallback callback) {
@@ -88,6 +100,27 @@ public class UserProfileActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<ModelResponse.UserResponse> call, Throwable t) {
                 callback.onError("Request failed: " + t.getMessage());
+            }
+        });
+    }
+
+    public void updateProfile(String token, String name, String email, String dateOfBirth, String country) {
+        ApiService apiService = RetrofitClient.getApiService();
+        Call<ModelResponse.UpdateUserResponse> call = apiService.updateProfile("Bearer " + token, name, email, dateOfBirth, country);
+
+        call.enqueue(new Callback<ModelResponse.UpdateUserResponse>() {
+            @Override
+            public void onResponse(Call<ModelResponse.UpdateUserResponse> call, Response<ModelResponse.UpdateUserResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    Toast.makeText(UserProfileActivity.this, "Profile updated successfully", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(UserProfileActivity.this, "Failed to update profile", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ModelResponse.UpdateUserResponse> call, Throwable t) {
+                Toast.makeText(UserProfileActivity.this, "Request failed: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }

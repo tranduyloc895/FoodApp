@@ -176,7 +176,7 @@
                 android:background="@drawable/edit_text_background">
 
                 <TextView
-                    android:id="@+id/tv_country_selected"
+                    android:id="@+id/tv_dateOfbirth_selected"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentStart="true"
@@ -197,13 +197,13 @@
                     android:src="@drawable/ic_dropdown" />
             </RelativeLayout>
 
-            <!-- Phone Number Field -->
+            <!-- Country -->
             <TextView
-                android:id="@+id/label_phone"
+                android:id="@+id/tvCountry"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/form_margin_top"
-                android:text="Phone Number"
+                android:text="Country"
                 android:textColor="@color/black"
                 android:textSize="@dimen/form_field_text_size" />
 
@@ -218,45 +218,17 @@
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:layout_alignParentStart="true">
-
-                    <TextView
-                        android:id="@+id/tv_country_code"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_centerVertical="true"
-                        android:layout_marginStart="12dp"
-                        android:text="+84"
-                        android:textColor="@color/black"
-                        android:textSize="16sp" />
-
-                    <ImageView
-                        android:id="@+id/iv_code_dropdown"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_centerVertical="true"
-                        android:layout_marginStart="4dp"
-                        android:layout_toEndOf="@+id/tv_country_code"
-                        android:src="@drawable/ic_dropdown" />
-
-                    <View
-                        android:layout_width="1dp"
-                        android:layout_height="30dp"
-                        android:layout_centerVertical="true"
-                        android:layout_marginStart="8dp"
-                        android:layout_toEndOf="@+id/iv_code_dropdown"
-                        android:background="#DDDDDD" />
                 </RelativeLayout>
 
-                <EditText
-                    android:id="@+id/et_phone"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_marginStart="12dp"
-                    android:layout_toEndOf="@+id/country_code_container"
-                    android:background="@null"
-                    android:inputType="phone"
-                    android:paddingStart="8dp"
-                    android:paddingEnd="12dp" />
+                <ImageView
+                    android:id="@+id/iv_dropdown2"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:layout_marginEnd="12dp"
+                    android:src="@drawable/ic_dropdown" />
+
             </RelativeLayout>
 
             <!-- Update Button -->
