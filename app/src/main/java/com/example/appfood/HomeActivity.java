@@ -8,8 +8,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.android.material.tabs.TabLayout;
 
+import adapter.TabAdapter_Home;
 import api.ApiService;
 import api.ModelResponse;
 import api.RetrofitClient;
@@ -70,7 +70,7 @@ public class HomeActivity extends AppCompatActivity {
         if (token != null) {
             getUserInfo(token, new OnUserInfoCallback() {
                 @Override
-                public void onUserInfoReceived(String name, String email) {
+                public void onUserInfoReceived(String name, String email, String dateOfBirth, String country) {
                     tvGreeting.setText("Hello, " + name + "!");
                 }
 
@@ -101,7 +101,9 @@ public class HomeActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     String name = response.body().getData().getUser().getName();
                     String email = response.body().getData().getUser().getEmail();
-                    callback.onUserInfoReceived(name, email);
+                    String dateOfBirth = response.body().getData().getUser().getDateOfBirth();
+                    String country = response.body().getData().getUser().getCountry();
+                    callback.onUserInfoReceived(name, email, dateOfBirth, country);
                 } else {
                     callback.onError("Response error: " + response.code());
                 }
@@ -115,7 +117,7 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     public interface OnUserInfoCallback {
-        void onUserInfoReceived(String name, String email);
+        void onUserInfoReceived(String name, String email, String dateOfBirth, String country);
         void onError(String errorMessage);
     }
 }

@@ -1,4 +1,4 @@
-package com.example.appfood;
+package fragment;
 
 import android.app.Dialog;
 import android.content.Intent;
@@ -13,6 +13,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
+
+import com.example.appfood.R;
+import com.example.appfood.SignInActivity;
 
 import api.ApiService;
 import api.RetrofitClient;

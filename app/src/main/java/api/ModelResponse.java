@@ -68,6 +68,9 @@ public class ModelResponse {
             private String name;
             private String email;
 
+            private String date_of_birth;
+            private String country;
+
             public String getId() {
                 return id;
             }
@@ -90,6 +93,19 @@ public class ModelResponse {
 
             public void setEmail(String email) {
                 this.email = email;
+            }
+
+            public String getDateOfBirth() {
+                return date_of_birth;
+            }
+            public void setDateOfBirth(String date_of_birth) {
+                this.date_of_birth = date_of_birth;
+            }
+            public String getCountry() {
+                return country;
+            }
+            public void setCountry(String country) {
+                this.country = country;
             }
         }
     }

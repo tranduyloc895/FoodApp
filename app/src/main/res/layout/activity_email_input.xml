@@ -61,7 +61,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="40dp"
-        android:background="@drawable/green_button_background"
+        android:background="@drawable/button_background"
         android:padding="14dp"
         android:text="Send Code"
         android:textAllCaps="false"

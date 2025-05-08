@@ -80,7 +80,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:background="@drawable/edit_text_background"
+                    android:background="@drawable/common_background"
                     android:hint="Enter Email"
                     android:inputType="textEmailAddress"
                     android:padding="15dp" />
@@ -98,7 +98,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:background="@drawable/edit_text_background"
+                    android:background="@drawable/common_background"
                     android:hint="Enter Password"
                     android:inputType="textPassword"
                     android:padding="15dp" />
@@ -118,7 +118,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="30dp"
-                    android:background="@drawable/green_button_background"
+                    android:background="@drawable/button_background"
                     android:gravity="center"
                     android:padding="15dp"
                     android:text="Sign In"
