@@ -8,14 +8,9 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import api.ApiService;
-import api.ModelResponse;
 import api.RetrofitClient;
 import retrofit2.Call;
 
@@ -48,7 +43,7 @@ public class EmailInput extends AppCompatActivity {
         });
     }
 
-    private void sendEmail(String email) {
+    public void sendEmail(String email) {
         ApiService apiService = RetrofitClient.getApiService();
         Call<Void> call = apiService.forgotPassword(email);
         call.enqueue(new retrofit2.Callback<Void>() {
@@ -57,7 +52,7 @@ public class EmailInput extends AppCompatActivity {
                 if (response.isSuccessful()) {
                     // Handle success
                     Toast.makeText(EmailInput.this, "Please check your email!", Toast.LENGTH_SHORT).show();
-                    Intent intent = new Intent(EmailInput.this, VerifyOTPActivity.class);
+                    Intent intent = new Intent(EmailInput.this, VerifyOTPResetActivity.class);
                     intent.putExtra("email", email);
                     startActivity(intent);
                     finish();

@@ -1,6 +1,7 @@
 package com.example.appfood;
 
 import android.app.DatePickerDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
@@ -35,7 +36,7 @@ public class UserProfileActivity extends AppCompatActivity {
     ImageButton btnBack, btnLogout;
     Button btnUpdate;
     ImageView iVdob, iVcountry;
-    TextView dobTextView;
+    TextView dobTextView, tvChanngePassword;
     int year, month, day;
     String country;
     Spinner countrySpinner;
@@ -56,6 +57,7 @@ public class UserProfileActivity extends AppCompatActivity {
         iVdob = findViewById(R.id.iv_dropdown);
         dobTextView = findViewById(R.id.tv_dateOfbirth_selected);
         countrySpinner = findViewById(R.id.spinner_country);
+        tvChanngePassword = findViewById(R.id.tv_change_password);
 
         // Set up back button
         btnBack.setOnClickListener(v -> {
@@ -132,6 +134,16 @@ public class UserProfileActivity extends AppCompatActivity {
             updateProfile(token, name, email, dateOfBirth, country);
         });
 
+        // Handle change password event
+        tvChanngePassword.setOnClickListener(v -> {
+            sendEmail(etEmail.getText().toString());
+            Intent intent = new Intent(UserProfileActivity.this, VerifyOTPChangePass.class);
+            intent.putExtra("email", etEmail.getText().toString());
+            intent.putExtra("token", token);
+            startActivity(intent);
+            finish();
+        });
+
     }
 
     public void getUserInfo(String token, HomeActivity.OnUserInfoCallback callback) {
@@ -194,5 +206,27 @@ public class UserProfileActivity extends AppCompatActivity {
 
         Collections.sort(countries);
         return countries;
+    }
+
+    public void sendEmail(String email) {
+        ApiService apiService = RetrofitClient.getApiService();
+        Call<Void> call = apiService.forgotPassword(email);
+        call.enqueue(new retrofit2.Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, retrofit2.Response<Void> response) {
+                if (response.isSuccessful()) {
+                    // Handle success
+                    Toast.makeText(UserProfileActivity.this, "Please check your email!", Toast.LENGTH_SHORT).show();
+                } else {
+                    // Handle failure
+                    Toast.makeText(UserProfileActivity.this, "Failed to send email", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                // Handle error
+            }
+        });
     }
 }

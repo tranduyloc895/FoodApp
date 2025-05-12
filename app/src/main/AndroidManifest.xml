@@ -16,11 +16,17 @@
         android:theme="@style/Theme.AppFood"
         tools:targetApi="31">
         <activity
-            android:name=".LogOutActivity"
-            android:theme="@style/OverlayDialogTheme"
-            android:launchMode="singleTop"
-            android:excludeFromRecents="true"
+            android:name=".NewPasswordChange"
             android:exported="false" />
+        <activity
+            android:name=".VerifyOTPChangePass"
+            android:exported="false" />
+        <activity
+            android:name=".LogOutActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:theme="@style/OverlayDialogTheme" />
         <activity
             android:name=".EmailInput"
             android:exported="false" />
@@ -43,13 +49,13 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".VerifyOTPActivity"
+            android:name=".VerifyOTPResetActivity"
             android:exported="false" />
         <activity
             android:name=".PasswordChangeConfirmActivity"
             android:exported="false" />
         <activity
-            android:name=".NewPasswordActivity"
+            android:name=".NewPasswordResetActivity"
             android:exported="false" />
     </application>
 

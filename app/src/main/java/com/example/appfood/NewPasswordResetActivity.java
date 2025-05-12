@@ -2,7 +2,6 @@ package com.example.appfood;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -15,7 +14,7 @@ import api.ModelResponse;
 import api.RetrofitClient;
 import retrofit2.Call;
 
-public class NewPasswordActivity extends AppCompatActivity {
+public class NewPasswordResetActivity extends AppCompatActivity {
     private EditText etPassword, etConfirmPassword;
     ImageButton btnBack;
     Button btnUpdatePassword;
@@ -23,7 +22,7 @@ public class NewPasswordActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_new_password);
+        setContentView(R.layout.activity_new_password_reset);
 
         // Initialize views
         etPassword = findViewById(R.id.etPassword);
@@ -56,23 +55,23 @@ public class NewPasswordActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     ModelResponse.LoginResponse loginResponse = response.body();
                     if (loginResponse.getMessage().equals("success")) {
-                        Toast.makeText(NewPasswordActivity.this, "Mật khẩu cập nhật thành công", Toast.LENGTH_SHORT).show();
-                        Intent intent = new Intent(NewPasswordActivity.this, SignInActivity.class);
+                        Toast.makeText(NewPasswordResetActivity.this, "Mật khẩu cập nhật thành công", Toast.LENGTH_SHORT).show();
+                        Intent intent = new Intent(NewPasswordResetActivity.this, SignInActivity.class);
                         startActivity(intent);
                         finish();
                     } else {
-                        Toast.makeText(NewPasswordActivity.this, loginResponse.getMessage(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(NewPasswordResetActivity.this, loginResponse.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 } else {
                     // Handle error response
                     String errorMessage = "Error: " + response.code();
-                    Toast.makeText(NewPasswordActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(NewPasswordResetActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(Call<ModelResponse.LoginResponse> call, Throwable t) {
-                Toast.makeText(NewPasswordActivity.this, "Lỗi mạng: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(NewPasswordResetActivity.this, "Lỗi mạng: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }

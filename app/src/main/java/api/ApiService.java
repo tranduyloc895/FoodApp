@@ -59,4 +59,13 @@ public interface ApiService {
             @Field("date_of_birth") String dateOfBirth,
             @Field("country") String country
     );
+
+    @FormUrlEncoded
+    @PATCH("update-password/")
+    Call<ModelResponse.ChangePasswordResponse> updatePassword(
+            @retrofit2.http.Header("Authorization") String token,
+            @Field("currentPassword") String currentPassword,
+            @Field("newPassword") String newPassword,
+            @Field("confirmNewPassword") String confirmNewPassword
+    );
 }

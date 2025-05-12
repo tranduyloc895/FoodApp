@@ -18,13 +18,19 @@ public class PasswordChangeConfirmActivity extends AppCompatActivity {
         ImageButton btnBack = findViewById(R.id.btnBack);
         btnBack.setOnClickListener(v -> finish());
 
-        // Initialize confirm button
+        // Get token from intent
+        String token = getIntent().getStringExtra("token");
+        if (token == null) {
+            Toast.makeText(this, "Invalid token", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
         findViewById(R.id.btnConfirm).setOnClickListener(v -> {
-            // Here you would typically navigate to the new password setup screen
-            // For now, we'll just show a toast
-            Toast.makeText(this, "Đã xác nhận thay đổi mật khẩu", Toast.LENGTH_SHORT).show();
-            // Intent intent = new Intent(this, SetNewPasswordActivity.class);
-            // startActivity(intent);
+            Intent intent = new Intent(PasswordChangeConfirmActivity.this, NewPasswordChange.class);
+            intent.putExtra("token", token);
+            startActivity(intent);
+            finish();
         });
     }
 } 
