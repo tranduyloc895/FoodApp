@@ -1,6 +1,7 @@
 package com.example.appfood;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
@@ -34,7 +35,6 @@ public class NewPasswordChange extends AppCompatActivity {
             finish();
             return;
         }
-
 
         // Initialize UI elements
         currentPassword = findViewById(R.id.etCurrentPassword);

@@ -9,7 +9,7 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
-import adapter.TabAdapter_Home;
+import adapter.TabAdapter_BottomNavigation;
 import api.ApiService;
 import api.ModelResponse;
 import api.RetrofitClient;
@@ -21,7 +21,7 @@ public class HomeActivity extends AppCompatActivity {
     private TextView tvGreeting;
     private ImageView ivProfile;
     private ViewPager2 viewPager_home;
-    private TabAdapter_Home tabAdapter_home;
+    private TabAdapter_BottomNavigation tabAdapter_home;
     private BottomNavigationView bottomNavigationView;
 
     @Override
@@ -31,9 +31,7 @@ public class HomeActivity extends AppCompatActivity {
 
         viewPager_home = findViewById(R.id.viewPager_home);
         bottomNavigationView = findViewById(R.id.bottom_navigation);
-        tabAdapter_home = new TabAdapter_Home(this);
-
-
+        tabAdapter_home = new TabAdapter_BottomNavigation(this);
         viewPager_home.setAdapter(tabAdapter_home);
 
         bottomNavigationView.setOnItemSelectedListener(item -> {

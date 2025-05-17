@@ -1,7 +1,9 @@
 package api;
 
+import java.util.List;
+
 public class ModelResponse {
-    public class LoginResponse{
+    public class LoginResponse {
         private String session_id;
         private String status;
         private String token;
@@ -67,7 +69,6 @@ public class ModelResponse {
             private String id;
             private String name;
             private String email;
-
             private String date_of_birth;
             private String country;
 
@@ -98,12 +99,15 @@ public class ModelResponse {
             public String getDateOfBirth() {
                 return date_of_birth;
             }
+
             public void setDateOfBirth(String date_of_birth) {
                 this.date_of_birth = date_of_birth;
             }
+
             public String getCountry() {
                 return country;
             }
+
             public void setCountry(String country) {
                 this.country = country;
             }
@@ -114,6 +118,7 @@ public class ModelResponse {
         private String status;
         private String message;
         private UserResponse.User Data;
+
         public String getStatus() {
             return status;
         }
@@ -173,7 +178,7 @@ public class ModelResponse {
         }
     }
 
-    public class UpdateUserResponse{
+    public class UpdateUserResponse {
         private String status;
         private String message;
         private UserResponse.User data;
@@ -195,7 +200,7 @@ public class ModelResponse {
         }
     }
 
-    public class ChangePasswordResponse{
+    public class ChangePasswordResponse {
         private String status;
         private String message;
 
@@ -215,5 +220,85 @@ public class ModelResponse {
             this.message = message;
         }
     }
-}
 
+    public class RecipeResponse {
+        private String status;
+        private int results;
+        private Data data;
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
+
+        public int getResults() {
+            return results;
+        }
+
+        public void setResults(int results) {
+            this.results = results;
+        }
+
+        public Data getData() {
+            return data;
+        }
+
+        public void setData(Data data) {
+            this.data = data;
+        }
+
+        public class Data {
+            private List<Recipe> recipes;
+
+            public List<Recipe> getRecipes() {
+                return recipes;
+            }
+
+            public void setRecipes(List<Recipe> recipes) {
+                this.recipes = recipes;
+            }
+        }
+
+        public class Recipe {
+            private String id;
+            private String title;
+            private String author;
+            private String image_url;
+
+            public String getId() {
+                return id;
+            }
+
+            public void setId(String id) {
+                this.id = id;
+            }
+
+            public String getTitle() {
+                return title;
+            }
+
+            public void setTitle(String title) {
+                this.title = title;
+            }
+
+            public String getAuthor() {
+                return author;
+            }
+
+            public void setAuthor(String author) {
+                this.author = author;
+            }
+
+            public String getImageUrl() {
+                return image_url;
+            }
+
+            public void setImageUrl(String image_url) {
+                this.image_url = image_url;
+            }
+        }
+    }
+}

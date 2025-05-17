@@ -1,6 +1,7 @@
 package com.example.appfood;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
@@ -69,12 +70,6 @@ public class SignInActivity extends AppCompatActivity {
                     if (loginResponse.getMessage() != null && loginResponse.getMessage().equals("success")) {
                         // Save token and session id if needed
                         String token = loginResponse.getToken();
-                        String sessionId = loginResponse.getSessionId();
-
-                        // You might want to save these in SharedPreferences
-                        // SharedPreferences preferences = getSharedPreferences("AppPrefs", MODE_PRIVATE);
-                        // preferences.edit().putString("token", token).apply();
-                        // preferences.edit().putString("sessionId", sessionId).apply();
 
                         Toast.makeText(SignInActivity.this, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show();
 

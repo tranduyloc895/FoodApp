@@ -7,43 +7,43 @@ import retrofit2.http.PATCH;
 import retrofit2.http.POST;
 public interface ApiService {
     @FormUrlEncoded
-    @POST("login/")
+    @POST("auth/login/")
     Call<ModelResponse.LoginResponse> login(
             @Field("email") String email,
             @Field("password") String password
     );
 
-    @GET("me/")
+    @GET("auth/me/")
     Call<ModelResponse.UserResponse> getUserInfo(
             @retrofit2.http.Header("Authorization") String token
     );
 
     @FormUrlEncoded
-    @POST("signup/")
+    @POST("auth/signup/")
     Call<ModelResponse.SignUpResponse> signUp(
             @Field("name") String name,
             @Field("email") String email,
             @Field("password") String password,
             @Field("confirm_password") String confirmPassword
     );
-    @POST("logout/")
+    @POST("auth/logout/")
     Call<Void> logout(
             @retrofit2.http.Header("Authorization") String token
     );
     @FormUrlEncoded
-    @POST("forgot-password/")
+    @POST("auth/forgot-password/")
     Call<Void> forgotPassword(
             @Field("email") String email
     );
     @FormUrlEncoded
-    @POST("verify-otp/")
+    @POST("auth/verify-otp/")
     Call<ModelResponse.VerifyOtpResponse> verifyOtp(
             @Field("email") String email,
             @Field("otp") String otp
     );
 
     @FormUrlEncoded
-    @PATCH("reset-password/")
+    @PATCH("auth/reset-password/")
     Call<ModelResponse.LoginResponse> resetPassword(
             @Field("email") String email,
             @Field("password") String password,
@@ -51,7 +51,7 @@ public interface ApiService {
     );
 
     @FormUrlEncoded
-    @PATCH("update-profile/")
+    @PATCH("auth/update-profile/")
     Call<ModelResponse.UpdateUserResponse> updateProfile(
             @retrofit2.http.Header("Authorization") String token,
             @Field("name") String name,
@@ -61,11 +61,16 @@ public interface ApiService {
     );
 
     @FormUrlEncoded
-    @PATCH("update-password/")
+    @PATCH("auth/update-password/")
     Call<ModelResponse.ChangePasswordResponse> updatePassword(
             @retrofit2.http.Header("Authorization") String token,
             @Field("currentPassword") String currentPassword,
             @Field("newPassword") String newPassword,
             @Field("confirmNewPassword") String confirmNewPassword
+    );
+
+    @GET("recipes/get-recipe-latest/")
+    Call<ModelResponse.RecipeResponse> getRecipeLatest(
+            @retrofit2.http.Header("Authorization") String token
     );
 }
