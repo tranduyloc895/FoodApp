@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="OverlayDialogTheme" parent="Theme.AppCompat.Dialog">
+        <item name="android:windowMinWidthMajor">90%</item>
+        <item name="android:windowMinWidthMinor">90%</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
+    <style name="CustomDialogTheme" parent="Theme.MaterialComponents.Dialog">
+        <item name="android:backgroundDimAmount">0</item> <!-- 0.0 = trong suốt, 1.0 = tối đen -->
+        <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
+    <style name="RoundedImage">
+        <item name="cornerSize">35%</item>
+    </style>
+</resources>
