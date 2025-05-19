@@ -64,7 +64,8 @@
                         android:rating="0"
                         android:scaleX="0.5"
                         android:scaleY="0.5"
-                        android:layout_marginBottom="55dp" />
+                        android:layout_marginBottom="55dp"
+                        android:progressTint="@color/orange"/>
                 </LinearLayout>
                 <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/iv_recipe_image_latest"

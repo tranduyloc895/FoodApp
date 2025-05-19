@@ -186,30 +186,30 @@ public class HomeFragment extends Fragment {
     private void fetchRatingsForRecipes(ApiService apiService, List<ModelResponse.RecipeResponse.Recipe> recipes) {
         for (ModelResponse.RecipeResponse.Recipe recipe : recipes) {
             String recipeId = recipe.getId();
-            Call<ModelResponse.AverageRatingResponse> ratingCall = apiService.getRecipeRating("Bearer " + token, recipeId);
+            Call<ModelResponse.RecipeDetailResponse> ratingCall = apiService.getRecipeDetail("Bearer " + token, recipeId);
 
-            ratingCall.enqueue(new Callback<ModelResponse.AverageRatingResponse>() {
+            ratingCall.enqueue(new Callback<ModelResponse.RecipeDetailResponse>() {
                 @Override
-                public void onResponse(@NonNull Call<ModelResponse.AverageRatingResponse> call,
-                                       @NonNull Response<ModelResponse.AverageRatingResponse> response) {
+                public void onResponse(@NonNull Call<ModelResponse.RecipeDetailResponse> call, @NonNull Response<ModelResponse.RecipeDetailResponse> response) {
                     if (response.isSuccessful() && response.body() != null) {
-                        Double averageRating = response.body().getData().getAverageRating();
-                        recipe.setAverageRating(averageRating != null ? averageRating : 0.0);
+                        ModelResponse.RecipeDetailResponse.Recipe detailedRecipe = response.body().getData().getRecipe();
+                        double averageRating = detailedRecipe.getAverageRating();
+                        recipe.setAverageRating(averageRating);
 
-                        // Notify of data change for the specific adapters
+                        // Notify adapter of data change
                         if (recipeList_common.contains(recipe)) {
                             adapter_common.notifyDataSetChanged();
                         } else if (recipeList_new.contains(recipe)) {
                             adapter_new.notifyDataSetChanged();
                         }
                     } else {
-                        Log.e(TAG, "Failed to get rating for Recipe ID: " + recipeId);
+                        Log.e(TAG, "Failed to get details for Recipe ID: " + recipeId);
                     }
                 }
 
                 @Override
-                public void onFailure(@NonNull Call<ModelResponse.AverageRatingResponse> call, @NonNull Throwable t) {
-                    Log.e(TAG, "API Call Failed (Rating) - Recipe ID: " + recipeId + ", Error: " + t.getMessage());
+                public void onFailure(@NonNull Call<ModelResponse.RecipeDetailResponse> call, @NonNull Throwable t) {
+                    Log.e(TAG, "API Call Failed (Details) - Recipe ID: " + recipeId + ", Error: " + t.getMessage());
                 }
             });
         }
