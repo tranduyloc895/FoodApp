@@ -1,8 +1,15 @@
 package com.example.appfood;
 
+import android.app.Dialog;
+import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
@@ -119,8 +126,7 @@ public class MainRecipe extends AppCompatActivity {
 
         // More options button click
         btnMore.setOnClickListener(v -> {
-            Toast.makeText(MainRecipe.this, "Options menu", Toast.LENGTH_SHORT).show();
-            // Implement options menu functionality if needed
+            showOptionsMenu();
         });
 
         // Tab button clicks
@@ -144,6 +150,19 @@ public class MainRecipe extends AppCompatActivity {
             if (instructions != null) {
                 tvItemCount.setText(instructions.size() + " Steps");
             }
+        });
+
+        // Add the new click listener for the Reviews TextView
+        tvReviews.setOnClickListener(v -> {
+            // Create intent to navigate to CommentsRecipe
+            Intent intent = new Intent(MainRecipe.this, CommentsRecipe.class);
+
+            // Pass the necessary data
+            intent.putExtra("token", token);
+            intent.putExtra("recipeId", recipeId);
+
+            // Start the CommentsRecipe activity
+            startActivity(intent);
         });
     }
 
@@ -488,4 +507,82 @@ public class MainRecipe extends AppCompatActivity {
     private void showError(String message) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
+
+    /**
+     * Handle back button options
+     */
+    private void showOptionsMenu() {
+        // Create the dialog
+        final Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_recipe_options);
+
+        // Set dialog window width and position
+        Window window = dialog.getWindow();
+        if (window != null) {
+            window.setLayout(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT);
+            window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            window.setGravity(Gravity.END | Gravity.TOP);
+
+            // Set margin from top and right
+            WindowManager.LayoutParams params = window.getAttributes();
+            params.x = 50; // distance from right
+            params.y = 120; // distance from top
+            window.setAttributes(params);
+        }
+
+        // Get option views
+        View layoutShare = dialog.findViewById(R.id.layoutShare);
+        View layoutRate = dialog.findViewById(R.id.layoutRate);
+        View layoutReview = dialog.findViewById(R.id.layoutReview);
+        View layoutUnsave = dialog.findViewById(R.id.layoutUnsave);
+
+        // Set click listeners for each option
+        layoutShare.setOnClickListener(v -> {
+            dialog.dismiss();
+            shareRecipe();
+        });
+
+        layoutRate.setOnClickListener(v -> {
+            dialog.dismiss();
+            showRatingDialog();
+        });
+
+        layoutReview.setOnClickListener(v -> {
+            dialog.dismiss();
+            navigateToComments();
+        });
+
+        layoutUnsave.setOnClickListener(v -> {
+            dialog.dismiss();
+            unsaveRecipe();
+        });
+
+        dialog.show();
+    }
+
+    // Implementation of the actions
+    private void shareRecipe() {
+        // TODO: Implement share functionality
+        Toast.makeText(this, "Share Recipe functionality", Toast.LENGTH_SHORT).show();
+    }
+
+    private void showRatingDialog() {
+        // TODO: Implement rating dialog
+        Toast.makeText(this, "Rate Recipe functionality", Toast.LENGTH_SHORT).show();
+    }
+
+    private void navigateToComments() {
+        // Navigate to comments/review screen
+        Intent intent = new Intent(MainRecipe.this, CommentsRecipe.class);
+        intent.putExtra("token", token);
+        intent.putExtra("recipeId", recipeId);
+        startActivity(intent);
+    }
+
+    private void unsaveRecipe() {
+        // TODO: Implement unsave functionality
+        Toast.makeText(this, "Recipe unsaved", Toast.LENGTH_SHORT).show();
+    }
+
 }

@@ -91,5 +91,18 @@ public interface ApiService {
             @Query("id") String recipeId
     );
 
+    @GET("recipes/get-recipe-comments/")
+    Call<ModelResponse.CommentResponse> getRecipeComments(
+            @retrofit2.http.Header("Authorization") String token,
+            @Query("id") String recipeId
+    );
+
+    @FormUrlEncoded
+    @PATCH("recipes/comment-recipe/")
+    Call<ModelResponse.RecipeDetailResponse> postComment(
+            @retrofit2.http.Header("Authorization") String token,
+            @Field("id") String recipeId,
+            @Field("comment") String comment
+    );
 
 }

@@ -58,9 +58,10 @@
                 android:layout_gravity="end|top"
                 android:layout_margin="12dp"
                 android:background="@drawable/rating_background"
+                android:drawableStart="@drawable/rating_star"
                 android:padding="6dp"
                 android:text="0.0"
-                android:textColor="@color/white"
+                android:textColor="@color/black"
                 android:textStyle="bold" />
 
             <LinearLayout
@@ -252,6 +253,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
+                android:textStyle="bold"
                 app:cardBackgroundColor="#F5F5F5"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="0dp">

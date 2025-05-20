@@ -601,4 +601,93 @@ public class ModelResponse {
         }
     }
 
+    public class CommentResponse {
+        private String status;
+        private int results;
+        private Data data;
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
+
+        public int getResults() {
+            return results;
+        }
+
+        public void setResults(int results) {
+            this.results = results;
+        }
+
+        public Data getData() {
+            return data;
+        }
+
+        public void setData(Data data) {
+            this.data = data;
+        }
+
+        public class Data {
+            private List<Comment> comments;
+
+            public List<Comment> getComments() {
+                return comments;
+            }
+
+            public void setComments(List<Comment> comments) {
+                this.comments = comments;
+            }
+        }
+
+        public class Comment {
+            private String id;
+            private String author;
+            private String content;
+            private String created_at;
+
+            public String getId() {
+                return id;
+            }
+
+            public void setId(String id) {
+                this.id = id;
+            }
+
+            public String getAuthor() {
+                return author;
+            }
+
+            public void setAuthor(String author) {
+                this.author = author;
+            }
+
+            public String getContent() {
+                return content;
+            }
+
+            public void setContent(String content) {
+                this.content = content;
+            }
+
+            public String getCreatedAt() {
+                return created_at;
+            }
+
+            public void setCreatedAt(String created_at) {
+                this.created_at = created_at;
+            }
+
+            // Helper method to get formatted date if needed
+            public String getFormattedDate() {
+                if (created_at != null && created_at.length() > 16) {
+                    return created_at.replace("T", " ").substring(0, 16);
+                }
+                return created_at;
+            }
+        }
+    }
+
 }
