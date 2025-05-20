@@ -165,8 +165,11 @@ public class CommentsRecipe extends AppCompatActivity implements CommentAdapter.
                         showError("Failed to load comments");
                         Log.e(TAG, "Comment data structure is invalid: " + response.body());
                     }
+                } else if (response.body() == null) {
+                    Toast.makeText(CommentsRecipe.this, "Không có bình luận nào cho bài viết này!", Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "Response body is null");
                 } else {
-                    String errorMsg = "Error loading comments";
+                    String errorMsg = "Failed to load comments";
                     try {
                         if (response.errorBody() != null) {
                             errorMsg += ": " + response.errorBody().string();
@@ -175,7 +178,8 @@ public class CommentsRecipe extends AppCompatActivity implements CommentAdapter.
                         Log.e(TAG, "Error reading error response", e);
                     }
                     showError(errorMsg);
-                    Log.e(TAG, errorMsg);
+                    Log.e(TAG, errorMsg + " - HTTP Status: " + response.code());
+
                 }
             }
 

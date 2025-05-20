@@ -3,8 +3,8 @@ package com.example.appfood;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -17,23 +17,15 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/**
- * Activity for user sign-in.
- * Handles user authentication, navigation to sign-up and password reset,
- * and manages login API interaction.
- */
 public class SignInActivity extends AppCompatActivity {
     // UI components for user input and actions
     private EditText etEmail, etPassword;
-    private Button btnSignIn;
+    private View btnSignInWithLoading;
+    private TextView btnText;
+    private ProgressBar btnProgressBar;
     private TextView forgotPassword;
+    private boolean isLoading = false;
 
-    /**
-     * Called when the activity is starting. Initializes UI components,
-     * sets up listeners for sign-in and navigation actions.
-     *
-     * @param savedInstanceState If the activity is being re-initialized after previously being shut down then this Bundle contains the data it most recently supplied.
-     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,7 +35,10 @@ public class SignInActivity extends AppCompatActivity {
         initViews();
 
         // Handle sign-in button click
-        btnSignIn.setOnClickListener(v -> {
+        btnSignInWithLoading.setOnClickListener(v -> {
+            // Prevent multiple clicks during loading
+            if (isLoading) return;
+
             String email = etEmail.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
 
@@ -51,48 +46,53 @@ public class SignInActivity extends AppCompatActivity {
             if (email.isEmpty() || password.isEmpty()) {
                 Toast.makeText(this, "Vui lòng nhập đầy đủ thông tin", Toast.LENGTH_SHORT).show();
             } else {
+                setLoadingState(true);
                 loginUser(email, password);
             }
         });
     }
 
-    /**
-     * Initializes the UI components for user input and actions.
-     */
     private void initViews() {
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
-        btnSignIn = findViewById(R.id.btnSignIn);
+
+        // Find our custom button view
+        btnSignInWithLoading = findViewById(R.id.btnSignInWithLoading);
+
+        // Get the child views from our custom button layout
+        btnText = btnSignInWithLoading.findViewById(R.id.btnText);
+        btnProgressBar = btnSignInWithLoading.findViewById(R.id.btnProgressBar);
+
         forgotPassword = findViewById(R.id.tvForgotPassword);
     }
 
-    /**
-     * Navigates to the sign-up activity.
-     *
-     * @param view The view that triggered this method.
-     */
+    private void setLoadingState(boolean loading) {
+        isLoading = loading;
+        if (loading) {
+            // Show loading state
+            btnProgressBar.setVisibility(View.VISIBLE);
+            btnText.setText("Signing In...");
+            btnSignInWithLoading.setEnabled(false);
+            btnSignInWithLoading.setAlpha(0.7f);
+        } else {
+            // Show normal state
+            btnProgressBar.setVisibility(View.GONE);
+            btnText.setText("Sign In");
+            btnSignInWithLoading.setEnabled(true);
+            btnSignInWithLoading.setAlpha(1.0f);
+        }
+    }
+
     public void SignUp(View view) {
         Intent intent = new Intent(SignInActivity.this, SignUpActivity.class);
         startActivity(intent);
     }
 
-    /**
-     * Navigates to the forgot password (email input) activity.
-     *
-     * @param view The view that triggered this method.
-     */
     public void ForgotPassword(View view) {
         Intent intent = new Intent(SignInActivity.this, EmailInput.class);
         startActivity(intent);
     }
 
-    /**
-     * Calls the API to authenticate the user.
-     * Handles both success and error responses.
-     *
-     * @param email    The user's email address.
-     * @param password The user's password.
-     */
     private void loginUser(String email, String password) {
         ApiService apiService = RetrofitClient.getApiService();
         Call<ModelResponse.LoginResponse> call = apiService.login(email, password);
@@ -100,10 +100,13 @@ public class SignInActivity extends AppCompatActivity {
         call.enqueue(new Callback<ModelResponse.LoginResponse>() {
             @Override
             public void onResponse(Call<ModelResponse.LoginResponse> call, Response<ModelResponse.LoginResponse> response) {
+                // Reset button state
+                setLoadingState(false);
+
                 if (response.isSuccessful() && response.body() != null) {
                     ModelResponse.LoginResponse loginResponse = response.body();
 
-                    // Check if login was successful based on message
+                    // Check if login was successful
                     if ("success".equals(loginResponse.getMessage())) {
                         String token = loginResponse.getToken();
 
@@ -124,6 +127,9 @@ public class SignInActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<ModelResponse.LoginResponse> call, Throwable t) {
+                // Reset button state
+                setLoadingState(false);
+
                 Toast.makeText(SignInActivity.this, "Không thể kết nối đến máy chủ: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });

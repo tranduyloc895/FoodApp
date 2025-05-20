@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -15,6 +16,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -568,8 +570,73 @@ public class MainRecipe extends AppCompatActivity {
     }
 
     private void showRatingDialog() {
-        // TODO: Implement rating dialog
-        Toast.makeText(this, "Rate Recipe functionality", Toast.LENGTH_SHORT).show();
+        // Create custom dialog
+        final Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_rate_recipe);
+
+        // Set transparent background to get rounded corners
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
+
+        // Initialize views
+        TextView tvTitle = dialog.findViewById(R.id.tvRateTitle);
+        ImageView star1 = dialog.findViewById(R.id.star1);
+        ImageView star2 = dialog.findViewById(R.id.star2);
+        ImageView star3 = dialog.findViewById(R.id.star3);
+        ImageView star4 = dialog.findViewById(R.id.star4);
+        ImageView star5 = dialog.findViewById(R.id.star5);
+        Button btnSendRating = dialog.findViewById(R.id.btnSendRating);
+        ProgressBar progressBar = dialog.findViewById(R.id.progressBar);
+
+        // Add ImageViews to array for easier handling
+        final ImageView[] stars = {star1, star2, star3, star4, star5};
+
+        // Track the current rating
+        final int[] currentRating = {0};
+
+        // Set up click listeners for stars
+        for (int i = 0; i < stars.length; i++) {
+            final int starIndex = i;
+            stars[i].setOnClickListener(v -> {
+                // Update the rating
+                currentRating[0] = starIndex + 1;
+
+                // Update star UI based on selection
+                for (int j = 0; j < stars.length; j++) {
+                    stars[j].setSelected(j <= starIndex);
+                }
+
+                // Enable the send button
+                btnSendRating.setEnabled(true);
+                btnSendRating.setBackgroundResource(R.drawable.send_button_enable);
+            });
+        }
+
+        // Set click listener for send button
+        // Set click listener for send button
+        btnSendRating.setOnClickListener(v -> {
+            if (currentRating[0] > 0) {
+                // Show loading indicator and disable button
+                progressBar.setVisibility(View.VISIBLE);
+                btnSendRating.setEnabled(false);
+                btnSendRating.setText("");  // Remove text while loading
+                btnSendRating.setBackgroundResource(R.drawable.send_button_disable);
+
+                // Disable star interactions during loading
+                for (ImageView star : stars) {
+                    star.setClickable(false);
+                }
+
+                // Call API to submit rating
+                submitRating(currentRating[0], dialog, progressBar, btnSendRating, stars);
+            } else {
+                Toast.makeText(MainRecipe.this, "Please select a rating", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        dialog.show();
     }
 
     private void navigateToComments() {
@@ -583,6 +650,87 @@ public class MainRecipe extends AppCompatActivity {
     private void unsaveRecipe() {
         // TODO: Implement unsave functionality
         Toast.makeText(this, "Recipe unsaved", Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * Submit a rating to the API
+     * @param rating The rating value (1-5)
+     * @param dialog The dialog instance
+     * @param progressBar The progress bar to indicate loading
+     * @param sendButton The send button
+     * @param stars Array of star ImageViews
+     */
+    private void submitRating(int rating, Dialog dialog, ProgressBar progressBar,
+                              Button sendButton, ImageView[] stars) {
+        // Get API service
+        ApiService apiService = RetrofitClient.getApiService();
+
+        // Call the rate recipe API
+        Call<ModelResponse.RecipeDetailResponse> call = apiService.rateRecipe(
+                "Bearer " + token,
+                recipeId,
+                rating);
+
+        call.enqueue(new Callback<ModelResponse.RecipeDetailResponse>() {
+            @Override
+            public void onResponse(Call<ModelResponse.RecipeDetailResponse> call, Response<ModelResponse.RecipeDetailResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    // Rating submitted successfully
+                    Toast.makeText(MainRecipe.this, "Rating submitted successfully", Toast.LENGTH_SHORT).show();
+
+                    // Update the UI with the new rating if available
+                    if (response.body().getData() != null) {
+                        averageRating = response.body().getData().getRecipe().getAverageRating();
+                        tvRating.setText(String.format("%.1f", averageRating));
+                    }
+
+                    // Dismiss the dialog with a slight delay to show success
+                    new Handler().postDelayed(dialog::dismiss, 300);
+                } else {
+                    // Handle error - reset the dialog to allow retrying
+                    progressBar.setVisibility(View.GONE);
+                    sendButton.setEnabled(true);
+                    sendButton.setText("Send");
+                    sendButton.setBackgroundResource(R.drawable.send_button_enable);
+
+                    // Re-enable star interactions
+                    for (ImageView star : stars) {
+                        star.setClickable(true);
+                    }
+
+                    // Show error message
+                    String errorMsg = "Failed to submit rating";
+                    try {
+                        if (response.errorBody() != null) {
+                            errorMsg += ": " + response.errorBody().string();
+                        }
+                    } catch (IOException e) {
+                        Log.e(TAG, "Error reading error response", e);
+                    }
+
+                    showError(errorMsg);
+                    Log.e(TAG, errorMsg);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ModelResponse.RecipeDetailResponse> call, Throwable t) {
+                // Handle network failure - reset the dialog to allow retrying
+                progressBar.setVisibility(View.GONE);
+                sendButton.setEnabled(true);
+                sendButton.setText("Send");
+                sendButton.setBackgroundResource(R.drawable.send_button_enable);
+
+                // Re-enable star interactions
+                for (ImageView star : stars) {
+                    star.setClickable(true);
+                }
+
+                // Show error message
+                showError("Network error: " + t.getMessage());
+                Log.e(TAG, "Network error: " + t.getMessage(), t);
+            }
+        });
     }
 
 }

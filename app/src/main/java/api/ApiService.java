@@ -121,4 +121,12 @@ public interface ApiService {
             @retrofit2.http.Header("Authorization") String token,
             @Body Map<String, Object> recipeData
     );
+
+    @FormUrlEncoded
+    @PATCH("recipes/rating-recipe/")
+    Call<ModelResponse.RecipeDetailResponse> rateRecipe(
+            @retrofit2.http.Header("Authorization") String token,
+            @Field("id") String recipeId,
+            @Field("rating") int rating
+    );
 }
