@@ -5,7 +5,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.util.Log;
-import android.widget.RatingBar;
 import android.widget.Toast;
 import android.content.Intent;
 
@@ -61,6 +60,16 @@ public class HomeFragment extends Fragment {
         loadRecipeData();
 
         return view;
+    }
+
+    /**
+     * Called when the fragment is visible to the user.
+     * Reloads recipe data to ensure it is up-to-date.
+     */
+    @Override
+    public void onResume() {
+        super.onResume();
+        loadRecipeData();
     }
 
     /**

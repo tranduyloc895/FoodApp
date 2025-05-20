@@ -22,7 +22,7 @@ import api.ModelResponse;
 public class New_RecipeAdapter extends RecyclerView.Adapter<New_RecipeAdapter.ViewHolder> {
     final private Context context;
     final private List<ModelResponse.RecipeResponse.Recipe> recipeList;
-    private OnRecipeClickListener listener;
+    final private OnRecipeClickListener listener;
 
     public interface OnRecipeClickListener {
         void onRecipeClick(String recipeId);

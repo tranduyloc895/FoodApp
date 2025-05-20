@@ -2,6 +2,6 @@
 <translate xmlns:android="http://schemas.android.com/apk/res/android"
     android:fromYDelta="100%"
     android:toYDelta="-100%"
-    android:duration="7500"
+    android:duration="5000"
     android:repeatCount="infinite"
     android:interpolator="@android:anim/linear_interpolator"/>

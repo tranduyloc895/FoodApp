@@ -338,38 +338,6 @@ public class ModelResponse {
         }
     }
 
-    public class AverageRatingResponse {
-        private String status;
-        private Data data;
-
-        public String getStatus() {
-            return status;
-        }
-
-        public void setStatus(String status) {
-            this.status = status;
-        }
-
-        public Data getData() {
-            return data;
-        }
-
-        public void setData(Data data) {
-            this.data = data;
-        }
-
-        public class Data {
-            private double averageRating;
-
-            public double getAverageRating() {
-                return averageRating;
-            }
-
-            public void setAverageRating(double averageRating) {
-                this.averageRating = averageRating;
-            }
-        }
-    }
 
     public static class RecipeDetailResponse {
         private String status;

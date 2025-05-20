@@ -2,12 +2,14 @@ package com.example.appfood;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import adapter.TabAdapter_BottomNavigation;
 import api.ApiService;
@@ -28,6 +30,7 @@ public class HomeActivity extends AppCompatActivity {
     private ViewPager2 viewPager_home;
     private TabAdapter_BottomNavigation tabAdapter_home;
     private BottomNavigationView bottomNavigationView;
+    private FloatingActionButton btnAddRecipe;
 
     /**
      * Called when the activity is starting. Initializes UI components,
@@ -47,6 +50,7 @@ public class HomeActivity extends AppCompatActivity {
         String token = getIntent().getStringExtra("token");
         handleGreeting(token);
         setupProfileClick(token);
+        setupAddRecipeButton(token);
     }
 
     /**
@@ -59,6 +63,7 @@ public class HomeActivity extends AppCompatActivity {
         viewPager_home.setAdapter(tabAdapter_home);
         tvGreeting = findViewById(R.id.tv_greeting);
         ivProfile = findViewById(R.id.iv_profile);
+        btnAddRecipe = findViewById(R.id.fab_add);
     }
 
     /**
@@ -94,6 +99,18 @@ public class HomeActivity extends AppCompatActivity {
             public void onPageSelected(int position) {
                 bottomNavigationView.getMenu().getItem(position).setChecked(true);
             }
+        });
+    }
+
+    /**
+     * Handles the click event for the add recipe button.
+     * Starts the AddRecipeActivity.
+     */
+    private void setupAddRecipeButton(String token) {
+        btnAddRecipe.setOnClickListener(v -> {
+            Intent intent = new Intent(HomeActivity.this, AddRecipeActivity.class);
+            intent.putExtra("token", token);
+            startActivity(intent);
         });
     }
 

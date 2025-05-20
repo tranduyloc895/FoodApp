@@ -1,9 +1,11 @@
 package adapter;
 
 import android.content.Context;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
@@ -18,9 +20,9 @@ import java.util.List;
 import api.ModelResponse;
 
 public class Common_RecipeAdapter extends RecyclerView.Adapter<Common_RecipeAdapter.ViewHolder> {
-    private Context context;
-    private List<ModelResponse.RecipeResponse.Recipe> recipeList;
-    private OnRecipeClickListener listener;
+    final private Context context;
+    final private List<ModelResponse.RecipeResponse.Recipe> recipeList;
+    final private OnRecipeClickListener listener;
 
     public interface OnRecipeClickListener {
         void onRecipeClick(String recipeId);
@@ -44,12 +46,22 @@ public class Common_RecipeAdapter extends RecyclerView.Adapter<Common_RecipeAdap
         ModelResponse.RecipeResponse.Recipe recipe = recipeList.get(position);
         holder.tvRecipeName.setText(recipe.getTitle());
 
-        Animation marqueeAnimation = AnimationUtils.loadAnimation(context, R.anim.vertical_marquee);
-        holder.tvRecipeName.startAnimation(marqueeAnimation);
-        holder.tvRecipeName.setSelected(true);
+        holder.tvRecipeName.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                holder.tvRecipeName.getViewTreeObserver().removeOnPreDrawListener(this);
+
+                int maxHeightPx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 100, context.getResources().getDisplayMetrics());
+                if (holder.tvRecipeName.getHeight() > maxHeightPx) {
+                    Animation marqueeAnimation = AnimationUtils.loadAnimation(context, R.anim.vertical_marquee);
+                    holder.tvRecipeName.startAnimation(marqueeAnimation);
+                    holder.tvRecipeName.setSelected(true);
+                }
+                return true;
+            }
+        });
 
         Glide.with(context).load(recipe.getImageUrl()).into(holder.ivRecipeImage);
-
         holder.tvAverageRating.setText(String.format("%.1f", recipe.getAverageRating()));
 
         holder.itemView.setOnClickListener(v -> {

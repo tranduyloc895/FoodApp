@@ -1,5 +1,8 @@
 package api;
+import java.util.Map;
+
 import retrofit2.Call;
+import retrofit2.http.Body;
 import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.GET;
@@ -72,17 +75,9 @@ public interface ApiService {
             @Field("confirmNewPassword") String confirmNewPassword
     );
 
-
     @GET("recipes/get-recipe-latest/")
     Call<ModelResponse.RecipeResponse> getRecipeLatest(
             @Header("Authorization") String token
-    );
-
-
-    @GET("recipes/get-recipe-rating/")
-    Call<ModelResponse.AverageRatingResponse> getRecipeRating(
-            @Header("Authorization") String token,
-            @Query("id") String recipeId
     );
 
     @GET("recipes/get-recipe-id/")
@@ -121,4 +116,9 @@ public interface ApiService {
             @Field("commentId") String commentId
     );
 
+    @POST("recipes/add-recipe/")
+    Call<ModelResponse.RecipeResponse> addRecipe(
+            @retrofit2.http.Header("Authorization") String token,
+            @Body Map<String, Object> recipeData
+    );
 }

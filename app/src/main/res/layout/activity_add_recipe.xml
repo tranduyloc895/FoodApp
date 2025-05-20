@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:padding="10dp"
+        android:orientation="vertical"
+        android:background="@color/background_home">
+
+        <FrameLayout
+            android:id="@+id/fl_add_recipe_top"
+            android:layout_width="match_parent"
+            android:layout_height="75dp"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/ib_add_recip_back"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="16dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Back"
+                android:src="@drawable/ic_back"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tv_add_recipe_title"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="Add Recipe"
+                android:layout_gravity="center_horizontal"
+                android:textColor="@color/black"
+                android:textSize="20sp"
+                android:textStyle="bold"/>
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/fl_add_recipe_image"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
+            android:orientation="horizontal"
+            android:layout_gravity="center"
+            android:background="@drawable/rounded_linear">
+
+            <ImageView
+                android:id="@+id/iv_add_recipe_image"
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                android:contentDescription="Recipe Image">
+            </ImageView>
+
+            <TextView
+                android:id="@+id/tv_add_recipe_image"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="Add Image"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:textStyle="bold"/>
+        </FrameLayout>
+
+        <LinearLayout
+            android:id="@+id/ll_add_recipe_details"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_add_recipe_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Title"
+                android:textSize="16sp"
+                android:textStyle="bold">
+            </TextView>
+
+            <EditText
+                android:id="@+id/et_add_recipe_name"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:hint="Title"
+                android:background="@drawable/rounded_textview"
+                android:padding="10dp"
+                android:textColorHint="@color/gray"
+                android:paddingStart="25dp"
+                android:paddingEnd="25dp"
+                android:gravity="start|center"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="20dp">
+            </EditText>
+
+            <TextView
+                android:id="@+id/tv_add_recipe_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Cooking Time"
+                android:textSize="16sp"
+                android:textStyle="bold">
+            </TextView>
+
+            <EditText
+                android:id="@+id/et_add_recipe_time"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:hint="Cooking Time"
+                android:background="@drawable/rounded_textview"
+                android:padding="10dp"
+                android:textColorHint="@color/gray"
+                android:paddingStart="25dp"
+                android:paddingEnd="25dp"
+                android:gravity="start|center"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="20dp">
+            </EditText>
+
+            <TextView
+                android:id="@+id/tv_add_recipe_ingredients"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ingredients"
+                android:textSize="16sp"
+                android:textStyle="bold">
+            </TextView>
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="8dp"
+                android:background="@drawable/rounded_linear">
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_add_recipe_ingredients"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:background="@drawable/rounded_linear"
+                    android:backgroundTint="@color/gray_light">
+                </androidx.recyclerview.widget.RecyclerView>
+
+                <LinearLayout
+                    android:id="@+id/ll_add_recipe_ingredients"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:background="@drawable/rounded_linear">
+
+                    <EditText
+                        android:id="@+id/et_quantity_name"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="6"
+                        android:hint="quantiy/name"
+                        android:textColorHint="@color/gray"
+                        android:background="@drawable/rounded_linear"
+                        android:backgroundTint="@color/gray_light">
+                    </EditText>
+
+                    <FrameLayout
+                        android:id="@+id/fl_add_ingredients_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1">
+
+                        <ImageButton
+                            android:id="@+id/ib_add_ingredients"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/rounded_button_background"
+                            android:backgroundTint="@color/green"
+                            android:gravity="center">
+                        </ImageButton>
+
+                        <TextView
+                            android:id="@+id/tv_add_ingredients"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:gravity="center"
+                            android:text="Add"
+                            android:textColor="@color/white"
+                            android:textSize="16sp"
+                            android:textStyle="bold">
+                        </TextView>
+                    </FrameLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tv_add_recipe_instruction"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Instruction"
+                android:textSize="16sp"
+                android:textStyle="bold">
+            </TextView>
+
+            <EditText
+                android:id="@+id/et_add_recipe_instruction"
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                android:hint="Instruction"
+                android:scrollbars="vertical"
+                android:background="@drawable/rounded_textview"
+                android:padding="10dp"
+                android:textColorHint="@color/gray"
+                android:paddingStart="25dp"
+                android:paddingEnd="25dp"
+                android:gravity="start|top"
+                android:layout_marginTop="5dp"
+                android:backgroundTint="@color/gray_light"
+                android:overScrollMode="always"
+                android:scrollHorizontally="false"
+                android:maxLines="10"
+                android:inputType="textMultiLine"
+                android:focusable="true">
+            </EditText>
+
+            <FrameLayout
+                android:id="@+id/fl_add_finish_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:paddingTop="10dp">
+
+                <ImageButton
+                    android:id="@+id/ib_finish"
+                    android:layout_width="100dp"
+                    android:layout_height="45dp"
+                    android:background="@drawable/rounded_button_background"
+                    android:backgroundTint="@color/green"
+                    android:gravity="center">
+                </ImageButton>
+
+                <TextView
+                    android:id="@+id/tv_finish"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:text="Finish"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold">
+                </TextView>
+            </FrameLayout>
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>
