@@ -25,6 +25,7 @@ import adapter.CountryAdapter;
 import api.ApiService;
 import api.ModelResponse;
 import api.RetrofitClient;
+import fragment.HomeFragment;
 import fragment.LogoutDialogFragment;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -64,7 +65,7 @@ public class UserProfileActivity extends AppCompatActivity {
 
         String token = getIntent().getStringExtra("token");
         if (token != null) {
-            getUserInfo(token, new HomeActivity.OnUserInfoCallback() {
+            getUserInfo(token, new HomeFragment.OnUserInfoCallback() {
                 @Override
                 public void onUserInfoReceived(String name, String email, String dateOfBirth, String country) {
                     etName.setText(name);
@@ -153,7 +154,7 @@ public class UserProfileActivity extends AppCompatActivity {
     /**
      * Retrieves the user's information from the API and passes it to the callback.
      */
-    public void getUserInfo(String token, HomeActivity.OnUserInfoCallback callback) {
+    public void getUserInfo(String token, HomeFragment.OnUserInfoCallback callback) {
         ApiService apiService = RetrofitClient.getApiService();
         apiService.getUserInfo("Bearer " + token).enqueue(new Callback<ModelResponse.UserResponse>() {
             @Override

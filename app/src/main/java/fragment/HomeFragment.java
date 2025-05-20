@@ -6,7 +6,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.util.Log;
 import android.widget.Toast;
+import android.widget.TextView;
 import android.content.Intent;
+import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -18,6 +20,9 @@ import adapter.New_RecipeAdapter;
 
 import com.example.appfood.MainRecipe;
 import com.example.appfood.R;
+import com.example.appfood.UserProfileActivity;
+import com.example.appfood.AddRecipeActivity;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,9 +46,12 @@ public class HomeFragment extends Fragment {
     private New_RecipeAdapter adapter_new;
     private List<ModelResponse.RecipeResponse.Recipe> recipeList_common, recipeList_new;
     private String token;
+    private TextView tvGreeting;
+    private ImageView ivProfile;
+    private FloatingActionButton fabAddRecipe;
 
     /**
-     * Inflates the fragment layout and initializes RecyclerViews and adapters.
+     * Inflates the fragment layout and initializes UI elements.
      */
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -56,6 +64,7 @@ public class HomeFragment extends Fragment {
             return view;
         }
 
+        initViews(view);
         initRecyclerViews(view);
         loadRecipeData();
 
@@ -73,29 +82,70 @@ public class HomeFragment extends Fragment {
     }
 
     /**
+     * Initializes view references.
+     */
+    private void initViews(View view) {
+        tvGreeting = view.findViewById(R.id.tv_greeting);
+        ivProfile = view.findViewById(R.id.iv_profile);
+        fabAddRecipe = view.findViewById(R.id.fab_add);
+
+        handleGreeting(token);
+        setupProfileClick(token);
+    }
+
+    /**
      * Initializes RecyclerViews and their adapters for common and new recipes.
      */
     private void initRecyclerViews(View view) {
-        // Common recipes RecyclerView
         recyclerView_common = view.findViewById(R.id.rv_common_recipe);
         recyclerView_common.setHasFixedSize(true);
         recipeList_common = new ArrayList<>();
         adapter_common = new Common_RecipeAdapter(requireContext(), recipeList_common, this::navigateToRecipeDetails);
         recyclerView_common.setAdapter(adapter_common);
-        recyclerView_common.setLayoutManager(new GridLayoutManager(requireContext(), 1, GridLayoutManager.VERTICAL, false));
+        recyclerView_common.setLayoutManager(new GridLayoutManager(requireContext(), 1));
 
-        // New recipes RecyclerView
         recyclerView_new = view.findViewById(R.id.rv_new_recipe);
         recyclerView_new.setHasFixedSize(true);
         recipeList_new = new ArrayList<>();
         adapter_new = new New_RecipeAdapter(requireContext(), recipeList_new, this::navigateToRecipeDetails);
         recyclerView_new.setAdapter(adapter_new);
-        recyclerView_new.setLayoutManager(new GridLayoutManager(requireContext(), 2, GridLayoutManager.VERTICAL, false));
+        recyclerView_new.setLayoutManager(new GridLayoutManager(requireContext(), 2));
     }
 
     /**
-     * Navigate to recipe details screen with recipe ID and token
-     * @param recipeId The ID of the recipe to display
+     * Handles the greeting logic: fetches user info and displays greeting.
+     */
+    private void handleGreeting(String token) {
+        if (token != null) {
+            getUserInfo(token, new OnUserInfoCallback() {
+                @Override
+                public void onUserInfoReceived(String name, String email, String dateOfBirth, String country) {
+                    tvGreeting.setText("Hello, " + name + "!");
+                }
+
+                @Override
+                public void onError(String errorMessage) {
+                    tvGreeting.setText("Failed to load user info");
+                }
+            });
+        } else {
+            tvGreeting.setText("Token is missing.");
+        }
+    }
+
+    /**
+     * Sets up the profile image click to open UserProfileActivity.
+     */
+    private void setupProfileClick(String token) {
+        ivProfile.setOnClickListener(v -> {
+            Intent intent = new Intent(requireContext(), UserProfileActivity.class);
+            intent.putExtra("token", token);
+            startActivity(intent);
+        });
+    }
+
+    /**
+     * Navigate to recipe details screen with recipe ID and token.
      */
     private void navigateToRecipeDetails(String recipeId) {
         Intent intent = new Intent(requireContext(), MainRecipe.class);
@@ -110,6 +160,31 @@ public class HomeFragment extends Fragment {
     private void loadRecipeData() {
         loadCommonRecipes();
         loadNewRecipes();
+    }
+
+    /**
+     * Fetches user information from the API.
+     */
+    public void getUserInfo(String token, OnUserInfoCallback callback) {
+        ApiService apiService = RetrofitClient.getApiService();
+        Call<ModelResponse.UserResponse> call = apiService.getUserInfo("Bearer " + token);
+
+        call.enqueue(new Callback<ModelResponse.UserResponse>() {
+            @Override
+            public void onResponse(Call<ModelResponse.UserResponse> call, Response<ModelResponse.UserResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    String name = response.body().getData().getUser().getName();
+                    callback.onUserInfoReceived(name, "", "", "");
+                } else {
+                    callback.onError("Response error: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ModelResponse.UserResponse> call, Throwable t) {
+                callback.onError("Request failed: " + t.getMessage());
+            }
+        });
     }
 
     /**
@@ -222,5 +297,27 @@ public class HomeFragment extends Fragment {
                 }
             });
         }
+    }
+
+    /**
+     * Callback interface for receiving user information or error from getUserInfo.
+     */
+    public interface OnUserInfoCallback {
+        /**
+         * Called when user information is successfully received.
+         *
+         * @param name         The user's name.
+         * @param email        The user's email.
+         * @param dateOfBirth  The user's date of birth.
+         * @param country      The user's country.
+         */
+        void onUserInfoReceived(String name, String email, String dateOfBirth, String country);
+
+        /**
+         * Called when there is an error fetching user information.
+         *
+         * @param errorMessage The error message.
+         */
+        void onError(String errorMessage);
     }
 }

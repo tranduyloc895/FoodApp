@@ -143,11 +143,11 @@
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rv_add_recipe_ingredients"
-                    android:orientation="vertical"
                     android:layout_width="match_parent"
-                    android:layout_height="100dp"
+                    android:layout_height="200dp"
                     android:background="@drawable/rounded_linear"
-                    android:backgroundTint="@color/gray_light">
+                    android:backgroundTint="@color/gray_light"
+                    android:nestedScrollingEnabled="true">
                 </androidx.recyclerview.widget.RecyclerView>
 
                 <LinearLayout

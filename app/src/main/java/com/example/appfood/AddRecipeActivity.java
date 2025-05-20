@@ -1,9 +1,11 @@
 package com.example.appfood;
 
 import android.content.Intent;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -11,6 +13,7 @@ import android.widget.Toast;
 
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -38,6 +41,7 @@ public class AddRecipeActivity extends AppCompatActivity {
     private String token;
     private ImageView ivRecipeImage;
     private Uri imageUri;
+    private ImageButton ibBack;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +61,7 @@ public class AddRecipeActivity extends AppCompatActivity {
         setupAddIngredientButton();
         setupSubmitRecipeButton();
         setupImageSelection();
+        setupBackButton();
     }
 
     private void initViews() {
@@ -65,6 +70,7 @@ public class AddRecipeActivity extends AppCompatActivity {
         rvIngredients = findViewById(R.id.rv_add_recipe_ingredients);
         etTime = findViewById(R.id.et_add_recipe_time);
         ivRecipeImage = findViewById(R.id.iv_add_recipe_image);
+        ibBack = findViewById(R.id.ib_add_recip_back);
     }
 
     private void initRecyclerView() {
@@ -72,7 +78,8 @@ public class AddRecipeActivity extends AppCompatActivity {
             ingredientsList.remove(position);
             ingredientsAdapter.notifyItemRemoved(position);
         });
-        rvIngredients.setLayoutManager(new LinearLayoutManager(this));
+
+        rvIngredients.setLayoutManager(new GridLayoutManager(this, 2, GridLayoutManager.VERTICAL, false));
         rvIngredients.setAdapter(ingredientsAdapter);
     }
 
@@ -99,6 +106,10 @@ public class AddRecipeActivity extends AppCompatActivity {
                 Toast.makeText(this, "Token is missing!", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void setupBackButton() {
+        ibBack.setOnClickListener(v -> finish());
     }
 
     private void setupImageSelection() {
