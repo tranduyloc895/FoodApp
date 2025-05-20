@@ -105,4 +105,20 @@ public interface ApiService {
             @Field("comment") String comment
     );
 
+    @FormUrlEncoded
+    @PATCH("recipes/like-comment/")
+    Call<ModelResponse.RecipeDetailResponse> likeComment(
+            @retrofit2.http.Header("Authorization") String token,
+            @Field("recipeId") String recipeId,
+            @Field("commentId") String commentId
+    );
+
+    @FormUrlEncoded
+    @PATCH("recipes/dislike-comment/")
+    Call<ModelResponse.RecipeDetailResponse> dislikeComment(
+            @retrofit2.http.Header("Authorization") String token,
+            @Field("recipeId") String recipeId,
+            @Field("commentId") String commentId
+    );
+
 }

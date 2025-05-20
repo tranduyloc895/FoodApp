@@ -648,6 +648,19 @@ public class ModelResponse {
             private String content;
             private String created_at;
 
+            // New fields for likes and dislikes
+            private int likes;
+            private int dislikes;
+
+            // New fields for tracking who liked/disliked
+            private List<String> likedBy;
+
+            private List<String> dislikedBy;
+
+            // Transient fields to track current user's reaction status
+            private transient boolean userLiked;
+            private transient boolean userDisliked;
+
             public String getId() {
                 return id;
             }
@@ -680,12 +693,70 @@ public class ModelResponse {
                 this.created_at = created_at;
             }
 
+            public int getLikes() {
+                return likes;
+            }
+
+            public void setLikes(int likes) {
+                this.likes = likes;
+            }
+
+            public int getDislikes() {
+                return dislikes;
+            }
+
+            public void setDislikes(int dislikes) {
+                this.dislikes = dislikes;
+            }
+
+            public List<String> getLikedBy() {
+                return likedBy;
+            }
+
+            public void setLikedBy(List<String> likedBy) {
+                this.likedBy = likedBy;
+            }
+
+            public List<String> getDislikedBy() {
+                return dislikedBy;
+            }
+
+            public void setDislikedBy(List<String> dislikedBy) {
+                this.dislikedBy = dislikedBy;
+            }
+
+            public boolean isUserLiked() {
+                return userLiked;
+            }
+
+            public void setUserLiked(boolean userLiked) {
+                this.userLiked = userLiked;
+            }
+
+            public boolean isUserDisliked() {
+                return userDisliked;
+            }
+
+            public void setUserDisliked(boolean userDisliked) {
+                this.userDisliked = userDisliked;
+            }
+
             // Helper method to get formatted date if needed
             public String getFormattedDate() {
                 if (created_at != null && created_at.length() > 16) {
                     return created_at.replace("T", " ").substring(0, 16);
                 }
                 return created_at;
+            }
+
+            // Helper method to check if current user has liked this comment
+            public void checkUserReactions(String userId) {
+                if (likedBy != null) {
+                    userLiked = likedBy.contains(userId);
+                }
+                if (dislikedBy != null) {
+                    userDisliked = dislikedBy.contains(userId);
+                }
             }
         }
     }

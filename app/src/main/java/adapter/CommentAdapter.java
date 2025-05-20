@@ -1,6 +1,7 @@
 package adapter;
 
 import android.content.Context;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,6 +10,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.example.appfood.R;
 import api.ModelResponse;
 
@@ -26,9 +29,29 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
     private Context context;
     private List<ModelResponse.CommentResponse.Comment> commentList;
 
-    public CommentAdapter(Context context, List<ModelResponse.CommentResponse.Comment> commentList) {
+    private OnCommentActionListener actionListener;
+
+    private String userAvatarUrl;
+
+    // Interface for comment actions
+    public interface OnCommentActionListener {
+        void onLikeClicked(String commentId, int position);
+        void onDislikeClicked(String commentId, int position);
+    }
+
+    /**
+     * Set the current user's avatar URL
+     * @param avatarUrl URL of the user's avatar image
+     */
+    public void setUserAvatarUrl(String avatarUrl) {
+        this.userAvatarUrl = avatarUrl;
+        notifyDataSetChanged();  // Refresh all items to update avatars
+    }
+
+    public CommentAdapter(Context context, List<ModelResponse.CommentResponse.Comment> commentList, OnCommentActionListener listener) {
         this.context = context;
         this.commentList = commentList;
+        this.actionListener = listener;
     }
 
     @NonNull
@@ -51,12 +74,35 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
         // Format and set date
         holder.tvDate.setText(formatDateTime(comment.getCreatedAt()));
 
-        // Set default avatar (in a real app, you'd load the user's avatar)
-        holder.ivAvatar.setImageResource(R.drawable.ic_profile);
+        // Load avatar image if available, otherwise use default
+        if (!TextUtils.isEmpty(userAvatarUrl)) {
+            Glide.with(context)
+                    .load(userAvatarUrl)
+                    .apply(new RequestOptions()
+                            .placeholder(R.drawable.ic_profile)
+                            .error(R.drawable.ic_profile))
+                    .into(holder.ivAvatar);
+        } else {
+            // Set default avatar
+            holder.ivAvatar.setImageResource(R.drawable.ic_profile);
+        }
 
         // Set default reaction counts
-        holder.tvLikes.setText("0");
-        holder.tvFire.setText("0");
+        holder.tvLikes.setText(String.valueOf(comment.getLikes()));
+        holder.tvFire.setText(String.valueOf(comment.getDislikes()));
+
+        // Set click listeners for like and dislike
+        holder.tvLikes.setOnClickListener(v -> {
+            if (actionListener != null) {
+                actionListener.onLikeClicked(comment.getId(), position);
+            }
+        });
+
+        holder.tvFire.setOnClickListener(v -> {
+            if (actionListener != null) {
+                actionListener.onDislikeClicked(comment.getId(), position);
+            }
+        });
     }
 
     @Override

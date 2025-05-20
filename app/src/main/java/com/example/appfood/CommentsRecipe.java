@@ -28,7 +28,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class CommentsRecipe extends AppCompatActivity {
+public class CommentsRecipe extends AppCompatActivity implements CommentAdapter.OnCommentActionListener{
     private static final String TAG = "CommentsRecipe";
 
     // Comments data
@@ -51,6 +51,10 @@ public class CommentsRecipe extends AppCompatActivity {
     private CommentAdapter commentAdapter;
     private FrameLayout loadingOverlay;
 
+    // User info
+    private String userId;
+    private String url_avatar;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -71,6 +75,9 @@ public class CommentsRecipe extends AppCompatActivity {
 
         // Set up click listeners
         setupClickListeners();
+
+        // Get user info
+        getUserInfo(token);
 
         // Show loading state
         showLoading(true);
@@ -93,7 +100,7 @@ public class CommentsRecipe extends AppCompatActivity {
         loadingOverlay = findViewById(R.id.loadingOverlay);
 
         // Set up RecyclerView
-        commentAdapter = new CommentAdapter(this, commentList);
+        commentAdapter = new CommentAdapter(this, commentList, this);
         rvComments.setLayoutManager(new LinearLayoutManager(this));
         rvComments.setAdapter(commentAdapter);
 
@@ -298,4 +305,180 @@ public class CommentsRecipe extends AppCompatActivity {
     private void showError(String message) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
+
+    /**
+     * Get user info with token
+     */
+    public void getUserInfo(String token) {
+        ApiService apiService = RetrofitClient.getApiService();
+        apiService.getUserInfo("Bearer " + token).enqueue(new Callback<ModelResponse.UserResponse>() {
+            @Override
+            public void onResponse(Call<ModelResponse.UserResponse> call, Response<ModelResponse.UserResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    userId = response.body().getData().getUser().getId();
+                    url_avatar = response.body().getData().getUser().getUrlAvatar();
+
+                    // Set the avatar URL in the adapter when received
+                    if (commentAdapter != null && url_avatar != null) {
+                        commentAdapter.setUserAvatarUrl(url_avatar);
+                    }
+                } else {
+                    String errorMsg = "Error loading user info";
+                    try {
+                        if (response.errorBody() != null) {
+                            errorMsg += ": " + response.errorBody().string();
+                        }
+                    } catch (IOException e) {
+                        Log.e(TAG, "Error reading error response", e);
+                    }
+                    Log.e(TAG, errorMsg);
+                }
+            }
+            @Override
+            public void onFailure(Call<ModelResponse.UserResponse> call, Throwable t) {
+                String errorMessage = "Network error while loading user info: " + t.getMessage();
+                Log.e(TAG, errorMessage, t);
+            }
+        });
+    }
+
+    /**
+     * Handle like and dislike actions
+     */
+
+    public void onLikeClicked(String commentId, int position) {
+        if (token == null || recipeId == null || commentId == null) {
+            showError("Missing required data for liking comment");
+            return;
+        }
+
+        // Show loading
+        showLoading(true);
+
+        // Log action
+        Log.d(TAG, "Liking comment ID: " + commentId + " for recipe ID: " + recipeId);
+
+        // Call API to like comment
+        ApiService apiService = RetrofitClient.getApiService();
+        Call<ModelResponse.RecipeDetailResponse> call = apiService.likeComment(
+                "Bearer " + token,
+                recipeId,
+                commentId
+        );
+
+        call.enqueue(new Callback<ModelResponse.RecipeDetailResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<ModelResponse.RecipeDetailResponse> call,
+                                   @NonNull Response<ModelResponse.RecipeDetailResponse> response) {
+                // Hide loading
+                showLoading(false);
+
+                if (response.isSuccessful() && response.body() != null) {
+                    ModelResponse.RecipeDetailResponse detailResponse = response.body();
+                    Log.d(TAG, "Comment liked successfully: " + detailResponse.getStatus());
+
+                    // Reload all comments instead of updating just one
+                    getComments(token, recipeId);
+
+
+                } else {
+                    String errorMsg = "Failed to like comment";
+                    try {
+                        if (response.errorBody() != null) {
+                            errorMsg += ": " + response.errorBody().string();
+                        }
+                    } catch (IOException e) {
+                        Log.e(TAG, "Error reading error response", e);
+                    }
+
+                    showError(errorMsg);
+                    Log.e(TAG, errorMsg + " - HTTP Status: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ModelResponse.RecipeDetailResponse> call, @NonNull Throwable t) {
+                // Hide loading
+                showLoading(false);
+
+                // Handle network failure
+                String errorMessage = "Network error while liking comment: " + t.getMessage();
+                showError(errorMessage);
+                Log.e(TAG, errorMessage, t);
+            }
+        });
+    }
+
+    /**
+     * Implementation of the OnCommentActionListener interface
+     * Called when a user dislikes a comment
+     */
+
+    public void onDislikeClicked(String commentId, int position) {
+        if (token == null || recipeId == null || commentId == null) {
+            showError("Missing required data for disliking comment");
+            return;
+        }
+
+        // Show loading
+        showLoading(true);
+
+        // Log action
+        Log.d(TAG, "Disliking comment ID: " + commentId + " for recipe ID: " + recipeId);
+
+        // Call API to dislike comment
+        ApiService apiService = RetrofitClient.getApiService();
+        Call<ModelResponse.RecipeDetailResponse> call = apiService.dislikeComment(
+                "Bearer " + token,
+                recipeId,
+                commentId
+        );
+
+        call.enqueue(new Callback<ModelResponse.RecipeDetailResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<ModelResponse.RecipeDetailResponse> call,
+                                   @NonNull Response<ModelResponse.RecipeDetailResponse> response) {
+                // Hide loading
+                showLoading(false);
+
+                if (response.isSuccessful() && response.body() != null) {
+                    ModelResponse.RecipeDetailResponse detailResponse = response.body();
+                    Log.d(TAG, "Comment disliked successfully: " + detailResponse.getStatus());
+
+                    // Reload all comments instead of updating just one
+                    getComments(token, recipeId);
+
+
+                } else {
+                    String errorMsg = "Failed to dislike comment";
+                    try {
+                        if (response.errorBody() != null) {
+                            errorMsg += ": " + response.errorBody().string();
+                        }
+                    } catch (IOException e) {
+                        Log.e(TAG, "Error reading error response", e);
+                    }
+
+                    showError(errorMsg);
+                    Log.e(TAG, errorMsg + " - HTTP Status: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ModelResponse.RecipeDetailResponse> call, @NonNull Throwable t) {
+                // Hide loading
+                showLoading(false);
+
+                // Handle network failure
+                String errorMessage = "Network error while disliking comment: " + t.getMessage();
+                showError(errorMessage);
+                Log.e(TAG, errorMessage, t);
+            }
+        });
+    }
+
+    /**
+     * Update a comment in the list after a like/dislike action
+     */
+
 }
