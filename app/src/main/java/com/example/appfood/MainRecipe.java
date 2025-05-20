@@ -3,7 +3,6 @@ package com.example.appfood;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
@@ -23,6 +22,7 @@ import com.bumptech.glide.request.RequestOptions;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import api.ApiService;
 import api.ModelResponse;
@@ -39,12 +39,18 @@ public class MainRecipe extends AppCompatActivity {
     private String title;
     private String author;
     private String image_url;
+    private String url_avatar;
+    private String country;
     private List<String> ingredients;
     private List<String> instructions;
     private double averageRating;
     private int reviewCount;
     private String token;
     private String recipeId;
+    private String recipeTime;
+
+    // Loading counter to track multiple API calls
+    private AtomicInteger loadingCounter = new AtomicInteger(0);
 
     // UI elements
     private ImageButton btnBack, btnMore;
@@ -54,10 +60,7 @@ public class MainRecipe extends AppCompatActivity {
     private TextView tvUserName, tvUserLocation, tvItemCount;
     private Button btnIngredient, btnProcedure;
     private NestedScrollView scrollIngredients, scrollProcedure;
-
-    // User data
-    private String url_avatar;
-    private String country;
+    private FrameLayout loadingOverlay;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,7 +83,10 @@ public class MainRecipe extends AppCompatActivity {
         // Set up click listeners
         setupClickListeners();
 
-        // Load user profile to get avatar URL
+        // Show loading state - we're starting multiple API requests
+        showLoading(true);
+
+        // Get user profile to load avatar and country
         getUserProfile(token);
 
         // Load recipe data
@@ -104,6 +110,7 @@ public class MainRecipe extends AppCompatActivity {
         btnProcedure = findViewById(R.id.btnProcedure);
         scrollIngredients = findViewById(R.id.scrollIngredients);
         scrollProcedure = findViewById(R.id.scrollProcedure);
+        loadingOverlay = findViewById(R.id.loadingOverlay);
     }
 
     private void setupClickListeners() {
@@ -141,13 +148,79 @@ public class MainRecipe extends AppCompatActivity {
     }
 
     /**
+     * Get user profile information from API to retrieve the avatar URL and country
+     * @param token Authentication token
+     */
+    private void getUserProfile(String token) {
+        // Increment loading counter
+        loadingCounter.incrementAndGet();
+
+        ApiService apiService = RetrofitClient.getApiService();
+        apiService.getUserInfo("Bearer " + token).enqueue(new Callback<ModelResponse.UserResponse>() {
+            @Override
+            public void onResponse(Call<ModelResponse.UserResponse> call, Response<ModelResponse.UserResponse> response) {
+                // Decrement loading counter and check if we should hide loading overlay
+                checkAndUpdateLoadingState();
+
+                if (response.isSuccessful() && response.body() != null) {
+                    ModelResponse.UserResponse userProfile = response.body();
+                    url_avatar = userProfile.getData().getUser().getUrlAvatar();
+                    country = userProfile.getData().getUser().getCountry();
+
+                    // Load avatar image once we have the URL
+                    loadProfileAvatar();
+
+                    // Update the location with country info
+                    updateUserLocation();
+                } else {
+                    showError("Failed to load user profile");
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ModelResponse.UserResponse> call, Throwable t) {
+                // Decrement loading counter and check if we should hide loading overlay
+                checkAndUpdateLoadingState();
+
+                showError("Network error: " + t.getMessage());
+            }
+        });
+    }
+
+    /**
+     * Update the user location TextView with country information
+     */
+    private void updateUserLocation() {
+        if (country != null && !country.isEmpty()) {
+            tvUserLocation.setText(country);
+        } else {
+            tvUserLocation.setText("Location not specified");
+        }
+    }
+
+    /**
+     * Load the user's avatar into the profile image view
+     */
+    private void loadProfileAvatar() {
+        if (url_avatar != null && !url_avatar.isEmpty()) {
+            Glide.with(this)
+                    .load(url_avatar)
+                    .apply(new RequestOptions()
+                            .placeholder(R.drawable.ic_profile)
+                            .error(R.drawable.ic_profile))
+                    .into(imgProfile);
+        }
+    }
+
+    /**
      * Get recipe details from API
      * @param token Authentication token
      * @param id Recipe ID
      */
     public void getRecipe(String token, String id) {
-        // Show loading state
-        showLoading(true);
+        // Increment loading counter
+        loadingCounter.incrementAndGet();
+
         Log.d(TAG, "Fetching recipe with ID: " + id);
 
         ApiService apiService = RetrofitClient.getApiService();
@@ -157,8 +230,8 @@ public class MainRecipe extends AppCompatActivity {
             @Override
             public void onResponse(@NonNull Call<ModelResponse.RecipeDetailResponse> call,
                                    @NonNull Response<ModelResponse.RecipeDetailResponse> response) {
-                // Hide loading state
-                showLoading(false);
+                // Decrement loading counter and check if we should hide loading overlay
+                checkAndUpdateLoadingState();
 
                 if (response.isSuccessful() && response.body() != null) {
                     ModelResponse.RecipeDetailResponse recipeResponse = response.body();
@@ -175,6 +248,7 @@ public class MainRecipe extends AppCompatActivity {
                         image_url = recipe.getImageUrl();
                         ingredients = recipe.getIngredients();
                         instructions = recipe.getInstructions();
+                        recipeTime = recipe.getTime();
 
                         // Calculate the average rating from the ratings list
                         averageRating = recipe.getAverageRating();
@@ -202,7 +276,9 @@ public class MainRecipe extends AppCompatActivity {
 
             @Override
             public void onFailure(@NonNull Call<ModelResponse.RecipeDetailResponse> call, @NonNull Throwable t) {
-                showLoading(false);
+                // Decrement loading counter and check if we should hide loading overlay
+                checkAndUpdateLoadingState();
+
                 showError("Network error: " + t.getMessage());
                 Log.e(TAG, "API call failed", t);
             }
@@ -210,16 +286,13 @@ public class MainRecipe extends AppCompatActivity {
     }
 
     /**
-     * Load the user's avatar into the profile image view
+     * Check if all loading operations are complete and update loading state
      */
-    private void loadProfileAvatar() {
-        if (url_avatar != null && !url_avatar.isEmpty()) {
-            Glide.with(this)
-                    .load(url_avatar)
-                    .apply(new RequestOptions()
-                            .placeholder(R.drawable.ic_profile) // Use existing placeholder
-                            .error(R.drawable.ic_profile))      // Use existing profile icon as error fallback
-                    .into(imgProfile);
+    private void checkAndUpdateLoadingState() {
+        int count = loadingCounter.decrementAndGet();
+        if (count <= 0) {
+            // All loads complete, hide loading overlay
+            showLoading(false);
         }
     }
 
@@ -238,7 +311,13 @@ public class MainRecipe extends AppCompatActivity {
 
         // Set user information
         tvUserName.setText(author);
-        tvUserLocation.setText("Recipe Author");
+
+        // Set recipe time
+        if (recipeTime != null && !recipeTime.isEmpty()) {
+            tvTime.setText(recipeTime);
+        } else {
+            tvTime.setText("No time specified");
+        }
 
         // Set recipe image using Glide
         if (image_url != null && !image_url.isEmpty()) {
@@ -392,15 +471,15 @@ public class MainRecipe extends AppCompatActivity {
     }
 
     /**
-     * Show loading state
+     * Show or hide loading state
+     * @param isLoading true to show loading overlay, false to hide it
      */
     private void showLoading(boolean isLoading) {
-        // Implement loading indicator if needed
-        if (isLoading) {
-            // Show progress indicator
-        } else {
-            // Hide progress indicator
-        }
+        runOnUiThread(() -> {
+            if (loadingOverlay != null) {
+                loadingOverlay.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+            }
+        });
     }
 
     /**
@@ -408,35 +487,5 @@ public class MainRecipe extends AppCompatActivity {
      */
     private void showError(String message) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
-    }
-
-    /**
-     * Get user profile information
-     */
-    /**
-     * Get user profile information from API to retrieve the avatar URL
-     * @param token Authentication token
-     */
-    private void getUserProfile(String token) {
-        ApiService apiService = RetrofitClient.getApiService();
-        apiService.getUserInfo("Bearer " + token).enqueue(new Callback<ModelResponse.UserResponse>() {
-            @Override
-            public void onResponse(Call<ModelResponse.UserResponse> call, Response<ModelResponse.UserResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    ModelResponse.UserResponse userProfile = response.body();
-                    url_avatar = userProfile.getData().getUser().getUrlAvatar();
-
-                    // Load avatar image once we have the URL
-                    loadProfileAvatar();
-                } else {
-                    showError("Failed to load user profile");
-                }
-            }
-
-            @Override
-            public void onFailure(Call<ModelResponse.UserResponse> call, Throwable t) {
-                showError("Network error: " + t.getMessage());
-            }
-        });
     }
 }

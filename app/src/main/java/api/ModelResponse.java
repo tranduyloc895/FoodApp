@@ -414,6 +414,7 @@ public class ModelResponse {
             private String updated_at;
             private List<Comment> comments;
             private List<Rating> rating;
+            private String time;
 
             public String getId() {
                 return id;
@@ -493,6 +494,13 @@ public class ModelResponse {
 
             public void setRatings(List<Rating> rating) {
                 this.rating = rating;
+            }
+
+            public String getTime() {
+                return time;
+            }
+            public void setTime(String time) {
+                this.time = time;
             }
 
             // Method to calculate average rating
