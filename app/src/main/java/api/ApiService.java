@@ -1,14 +1,19 @@
 package api;
 import java.util.Map;
 
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.GET;
 import retrofit2.http.Header;
+import retrofit2.http.Multipart;
 import retrofit2.http.PATCH;
 import retrofit2.http.POST;
+import retrofit2.http.Part;
+import retrofit2.http.PartMap;
 import retrofit2.http.Query;
 
 public interface ApiService {
@@ -22,6 +27,12 @@ public interface ApiService {
     @GET("auth/me/")
     Call<ModelResponse.UserResponse> getUserInfo(
             @retrofit2.http.Header("Authorization") String token
+    );
+
+    @GET("auth/get-user-byID/")
+    Call<ModelResponse.UserResponse> getUserById(
+            @retrofit2.http.Header("Authorization") String token,
+            @Query("id") String userId
     );
 
     @FormUrlEncoded
@@ -116,10 +127,12 @@ public interface ApiService {
             @Field("commentId") String commentId
     );
 
+    @Multipart
     @POST("recipes/add-recipe/")
-    Call<ModelResponse.RecipeResponse> addRecipe(
-            @retrofit2.http.Header("Authorization") String token,
-            @Body Map<String, Object> recipeData
+    Call<ModelResponse.RecipeDetailResponse> addRecipeWithParts(
+            @Header("Authorization") String token,
+            @PartMap Map<String, RequestBody> parts,
+            @Part MultipartBody.Part imageRecipe
     );
 
     @FormUrlEncoded
@@ -128,5 +141,12 @@ public interface ApiService {
             @retrofit2.http.Header("Authorization") String token,
             @Field("id") String recipeId,
             @Field("rating") int rating
+    );
+
+    @Multipart
+    @POST("auth/upload-avatar/")
+    Call<ModelResponse.UserResponse> uploadAvatar(
+            @retrofit2.http.Header("Authorization") String token,
+            @Part MultipartBody.Part avatar
     );
 }

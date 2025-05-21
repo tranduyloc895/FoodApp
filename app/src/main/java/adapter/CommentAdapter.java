@@ -2,6 +2,7 @@ package adapter;
 
 import android.content.Context;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,20 +19,33 @@ import api.ModelResponse;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.TimeZone;
 
 import de.hdodenhof.circleimageview.CircleImageView;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import api.RetrofitClient;
+import api.ApiService;
 
 public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentViewHolder> {
+    private static final String TAG = "CommentAdapter";
 
     private Context context;
     private List<ModelResponse.CommentResponse.Comment> commentList;
-
     private OnCommentActionListener actionListener;
 
     private String userAvatarUrl;
+    private String userName;
+    private String token;
+
+    // Cache for user data to avoid repeated API calls
+    private Map<String, String> userNameCache = new HashMap<>();
+    private Map<String, String> userAvatarCache = new HashMap<>();
 
     // Interface for comment actions
     public interface OnCommentActionListener {
@@ -48,7 +62,16 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
         notifyDataSetChanged();  // Refresh all items to update avatars
     }
 
-    public CommentAdapter(Context context, List<ModelResponse.CommentResponse.Comment> commentList, OnCommentActionListener listener) {
+    /**
+     * Set the authentication token for API calls
+     * @param token Authentication token
+     */
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    public CommentAdapter(Context context, List<ModelResponse.CommentResponse.Comment> commentList,
+                          OnCommentActionListener listener) {
         this.context = context;
         this.commentList = commentList;
         this.actionListener = listener;
@@ -64,9 +87,32 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
     @Override
     public void onBindViewHolder(@NonNull CommentViewHolder holder, int position) {
         ModelResponse.CommentResponse.Comment comment = commentList.get(position);
+        String authorId = comment.getAuthor_id();
 
-        // Set author name
-        holder.tvUsername.setText(comment.getAuthor());
+        // Check if we already have author's name in cache
+        if (userNameCache.containsKey(authorId)) {
+            holder.tvUsername.setText(userNameCache.get(authorId));
+
+            // Load author avatar if available
+            String authorAvatar = userAvatarCache.get(authorId);
+            if (!TextUtils.isEmpty(authorAvatar)) {
+                loadAvatar(holder.ivAvatar, authorAvatar);
+            } else {
+                holder.ivAvatar.setImageResource(R.drawable.ic_profile);
+            }
+        } else {
+            // Set temporary text while loading
+            holder.tvUsername.setText("Loading...");
+            holder.ivAvatar.setImageResource(R.drawable.ic_profile);
+
+            // Fetch author details from API
+            if (token != null) {
+                fetchUserDetails(authorId, holder, position);
+            } else {
+                // Fallback if token is not available
+                holder.tvUsername.setText(authorId);
+            }
+        }
 
         // Set comment content
         holder.tvComment.setText(comment.getContent());
@@ -74,20 +120,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
         // Format and set date
         holder.tvDate.setText(formatDateTime(comment.getCreatedAt()));
 
-        // Load avatar image if available, otherwise use default
-        if (!TextUtils.isEmpty(userAvatarUrl)) {
-            Glide.with(context)
-                    .load(userAvatarUrl)
-                    .apply(new RequestOptions()
-                            .placeholder(R.drawable.ic_profile)
-                            .error(R.drawable.ic_profile))
-                    .into(holder.ivAvatar);
-        } else {
-            // Set default avatar
-            holder.ivAvatar.setImageResource(R.drawable.ic_profile);
-        }
-
-        // Set default reaction counts
+        // Set reaction counts
         holder.tvLikes.setText(String.valueOf(comment.getLikes()));
         holder.tvFire.setText(String.valueOf(comment.getDislikes()));
 
@@ -103,6 +136,79 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
                 actionListener.onDislikeClicked(comment.getId(), position);
             }
         });
+    }
+
+    /**
+     * Fetch user details using the API
+     * @param userId User ID to fetch
+     * @param holder ViewHolder to update
+     * @param position Position in the RecyclerView
+     */
+    private void fetchUserDetails(String userId, CommentViewHolder holder, int position) {
+        ApiService apiService = RetrofitClient.getApiService();
+        Call<ModelResponse.UserResponse> call = apiService.getUserById("Bearer " + token, userId);
+
+        call.enqueue(new Callback<ModelResponse.UserResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<ModelResponse.UserResponse> call,
+                                   @NonNull Response<ModelResponse.UserResponse> response) {
+                if (response.isSuccessful() && response.body() != null &&
+                        response.body().getData() != null &&
+                        response.body().getData().getUser() != null) {
+
+                    // Get user data
+                    ModelResponse.UserResponse.User user = response.body().getData().getUser();
+                    String userName = user.getName();
+                    String userAvatar = user.getUrlAvatar();
+
+                    // Store in cache
+                    userNameCache.put(userId, userName);
+                    if (userAvatar != null) {
+                        userAvatarCache.put(userId, userAvatar);
+                    }
+
+                    // Update UI if the view holder is still visible
+                    if (holder.getAdapterPosition() == position) {
+                        holder.tvUsername.setText(userName);
+                        if (userAvatar != null) {
+                            loadAvatar(holder.ivAvatar, userAvatar);
+                        }
+                    }
+                } else {
+                    // Fallback on error
+                    Log.e(TAG, "Failed to get user details: " + response.code());
+                    userNameCache.put(userId, userId); // Use ID as fallback
+
+                    // Update UI with fallback
+                    if (holder.getAdapterPosition() == position) {
+                        holder.tvUsername.setText(userId);
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ModelResponse.UserResponse> call, @NonNull Throwable t) {
+                Log.e(TAG, "API call failed: " + t.getMessage());
+                userNameCache.put(userId, userId); // Use ID as fallback
+
+                // Update UI with fallback
+                if (holder.getAdapterPosition() == position) {
+                    holder.tvUsername.setText(userId);
+                }
+            }
+        });
+    }
+
+    /**
+     * Load avatar image with Glide
+     */
+    private void loadAvatar(CircleImageView imageView, String imageUrl) {
+        Glide.with(context)
+                .load(imageUrl)
+                .apply(new RequestOptions()
+                        .placeholder(R.drawable.ic_profile)
+                        .error(R.drawable.ic_profile))
+                .into(imageView);
     }
 
     @Override

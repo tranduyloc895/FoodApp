@@ -220,16 +220,99 @@ public class MainRecipe extends AppCompatActivity {
     }
 
     /**
+     * Fetch author details by ID from the API
+     * @param authorId ID of the author
+     */
+    private void fetchAuthorDetails(String authorId) {
+        // Show loading indicator for the profile section
+        if (imgProfile != null) {
+            imgProfile.setAlpha(0.5f);
+        }
+
+        Log.d(TAG, "Fetching author details for ID: " + authorId);
+
+        ApiService apiService = RetrofitClient.getApiService();
+        apiService.getUserById("Bearer " + token, authorId).enqueue(new Callback<ModelResponse.UserResponse>() {
+            @Override
+            public void onResponse(Call<ModelResponse.UserResponse> call, Response<ModelResponse.UserResponse> response) {
+                if (imgProfile != null) {
+                    imgProfile.setAlpha(1.0f);
+                }
+
+                if (response.isSuccessful() && response.body() != null &&
+                        response.body().getData() != null &&
+                        response.body().getData().getUser() != null) {
+
+                    // Get user data
+                    ModelResponse.UserResponse.User user = response.body().getData().getUser();
+                    String userName = user.getName();
+                    String userAvatar = user.getUrlAvatar();
+
+                    // Update UI with author information
+                    tvUserName.setText(userName != null && !userName.isEmpty() ? userName : authorId);
+
+                    // Load the avatar with Glide
+                    if (userAvatar != null && !userAvatar.isEmpty()) {
+                        Glide.with(MainRecipe.this)
+                                .load(userAvatar)
+                                .apply(new RequestOptions()
+                                        .placeholder(R.drawable.ic_profile)
+                                        .error(R.drawable.ic_profile))
+                                .into(imgProfile);
+                    } else {
+                        imgProfile.setImageResource(R.drawable.ic_profile);
+                    }
+
+                    // Update user location if country is available
+                    String userCountry = user.getCountry();
+                    if (userCountry != null && !userCountry.isEmpty()) {
+                        tvUserLocation.setText(userCountry);
+                    }
+                } else {
+                    // Default for failed requests
+                    imgProfile.setImageResource(R.drawable.ic_profile);
+                    Log.e(TAG, "Failed to get author details: " +
+                            (response.code() + " - " + (response.errorBody() != null ?
+                                    "Error body available" : "No error body")));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ModelResponse.UserResponse> call, Throwable t) {
+                if (imgProfile != null) {
+                    imgProfile.setAlpha(1.0f);
+                }
+                imgProfile.setImageResource(R.drawable.ic_profile);
+                Log.e(TAG, "Network error fetching author details: " + t.getMessage());
+            }
+        });
+    }
+
+    /**
      * Load the user's avatar into the profile image view
      */
     private void loadProfileAvatar() {
-        if (url_avatar != null && !url_avatar.isEmpty()) {
+        // Check if author is "helenrecipes" - set special profile image
+        if (author != null && author.equals("helenrecipes")) {
+            // Set the Helen-specific profile image
+            imgProfile.setImageResource(R.drawable.ic_helen);
+        }
+        // For other authors, fetch their details using the API
+        else if (author != null && !author.isEmpty()) {
+            // Use the author ID to fetch user details
+            fetchAuthorDetails(author);
+        }
+        // If no author is available, use the current user's avatar if available
+        else if (url_avatar != null && !url_avatar.isEmpty()) {
             Glide.with(this)
                     .load(url_avatar)
                     .apply(new RequestOptions()
                             .placeholder(R.drawable.ic_profile)
                             .error(R.drawable.ic_profile))
                     .into(imgProfile);
+        } else {
+            // Set default avatar if no URL is available
+            imgProfile.setImageResource(R.drawable.ic_profile);
         }
     }
 
@@ -330,8 +413,8 @@ public class MainRecipe extends AppCompatActivity {
         // Set reviews count
         tvReviews.setText(String.format("(%d Reviews)", reviewCount));
 
-        // Set user information
-        tvUserName.setText(author);
+        // Load profile avatar based on author - this will handle setting the username too
+        loadProfileAvatar();
 
         // Set recipe time
         if (recipeTime != null && !recipeTime.isEmpty()) {
@@ -615,7 +698,6 @@ public class MainRecipe extends AppCompatActivity {
         }
 
         // Set click listener for send button
-        // Set click listener for send button
         btnSendRating.setOnClickListener(v -> {
             if (currentRating[0] > 0) {
                 // Show loading indicator and disable button
@@ -732,5 +814,4 @@ public class MainRecipe extends AppCompatActivity {
             }
         });
     }
-
 }

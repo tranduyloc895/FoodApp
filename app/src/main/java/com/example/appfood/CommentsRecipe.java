@@ -101,6 +101,7 @@ public class CommentsRecipe extends AppCompatActivity implements CommentAdapter.
 
         // Set up RecyclerView
         commentAdapter = new CommentAdapter(this, commentList, this);
+        commentAdapter.setToken(token); // Pass the token to the adapter
         rvComments.setLayoutManager(new LinearLayoutManager(this));
         rvComments.setAdapter(commentAdapter);
 

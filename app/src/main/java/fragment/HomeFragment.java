@@ -1,5 +1,6 @@
 package fragment;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,6 +19,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import adapter.Common_RecipeAdapter;
 import adapter.New_RecipeAdapter;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.example.appfood.MainRecipe;
 import com.example.appfood.R;
 import com.example.appfood.UserProfileActivity;
@@ -26,6 +29,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import api.ApiService;
 import api.ModelResponse;
@@ -50,6 +54,13 @@ public class HomeFragment extends Fragment {
     private ImageView ivProfile;
     private FloatingActionButton fabAddRecipe;
 
+    // Loading overlay
+    private View loadingOverlay;
+
+    // Counters for tracking loading state
+    private AtomicInteger pendingLoads = new AtomicInteger(0);
+    private boolean initialLoadComplete = false;
+
     /**
      * Inflates the fragment layout and initializes UI elements.
      */
@@ -64,8 +75,14 @@ public class HomeFragment extends Fragment {
             return view;
         }
 
+        // Initialize loading overlay
+        loadingOverlay = view.findViewById(R.id.loading_overlay);
+
         initViews(view);
         initRecyclerViews(view);
+
+        // Show loading before initial data fetch
+        showLoading();
         loadRecipeData();
 
         return view;
@@ -78,7 +95,80 @@ public class HomeFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        loadRecipeData();
+        if (initialLoadComplete) {
+            // Show loading when refreshing data
+            showLoading();
+
+            // Reset counter before starting new loads
+            pendingLoads.set(0);
+
+            // Load data
+            loadRecipeData();
+
+            // Update user profile without changing the loading message
+            refreshUserProfile(token);
+        }
+    }
+
+    /**
+     * Show loading overlay
+     */
+    private void showLoading() {
+        if (loadingOverlay != null) {
+            loadingOverlay.setVisibility(View.VISIBLE);
+        }
+    }
+
+    /**
+     * Hide loading overlay
+     */
+    private void hideLoading() {
+        if (loadingOverlay != null && isAdded()) {
+            loadingOverlay.setVisibility(View.GONE);
+        }
+    }
+
+    /**
+     * Register a pending load operation
+     */
+    private void registerPendingLoad() {
+        pendingLoads.incrementAndGet();
+        showLoading(); // Show loading when registering a new load
+    }
+
+    /**
+     * Complete a loading operation and hide overlay if all are done
+     */
+    private void completeLoad() {
+        if (pendingLoads.decrementAndGet() <= 0) {
+            initialLoadComplete = true;
+            hideLoading(); // Hide loading when all loads are complete
+        }
+    }
+
+    /**
+     * Refreshes user profile without changing the loading message
+     */
+    private void refreshUserProfile(String token) {
+        if (token != null) {
+            registerPendingLoad(); // Register user info load
+
+            getUserInfo(token, new OnUserInfoCallback() {
+                @Override
+                public void onUserInfoReceived(String name, String email, String dateOfBirth, String country, String url_avatar) {
+                    tvGreeting.setText("Hello, " + name + "!");
+                    loadProfileImage(url_avatar);
+                    completeLoad(); // Complete user info load
+                }
+
+                @Override
+                public void onError(String errorMessage) {
+                    // Don't change greeting if it fails on refresh
+                    Log.e(TAG, "Error refreshing user profile: " + errorMessage);
+                    completeLoad(); // Complete user info load despite error
+                }
+            });
+        }
     }
 
     /**
@@ -91,6 +181,15 @@ public class HomeFragment extends Fragment {
 
         handleGreeting(token);
         setupProfileClick(token);
+
+        // Set up Add Recipe FAB if it exists
+        if (fabAddRecipe != null) {
+            fabAddRecipe.setOnClickListener(v -> {
+                Intent intent = new Intent(requireContext(), AddRecipeActivity.class);
+                intent.putExtra("token", token);
+                startActivity(intent);
+            });
+        }
     }
 
     /**
@@ -107,9 +206,18 @@ public class HomeFragment extends Fragment {
         recyclerView_new = view.findViewById(R.id.rv_new_recipe);
         recyclerView_new.setHasFixedSize(true);
         recipeList_new = new ArrayList<>();
-        adapter_new = new New_RecipeAdapter(requireContext(), recipeList_new, this::navigateToRecipeDetails);
+
+        // Pass the token to the New_RecipeAdapter constructor
+        adapter_new = new New_RecipeAdapter(requireContext(), recipeList_new, this::navigateToRecipeDetails, token);
+
         recyclerView_new.setAdapter(adapter_new);
         recyclerView_new.setLayoutManager(new GridLayoutManager(requireContext(), 2));
+
+        // Save token to shared preferences for backup access
+        requireContext().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                .edit()
+                .putString("token", token)
+                .apply();
     }
 
     /**
@@ -117,19 +225,62 @@ public class HomeFragment extends Fragment {
      */
     private void handleGreeting(String token) {
         if (token != null) {
+            registerPendingLoad(); // Register user info load
+
             getUserInfo(token, new OnUserInfoCallback() {
                 @Override
-                public void onUserInfoReceived(String name, String email, String dateOfBirth, String country) {
-                    tvGreeting.setText("Hello, " + name + "!");
+                public void onUserInfoReceived(String name, String email, String dateOfBirth, String country, String url_avatar) {
+                    if (isAdded()) {
+                        tvGreeting.setText("Hello, " + name + "!");
+
+                        // Load avatar image using Glide
+                        loadProfileImage(url_avatar);
+                    }
+                    completeLoad(); // Complete user info load
                 }
 
                 @Override
                 public void onError(String errorMessage) {
-                    tvGreeting.setText("Failed to load user info");
+                    if (isAdded()) {
+                        tvGreeting.setText("Hello there!");
+                        // Set default avatar on error
+                        ivProfile.setImageResource(R.drawable.ic_profile);
+                        Log.e(TAG, "Error loading user info: " + errorMessage);
+                    }
+                    completeLoad(); // Complete user info load despite error
                 }
             });
         } else {
-            tvGreeting.setText("Token is missing.");
+            tvGreeting.setText("Hello there!");
+            // Set default avatar if token is missing
+            ivProfile.setImageResource(R.drawable.ic_profile);
+        }
+    }
+
+    /**
+     * Loads the user's profile image into the ivProfile ImageView.
+     * Uses the special case for "helenrecipes" user.
+     */
+    private void loadProfileImage(String avatarUrl) {
+        if (!isAdded() || getContext() == null) return;
+
+        if (avatarUrl != null && !avatarUrl.isEmpty()) {
+            // Check if this is helenrecipes (special case)
+            if (avatarUrl.contains("helenrecipes")) {
+                ivProfile.setImageResource(R.drawable.ic_helen);
+            } else {
+                // Load avatar using Glide
+                Glide.with(this)
+                        .load(avatarUrl)
+                        .apply(new RequestOptions()
+                                .placeholder(R.drawable.ic_profile)
+                                .error(R.drawable.ic_profile)
+                                .circleCrop())
+                        .into(ivProfile);
+            }
+        } else {
+            // Set default avatar if URL is empty
+            ivProfile.setImageResource(R.drawable.ic_profile);
         }
     }
 
@@ -173,8 +324,14 @@ public class HomeFragment extends Fragment {
             @Override
             public void onResponse(Call<ModelResponse.UserResponse> call, Response<ModelResponse.UserResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    String name = response.body().getData().getUser().getName();
-                    callback.onUserInfoReceived(name, "", "", "");
+                    ModelResponse.UserResponse.User user = response.body().getData().getUser();
+                    String name = user.getName();
+                    String email = user.getEmail();
+                    String dateOfBirth = user.getDateOfBirth();
+                    String country = user.getCountry();
+                    String urlAvatar = user.getUrlAvatar();
+
+                    callback.onUserInfoReceived(name, email, dateOfBirth, country, urlAvatar);
                 } else {
                     callback.onError("Response error: " + response.code());
                 }
@@ -191,13 +348,15 @@ public class HomeFragment extends Fragment {
      * Loads common recipes from the API and updates the corresponding RecyclerView.
      */
     private void loadCommonRecipes() {
+        registerPendingLoad(); // Register common recipes load
+
         ApiService apiService = RetrofitClient.getApiService();
         Call<ModelResponse.RecipeResponse> call = apiService.getRecipeLatest("Bearer " + token);
 
         call.enqueue(new Callback<ModelResponse.RecipeResponse>() {
             @Override
             public void onResponse(@NonNull Call<ModelResponse.RecipeResponse> call, @NonNull Response<ModelResponse.RecipeResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
+                if (response.isSuccessful() && response.body() != null && isAdded()) {
                     recipeList_common.clear();
                     List<ModelResponse.RecipeResponse.Recipe> allRecipes = response.body().getData().getRecipes();
                     List<ModelResponse.RecipeResponse.Recipe> displayRecipes =
@@ -212,14 +371,23 @@ public class HomeFragment extends Fragment {
 
                     recyclerView_common.setLayoutManager(new GridLayoutManager(requireContext(),
                             Math.max(1, recipeList_common.size()), GridLayoutManager.VERTICAL, false));
+
                 } else {
-                    Log.e(TAG, "Failed to load common recipes: " + response.message());
+                    Log.e(TAG, "Failed to load common recipes: " + (response.message() != null ? response.message() : "Unknown error"));
+                    if (isAdded()) {
+                        Toast.makeText(requireContext(), "Failed to load common recipes", Toast.LENGTH_SHORT).show();
+                    }
                 }
+                completeLoad(); // Complete common recipes load
             }
 
             @Override
             public void onFailure(@NonNull Call<ModelResponse.RecipeResponse> call, @NonNull Throwable t) {
                 Log.e(TAG, "API Call Failed (Common): " + t.getMessage());
+                if (isAdded()) {
+                    Toast.makeText(requireContext(), "Failed to load common recipes", Toast.LENGTH_SHORT).show();
+                }
+                completeLoad(); // Complete common recipes load despite error
             }
         });
     }
@@ -228,13 +396,15 @@ public class HomeFragment extends Fragment {
      * Loads new recipes from the API and updates the corresponding RecyclerView.
      */
     private void loadNewRecipes() {
+        registerPendingLoad(); // Register new recipes load
+
         ApiService apiService = RetrofitClient.getApiService();
         Call<ModelResponse.RecipeResponse> call = apiService.getRecipeLatest("Bearer " + token);
 
         call.enqueue(new Callback<ModelResponse.RecipeResponse>() {
             @Override
             public void onResponse(@NonNull Call<ModelResponse.RecipeResponse> call, @NonNull Response<ModelResponse.RecipeResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
+                if (response.isSuccessful() && response.body() != null && isAdded()) {
                     recipeList_new.clear();
                     List<ModelResponse.RecipeResponse.Recipe> allRecipes = response.body().getData().getRecipes();
                     List<ModelResponse.RecipeResponse.Recipe> displayRecipes =
@@ -250,14 +420,23 @@ public class HomeFragment extends Fragment {
                     int spanCount = Math.max(1, recipeList_new.size());
                     recyclerView_new.setLayoutManager(new GridLayoutManager(requireContext(),
                             spanCount, GridLayoutManager.VERTICAL, false));
+
                 } else {
-                    Log.e(TAG, "Failed to load new recipes: " + response.message());
+                    Log.e(TAG, "Failed to load new recipes: " + (response.message() != null ? response.message() : "Unknown error"));
+                    if (isAdded()) {
+                        Toast.makeText(requireContext(), "Failed to load new recipes", Toast.LENGTH_SHORT).show();
+                    }
                 }
+                completeLoad(); // Complete new recipes load
             }
 
             @Override
             public void onFailure(@NonNull Call<ModelResponse.RecipeResponse> call, @NonNull Throwable t) {
                 Log.e(TAG, "API Call Failed (New): " + t.getMessage());
+                if (isAdded()) {
+                    Toast.makeText(requireContext(), "Failed to load new recipes", Toast.LENGTH_SHORT).show();
+                }
+                completeLoad(); // Complete new recipes load despite error
             }
         });
     }
@@ -268,6 +447,14 @@ public class HomeFragment extends Fragment {
      * @param recipes The list of recipes to fetch ratings for
      */
     private void fetchRatingsForRecipes(ApiService apiService, List<ModelResponse.RecipeResponse.Recipe> recipes) {
+        // Register a batch load for all rating requests
+        int recipeCount = recipes.size();
+        if (recipeCount > 0) {
+            registerPendingLoad();
+        }
+
+        final AtomicInteger completedRatings = new AtomicInteger(0);
+
         for (ModelResponse.RecipeResponse.Recipe recipe : recipes) {
             String recipeId = recipe.getId();
             Call<ModelResponse.RecipeDetailResponse> ratingCall = apiService.getRecipeDetail("Bearer " + token, recipeId);
@@ -275,7 +462,7 @@ public class HomeFragment extends Fragment {
             ratingCall.enqueue(new Callback<ModelResponse.RecipeDetailResponse>() {
                 @Override
                 public void onResponse(@NonNull Call<ModelResponse.RecipeDetailResponse> call, @NonNull Response<ModelResponse.RecipeDetailResponse> response) {
-                    if (response.isSuccessful() && response.body() != null) {
+                    if (response.isSuccessful() && response.body() != null && isAdded()) {
                         ModelResponse.RecipeDetailResponse.Recipe detailedRecipe = response.body().getData().getRecipe();
                         double averageRating = detailedRecipe.getAverageRating();
                         recipe.setAverageRating(averageRating);
@@ -289,11 +476,21 @@ public class HomeFragment extends Fragment {
                     } else {
                         Log.e(TAG, "Failed to get details for Recipe ID: " + recipeId);
                     }
+
+                    // Check if all ratings are completed
+                    if (completedRatings.incrementAndGet() >= recipeCount) {
+                        completeLoad(); // Complete ratings batch load
+                    }
                 }
 
                 @Override
                 public void onFailure(@NonNull Call<ModelResponse.RecipeDetailResponse> call, @NonNull Throwable t) {
                     Log.e(TAG, "API Call Failed (Details) - Recipe ID: " + recipeId + ", Error: " + t.getMessage());
+
+                    // Check if all ratings are completed
+                    if (completedRatings.incrementAndGet() >= recipeCount) {
+                        completeLoad(); // Complete ratings batch load despite errors
+                    }
                 }
             });
         }
@@ -310,8 +507,9 @@ public class HomeFragment extends Fragment {
          * @param email        The user's email.
          * @param dateOfBirth  The user's date of birth.
          * @param country      The user's country.
+         * @param url_avatar   The user's avatar URL.
          */
-        void onUserInfoReceived(String name, String email, String dateOfBirth, String country);
+        void onUserInfoReceived(String name, String email, String dateOfBirth, String country, String url_avatar);
 
         /**
          * Called when there is an error fetching user information.

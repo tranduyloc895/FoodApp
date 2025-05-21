@@ -1,6 +1,7 @@
 package adapter;
 
 import android.content.Context;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,14 +16,26 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.appfood.R;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import api.ApiService;
 import api.ModelResponse;
+import api.RetrofitClient;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class Common_RecipeAdapter extends RecyclerView.Adapter<Common_RecipeAdapter.ViewHolder> {
+    private static final String TAG = "Common_RecipeAdapter";
+    private static final String SPECIAL_AUTHOR = "helenrecipes";
+
     final private Context context;
     final private List<ModelResponse.RecipeResponse.Recipe> recipeList;
     final private OnRecipeClickListener listener;
+    private final Map<String, String> authorNameCache = new HashMap<>();
+    private String token;
 
     public interface OnRecipeClickListener {
         void onRecipeClick(String recipeId);
@@ -32,6 +45,14 @@ public class Common_RecipeAdapter extends RecyclerView.Adapter<Common_RecipeAdap
         this.context = context;
         this.recipeList = recipeList;
         this.listener = listener;
+
+        // Safely get token from shared preferences if available
+        try {
+            this.token = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE).getString("token", "");
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting token: " + e.getMessage());
+            this.token = "";
+        }
     }
 
     @NonNull
@@ -45,6 +66,8 @@ public class Common_RecipeAdapter extends RecyclerView.Adapter<Common_RecipeAdap
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         ModelResponse.RecipeResponse.Recipe recipe = recipeList.get(position);
         holder.tvRecipeName.setText(recipe.getTitle());
+
+        // Since there's no author TextView in the common recipe layout, we'll skip that part
 
         holder.tvRecipeName.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
             @Override
@@ -79,6 +102,7 @@ public class Common_RecipeAdapter extends RecyclerView.Adapter<Common_RecipeAdap
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView ivRecipeImage;
         TextView tvRecipeName, tvAverageRating;
+        // Removed tvAuthor since it doesn't exist in the layout
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -86,7 +110,7 @@ public class Common_RecipeAdapter extends RecyclerView.Adapter<Common_RecipeAdap
             ivRecipeImage = itemView.findViewById(R.id.iv_recipe_image_common);
             tvRecipeName = itemView.findViewById(R.id.tv_recipe_name_common);
             tvAverageRating = itemView.findViewById(R.id.tv_average_rating_common);
+            // Removed tvAuthor findViewById call
         }
     }
 }
-

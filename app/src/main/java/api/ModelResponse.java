@@ -492,7 +492,7 @@ public class ModelResponse {
 
         public static class Comment {
             private String id;
-            private String author;
+            private String author_id;
             private String content;
             private String created_at;
 
@@ -504,12 +504,12 @@ public class ModelResponse {
                 this.id = id;
             }
 
-            public String getAuthor() {
-                return author;
+            public String getAuthor_id() {
+                return author_id;
             }
 
-            public void setAuthor(String author) {
-                this.author = author;
+            public void setAuthor_id(String author_id) {
+                this.author_id = author_id;
             }
 
             public String getContent() {
@@ -612,7 +612,7 @@ public class ModelResponse {
 
         public class Comment {
             private String id;
-            private String author;
+            private String author_id;
             private String content;
             private String created_at;
 
@@ -637,12 +637,12 @@ public class ModelResponse {
                 this.id = id;
             }
 
-            public String getAuthor() {
-                return author;
+            public String getAuthor_id() {
+                return author_id;
             }
 
-            public void setAuthor(String author) {
-                this.author = author;
+            public void setAuthor_id(String author_id) {
+                this.author_id = author_id;
             }
 
             public String getContent() {
