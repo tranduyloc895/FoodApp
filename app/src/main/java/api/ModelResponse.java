@@ -277,6 +277,7 @@ public class ModelResponse {
             private List<String> ingredients;
             private List<String> instructions;
             private double averageRating;
+            private String time;
 
             public String getId() {
                 return id;
@@ -318,6 +319,13 @@ public class ModelResponse {
                 this.averageRating = averageRating;
             }
 
+            public String getTime() {
+                return time;
+            }
+
+            public void setTime(String time) {
+                this.time = time;
+            }
             // With these correct getters:
             public List<String> getIngredients() {
                 return ingredients;

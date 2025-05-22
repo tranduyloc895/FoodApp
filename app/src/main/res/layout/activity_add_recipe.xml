@@ -144,7 +144,7 @@
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rv_add_recipe_ingredients"
                     android:layout_width="match_parent"
-                    android:layout_height="200dp"
+                    android:layout_height="150dp"
                     android:background="@drawable/rounded_linear"
                     android:backgroundTint="@color/gray_light"
                     android:nestedScrollingEnabled="true">
@@ -250,7 +250,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:gravity="center"
-                    android:text="Finish"
+                    android:text="Add Recipe"
                     android:textColor="@color/white"
                     android:textSize="16sp"
                     android:textStyle="bold">

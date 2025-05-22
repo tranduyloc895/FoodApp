@@ -13,6 +13,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -54,6 +55,7 @@ public class AddRecipeActivity extends AppCompatActivity {
     private Uri imageUri;
     private ImageButton ibBack;
     private ProgressDialog progressDialog;
+    private TextView tvRecipeImage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,6 +85,7 @@ public class AddRecipeActivity extends AppCompatActivity {
         etTime = findViewById(R.id.et_add_recipe_time);
         ivRecipeImage = findViewById(R.id.iv_add_recipe_image);
         ibBack = findViewById(R.id.ib_add_recip_back);
+        tvRecipeImage = findViewById(R.id.tv_add_recipe_image);
 
         // Initialize progress dialog
         progressDialog = new ProgressDialog(this);
@@ -149,6 +152,7 @@ public class AddRecipeActivity extends AppCompatActivity {
                 if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                     imageUri = result.getData().getData();
                     ivRecipeImage.setImageURI(imageUri);
+                    tvRecipeImage.setVisibility(View.GONE);
                 }
             });
 

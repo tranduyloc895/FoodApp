@@ -29,12 +29,9 @@ import retrofit2.Response;
 
 public class Common_RecipeAdapter extends RecyclerView.Adapter<Common_RecipeAdapter.ViewHolder> {
     private static final String TAG = "Common_RecipeAdapter";
-    private static final String SPECIAL_AUTHOR = "helenrecipes";
-
     final private Context context;
     final private List<ModelResponse.RecipeResponse.Recipe> recipeList;
     final private OnRecipeClickListener listener;
-    private final Map<String, String> authorNameCache = new HashMap<>();
     private String token;
 
     public interface OnRecipeClickListener {
@@ -67,8 +64,6 @@ public class Common_RecipeAdapter extends RecyclerView.Adapter<Common_RecipeAdap
         ModelResponse.RecipeResponse.Recipe recipe = recipeList.get(position);
         holder.tvRecipeName.setText(recipe.getTitle());
 
-        // Since there's no author TextView in the common recipe layout, we'll skip that part
-
         holder.tvRecipeName.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
             @Override
             public boolean onPreDraw() {
@@ -92,6 +87,8 @@ public class Common_RecipeAdapter extends RecyclerView.Adapter<Common_RecipeAdap
                 listener.onRecipeClick(recipe.getId());
             }
         });
+
+        holder.tvTime.setText(recipe.getTime());
     }
 
     @Override
@@ -101,8 +98,7 @@ public class Common_RecipeAdapter extends RecyclerView.Adapter<Common_RecipeAdap
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView ivRecipeImage;
-        TextView tvRecipeName, tvAverageRating;
-        // Removed tvAuthor since it doesn't exist in the layout
+        TextView tvRecipeName, tvAverageRating, tvTime;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -110,7 +106,7 @@ public class Common_RecipeAdapter extends RecyclerView.Adapter<Common_RecipeAdap
             ivRecipeImage = itemView.findViewById(R.id.iv_recipe_image_common);
             tvRecipeName = itemView.findViewById(R.id.tv_recipe_name_common);
             tvAverageRating = itemView.findViewById(R.id.tv_average_rating_common);
-            // Removed tvAuthor findViewById call
+            tvTime = itemView.findViewById(R.id.tv_recipe_time_value_common);
         }
     }
 }

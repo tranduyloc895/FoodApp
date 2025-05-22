@@ -30,7 +30,6 @@ import retrofit2.Response;
 public class New_RecipeAdapter extends RecyclerView.Adapter<New_RecipeAdapter.ViewHolder> {
     private static final String TAG = "New_RecipeAdapter";
     private static final String SPECIAL_AUTHOR = "helenrecipes";
-
     final private Context context;
     final private List<ModelResponse.RecipeResponse.Recipe> recipeList;
     final private OnRecipeClickListener listener;
@@ -117,6 +116,8 @@ public class New_RecipeAdapter extends RecyclerView.Adapter<New_RecipeAdapter.Vi
                 listener.onRecipeClick(recipe.getId());
             }
         });
+
+        holder.tvTime.setText(recipe.getTime());
     }
 
     /**
@@ -164,7 +165,7 @@ public class New_RecipeAdapter extends RecyclerView.Adapter<New_RecipeAdapter.Vi
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView ivRecipeImage;
-        TextView tvRecipeName, tvRecipeAuthor;
+        TextView tvRecipeName, tvRecipeAuthor, tvTime;
         RatingBar ratingBar_new;
 
         public ViewHolder(@NonNull View itemView) {
@@ -174,6 +175,7 @@ public class New_RecipeAdapter extends RecyclerView.Adapter<New_RecipeAdapter.Vi
             tvRecipeName = itemView.findViewById(R.id.tv_recipe_name_latest);
             tvRecipeAuthor = itemView.findViewById(R.id.tv_recipe_author_name_latest);
             ratingBar_new = itemView.findViewById(R.id.ratingBar_new);
+            tvTime = itemView.findViewById(R.id.tv_recipe_time_latest);
         }
     }
 }
