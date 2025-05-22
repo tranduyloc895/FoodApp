@@ -72,6 +72,8 @@ public class ModelResponse {
             private String country;
             private String url_avatar;
 
+            private List<String> saved_recipes;
+
             public String getId() {
                 return id;
             }
@@ -117,6 +119,19 @@ public class ModelResponse {
             }
             public void setUrlAvatar(String url_avatar) {
                 this.url_avatar = url_avatar;
+            }
+
+            public List<String> getSavedRecipes() {
+                return saved_recipes;
+            }
+
+            public void setSavedRecipes(List<String> saved_recipes) {
+                this.saved_recipes = saved_recipes;
+            }
+
+            // Helper method to check if a recipe is saved
+            public boolean isRecipeSaved(String recipeId) {
+                return saved_recipes != null && saved_recipes.contains(recipeId);
             }
         }
     }
@@ -805,4 +820,24 @@ public class ModelResponse {
         }
     }
 
+    public class DeleteSavedRecipeResponse {
+        private String status;
+        private String message;
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
+    }
 }

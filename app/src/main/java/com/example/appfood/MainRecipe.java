@@ -57,6 +57,7 @@ public class MainRecipe extends AppCompatActivity {
     private String token;
     private String recipeId;
     private String recipeTime;
+    private boolean isRecipeSaved = false; // Track if recipe is saved
 
     // Loading counter to track multiple API calls
     private AtomicInteger loadingCounter = new AtomicInteger(0);
@@ -98,8 +99,52 @@ public class MainRecipe extends AppCompatActivity {
         // Get user profile to load avatar and country
         getUserProfile(token);
 
+        // Check if the recipe is saved
+        checkIfRecipeIsSaved();
+
         // Load recipe data
         getRecipe(token, recipeId);
+    }
+
+    /**
+     * Check if the current recipe is saved by the user
+     */
+    private void checkIfRecipeIsSaved() {
+        // Increment loading counter
+        loadingCounter.incrementAndGet();
+
+        ApiService apiService = RetrofitClient.getApiService();
+        Call<ModelResponse.UserResponse> call = apiService.getUserInfo("Bearer " + token);
+
+        call.enqueue(new Callback<ModelResponse.UserResponse>() {
+            @Override
+            public void onResponse(Call<ModelResponse.UserResponse> call, Response<ModelResponse.UserResponse> response) {
+                // Decrement loading counter and check if we should hide loading overlay
+                checkAndUpdateLoadingState();
+
+                if (response.isSuccessful() && response.body() != null) {
+                    ModelResponse.UserResponse userProfile = response.body();
+                    List<String> savedRecipes = userProfile.getData().getUser().getSavedRecipes();
+
+                    // Check if the current recipe is in the saved recipes list
+                    if (savedRecipes != null) {
+                        isRecipeSaved = savedRecipes.contains(recipeId);
+                        Log.d(TAG, "Recipe " + recipeId + " is " + (isRecipeSaved ? "saved" : "not saved"));
+                    }
+                } else {
+                    Log.e(TAG, "Failed to check if recipe is saved: " +
+                            (response.code() + " " + (response.errorBody() != null ?
+                                    "Error body available" : "No error body")));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ModelResponse.UserResponse> call, Throwable t) {
+                // Decrement loading counter and check if we should hide loading overlay
+                checkAndUpdateLoadingState();
+                Log.e(TAG, "Network error checking saved status: " + t.getMessage());
+            }
+        });
     }
 
     private void initializeViews() {
@@ -621,6 +666,23 @@ public class MainRecipe extends AppCompatActivity {
         View layoutRate = dialog.findViewById(R.id.layoutRate);
         View layoutReview = dialog.findViewById(R.id.layoutReview);
         View layoutUnsave = dialog.findViewById(R.id.layoutUnsave);
+        TextView tvSaveOption = dialog.findViewById(R.id.tvSaveOption);
+        ImageView ivSaveIcon = dialog.findViewById(R.id.ivSaveIcon);
+
+        // Update save/unsave text and icon based on current state
+        if (isRecipeSaved) {
+            tvSaveOption.setText("Unsave");
+            // Change icon if needed
+            if (ivSaveIcon != null) {
+                ivSaveIcon.setImageResource(R.drawable.ic_bookmark_fill);
+            }
+        } else {
+            tvSaveOption.setText("Save");
+            // Change icon if needed
+            if (ivSaveIcon != null) {
+                ivSaveIcon.setImageResource(R.drawable.ic_bookmark_outline);
+            }
+        }
 
         // Set click listeners for each option
         layoutShare.setOnClickListener(v -> {
@@ -640,7 +702,7 @@ public class MainRecipe extends AppCompatActivity {
 
         layoutUnsave.setOnClickListener(v -> {
             dialog.dismiss();
-            unsaveRecipe();
+            toggleSaveRecipe();
         });
 
         dialog.show();
@@ -650,6 +712,143 @@ public class MainRecipe extends AppCompatActivity {
     private void shareRecipe() {
         // TODO: Implement share functionality
         Toast.makeText(this, "Share Recipe functionality", Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * Toggle between saving and unsaving the recipe
+     */
+//    private void toggleSaveRecipe() {
+//        showLoading(true);
+//
+//        ApiService apiService = RetrofitClient.getApiService();
+//
+//        if (isRecipeSaved) {
+//            // Recipe is saved, so unsave it
+//            Call<ModelResponse.DeleteSavedRecipeResponse> call =
+//                    apiService.deleteSavedRecipe("Bearer " + token, recipeId);
+//
+//            call.enqueue(new Callback<ModelResponse.DeleteSavedRecipeResponse>() {
+//                @Override
+//                public void onResponse(Call<ModelResponse.DeleteSavedRecipeResponse> call,
+//                                       Response<ModelResponse.DeleteSavedRecipeResponse> response) {
+//                    showLoading(false);
+//
+//                    if (response.isSuccessful()) {
+//                        isRecipeSaved = false;
+//                        Toast.makeText(MainRecipe.this, "Recipe removed from saved collection",
+//                                Toast.LENGTH_SHORT).show();
+//                    } else {
+//                        showError("Failed to unsave recipe: " + response.code());
+//                    }
+//                }
+//
+//                @Override
+//                public void onFailure(Call<ModelResponse.DeleteSavedRecipeResponse> call, Throwable t) {
+//                    showLoading(false);
+//                    showError("Network error while unsaving recipe");
+//                    Log.e(TAG, "Network error: " + t.getMessage());
+//                }
+//            });
+//        } else {
+//            // Recipe is not saved, so save it
+//            Call<ModelResponse.SavedRecipeResponse> call =
+//                    apiService.saveRecipe("Bearer " + token, recipeId);
+//
+//            call.enqueue(new Callback<ModelResponse.SavedRecipeResponse>() {
+//                @Override
+//                public void onResponse(Call<ModelResponse.SavedRecipeResponse> call,
+//                                       Response<ModelResponse.SavedRecipeResponse> response) {
+//                    showLoading(false);
+//
+//                    if (response.isSuccessful() && response.body() != null) {
+//                        isRecipeSaved = true;
+//                        Toast.makeText(MainRecipe.this, "Recipe saved successfully",
+//                                Toast.LENGTH_SHORT).show();
+//                    } else {
+//                        showError("Failed to save recipe: " + response.code());
+//                    }
+//                }
+//
+//                @Override
+//                public void onFailure(Call<ModelResponse.SavedRecipeResponse> call, Throwable t) {
+//                    showLoading(false);
+//                    showError("Network error while saving recipe");
+//                    Log.e(TAG, "Network error: " + t.getMessage());
+//                }
+//            });
+//        }
+//    }
+
+    /**
+     * Toggle between saving and unsaving the recipe
+     */
+    private void toggleSaveRecipe() {
+        // Increment loading counter to show loading overlay
+        loadingCounter.incrementAndGet();
+
+        ApiService apiService = RetrofitClient.getApiService();
+
+        if (isRecipeSaved) {
+            // Recipe is saved, so unsave it
+            Call<ModelResponse.DeleteSavedRecipeResponse> call =
+                    apiService.deleteSavedRecipe("Bearer " + token, recipeId);
+
+            call.enqueue(new Callback<ModelResponse.DeleteSavedRecipeResponse>() {
+                @Override
+                public void onResponse(Call<ModelResponse.DeleteSavedRecipeResponse> call,
+                                       Response<ModelResponse.DeleteSavedRecipeResponse> response) {
+                    // Use the checkAndUpdateLoadingState method instead of direct showLoading(false)
+                    checkAndUpdateLoadingState();
+
+                    if (response.isSuccessful()) {
+                        isRecipeSaved = false;
+                        Toast.makeText(MainRecipe.this, "Recipe removed from saved collection",
+                                Toast.LENGTH_SHORT).show();
+                    } else {
+                        showError("Failed to unsave recipe: " + response.code());
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<ModelResponse.DeleteSavedRecipeResponse> call, Throwable t) {
+                    // Use the checkAndUpdateLoadingState method instead of direct showLoading(false)
+                    checkAndUpdateLoadingState();
+
+                    showError("Network error while unsaving recipe");
+                    Log.e(TAG, "Network error: " + t.getMessage());
+                }
+            });
+        } else {
+            // Recipe is not saved, so save it
+            Call<ModelResponse.SavedRecipeResponse> call =
+                    apiService.saveRecipe("Bearer " + token, recipeId);
+
+            call.enqueue(new Callback<ModelResponse.SavedRecipeResponse>() {
+                @Override
+                public void onResponse(Call<ModelResponse.SavedRecipeResponse> call,
+                                       Response<ModelResponse.SavedRecipeResponse> response) {
+                    // Use the checkAndUpdateLoadingState method instead of direct showLoading(false)
+                    checkAndUpdateLoadingState();
+
+                    if (response.isSuccessful() && response.body() != null) {
+                        isRecipeSaved = true;
+                        Toast.makeText(MainRecipe.this, "Recipe saved successfully",
+                                Toast.LENGTH_SHORT).show();
+                    } else {
+                        showError("Failed to save recipe: " + response.code());
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<ModelResponse.SavedRecipeResponse> call, Throwable t) {
+                    // Use the checkAndUpdateLoadingState method instead of direct showLoading(false)
+                    checkAndUpdateLoadingState();
+
+                    showError("Network error while saving recipe");
+                    Log.e(TAG, "Network error: " + t.getMessage());
+                }
+            });
+        }
     }
 
     private void showRatingDialog() {
@@ -727,11 +926,6 @@ public class MainRecipe extends AppCompatActivity {
         intent.putExtra("token", token);
         intent.putExtra("recipeId", recipeId);
         startActivity(intent);
-    }
-
-    private void unsaveRecipe() {
-        // TODO: Implement unsave functionality
-        Toast.makeText(this, "Recipe unsaved", Toast.LENGTH_SHORT).show();
     }
 
     /**

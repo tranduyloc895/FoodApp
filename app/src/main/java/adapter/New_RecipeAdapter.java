@@ -14,6 +14,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.example.appfood.R;
 
 import java.util.HashMap;
@@ -23,6 +24,7 @@ import java.util.Map;
 import api.ApiService;
 import api.ModelResponse;
 import api.RetrofitClient;
+import de.hdodenhof.circleimageview.CircleImageView;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -34,6 +36,7 @@ public class New_RecipeAdapter extends RecyclerView.Adapter<New_RecipeAdapter.Vi
     final private List<ModelResponse.RecipeResponse.Recipe> recipeList;
     final private OnRecipeClickListener listener;
     private final Map<String, String> authorNameCache = new HashMap<>();
+    private final Map<String, String> authorAvatarCache = new HashMap<>();
     private String token;
 
     public interface OnRecipeClickListener {
@@ -87,15 +90,31 @@ public class New_RecipeAdapter extends RecyclerView.Adapter<New_RecipeAdapter.Vi
             if (SPECIAL_AUTHOR.equals(author)) {
                 // Special case for helenrecipes
                 holder.tvRecipeAuthor.setText(author);
+
+                // Set helen's avatar for special author
+                if (holder.ivAuthorAvatar != null) {
+                    holder.ivAuthorAvatar.setImageResource(R.drawable.ic_helen);
+                }
             } else {
-                // Check cache first
+                // Check name cache first
                 if (authorNameCache.containsKey(author)) {
                     holder.tvRecipeAuthor.setText(authorNameCache.get(author));
+
+                    // Check avatar cache and set avatar if available
+                    if (holder.ivAuthorAvatar != null && authorAvatarCache.containsKey(author)) {
+                        loadAuthorAvatar(holder.ivAuthorAvatar, authorAvatarCache.get(author));
+                    }
                 } else {
                     // Set temporary text
                     holder.tvRecipeAuthor.setText("Loading author...");
-                    // Fetch author name by ID
-                    fetchAuthorName(author, holder.tvRecipeAuthor);
+
+                    // Set default avatar while loading
+                    if (holder.ivAuthorAvatar != null) {
+                        holder.ivAuthorAvatar.setImageResource(R.drawable.ic_profile);
+                    }
+
+                    // Fetch author info (name and avatar)
+                    fetchAuthorInfo(author, holder);
                 }
             }
         }
@@ -121,11 +140,14 @@ public class New_RecipeAdapter extends RecyclerView.Adapter<New_RecipeAdapter.Vi
     }
 
     /**
-     * Fetch the author name based on author ID
+     * Fetch the author information (name and avatar) based on author ID
      */
-    private void fetchAuthorName(String authorId, TextView authorTextView) {
+    private void fetchAuthorInfo(String authorId, ViewHolder holder) {
         if (token == null || token.isEmpty() || authorId == null || authorId.isEmpty()) {
-            authorTextView.setText("Unknown Author");
+            holder.tvRecipeAuthor.setText("Unknown Author");
+            if (holder.ivAuthorAvatar != null) {
+                holder.ivAuthorAvatar.setImageResource(R.drawable.ic_profile);
+            }
             return;
         }
 
@@ -139,23 +161,63 @@ public class New_RecipeAdapter extends RecyclerView.Adapter<New_RecipeAdapter.Vi
                         response.body().getData() != null &&
                         response.body().getData().getUser() != null) {
 
-                    String name = response.body().getData().getUser().getName();
-                    // Cache the result
+                    ModelResponse.UserResponse.User user = response.body().getData().getUser();
+                    String name = user.getName();
+                    String avatarUrl = user.getUrlAvatar();
+
+                    // Cache the results
                     authorNameCache.put(authorId, name);
-                    // Update UI
-                    authorTextView.setText(name);
+                    if (avatarUrl != null && !avatarUrl.isEmpty()) {
+                        authorAvatarCache.put(authorId, avatarUrl);
+                    }
+
+                    // Update name
+                    holder.tvRecipeAuthor.setText(name);
+
+                    // Update avatar if view exists
+                    if (holder.ivAuthorAvatar != null) {
+                        if (avatarUrl != null && !avatarUrl.isEmpty()) {
+                            loadAuthorAvatar(holder.ivAuthorAvatar, avatarUrl);
+                        } else {
+                            holder.ivAuthorAvatar.setImageResource(R.drawable.ic_profile);
+                        }
+                    }
                 } else {
-                    authorTextView.setText("Unknown Author");
-                    Log.e(TAG, "Error getting author name: " + response.code());
+                    holder.tvRecipeAuthor.setText("Unknown Author");
+                    if (holder.ivAuthorAvatar != null) {
+                        holder.ivAuthorAvatar.setImageResource(R.drawable.ic_profile);
+                    }
+                    Log.e(TAG, "Error getting author info: " + response.code());
                 }
             }
 
             @Override
             public void onFailure(Call<ModelResponse.UserResponse> call, Throwable t) {
-                authorTextView.setText("Unknown Author");
-                Log.e(TAG, "Failed to get author name: " + t.getMessage());
+                holder.tvRecipeAuthor.setText("Unknown Author");
+                if (holder.ivAuthorAvatar != null) {
+                    holder.ivAuthorAvatar.setImageResource(R.drawable.ic_profile);
+                }
+                Log.e(TAG, "Failed to get author info: " + t.getMessage());
             }
         });
+    }
+
+    /**
+     * Load author avatar with Glide
+     */
+    private void loadAuthorAvatar(ImageView imageView, String avatarUrl) {
+        if (avatarUrl == null || avatarUrl.isEmpty()) {
+            imageView.setImageResource(R.drawable.ic_profile);
+            return;
+        }
+
+        Glide.with(context)
+                .load(avatarUrl)
+                .apply(new RequestOptions()
+                        .placeholder(R.drawable.ic_profile)
+                        .error(R.drawable.ic_profile)
+                        .circleCrop())
+                .into(imageView);
     }
 
     @Override
@@ -165,6 +227,7 @@ public class New_RecipeAdapter extends RecyclerView.Adapter<New_RecipeAdapter.Vi
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView ivRecipeImage;
+        ImageView ivAuthorAvatar; // Add author avatar view reference
         TextView tvRecipeName, tvRecipeAuthor, tvTime;
         RatingBar ratingBar_new;
 
@@ -176,6 +239,10 @@ public class New_RecipeAdapter extends RecyclerView.Adapter<New_RecipeAdapter.Vi
             tvRecipeAuthor = itemView.findViewById(R.id.tv_recipe_author_name_latest);
             ratingBar_new = itemView.findViewById(R.id.ratingBar_new);
             tvTime = itemView.findViewById(R.id.tv_recipe_time_latest);
+
+            // Get reference to author avatar image view
+            // (if this ID doesn't exist in your layout, you'll need to add it)
+            ivAuthorAvatar = itemView.findViewById(R.id.iv_recipe_author_image_latest);
         }
     }
 }

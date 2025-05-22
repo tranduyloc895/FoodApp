@@ -28,7 +28,9 @@ import com.example.appfood.AddRecipeActivity;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import api.ApiService;
@@ -61,6 +63,10 @@ public class HomeFragment extends Fragment {
     private AtomicInteger pendingLoads = new AtomicInteger(0);
     private boolean initialLoadComplete = false;
 
+    // Map to store saved recipes
+    private Map<String, Boolean> savedRecipesMap = new HashMap<>();
+
+
     /**
      * Inflates the fragment layout and initializes UI elements.
      */
@@ -79,13 +85,60 @@ public class HomeFragment extends Fragment {
         loadingOverlay = view.findViewById(R.id.loading_overlay);
 
         initViews(view);
-        initRecyclerViews(view);
 
-        // Show loading before initial data fetch
-        showLoading();
-        loadRecipeData();
+        // Load saved recipes before initializing RecyclerViews
+        loadSavedRecipes(() -> {
+            // Initialize RecyclerViews after we've loaded saved recipes
+            initRecyclerViews(view);
+
+            // Show loading before initial data fetch
+            showLoading();
+            loadRecipeData();
+        });
 
         return view;
+    }
+
+    /**
+     * Loads saved recipes from user info
+     */
+    private void loadSavedRecipes(Runnable onComplete) {
+        registerPendingLoad(); // Register saved recipes load
+
+        ApiService apiService = RetrofitClient.getApiService();
+        Call<ModelResponse.UserResponse> call = apiService.getUserInfo("Bearer " + token);
+
+        call.enqueue(new Callback<ModelResponse.UserResponse>() {
+            @Override
+            public void onResponse(Call<ModelResponse.UserResponse> call, Response<ModelResponse.UserResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    ModelResponse.UserResponse.User user = response.body().getData().getUser();
+                    List<String> savedRecipes = user.getSavedRecipes();
+
+                    // Clear and update saved recipes map
+                    savedRecipesMap.clear();
+                    if (savedRecipes != null) {
+                        for (String recipeId : savedRecipes) {
+                            savedRecipesMap.put(recipeId, true);
+                        }
+                    }
+
+                    Log.d(TAG, "Loaded " + (savedRecipes != null ? savedRecipes.size() : 0) + " saved recipes");
+                } else {
+                    Log.e(TAG, "Error loading saved recipes: " + response.code());
+                }
+
+                completeLoad(); // Complete saved recipes load
+                onComplete.run(); // Continue initialization
+            }
+
+            @Override
+            public void onFailure(Call<ModelResponse.UserResponse> call, Throwable t) {
+                Log.e(TAG, "Failed to load saved recipes: " + t.getMessage());
+                completeLoad(); // Complete saved recipes load despite error
+                onComplete.run(); // Continue initialization
+            }
+        });
     }
 
     /**
@@ -102,11 +155,14 @@ public class HomeFragment extends Fragment {
             // Reset counter before starting new loads
             pendingLoads.set(0);
 
-            // Load data
-            loadRecipeData();
+            // Load saved recipes first, then refresh other data
+            loadSavedRecipes(() -> {
+                // Load recipe data after refreshing saved recipes list
+                loadRecipeData();
 
-            // Update user profile without changing the loading message
-            refreshUserProfile(token);
+                // Update user profile without changing the loading message
+                refreshUserProfile(token);
+            });
         }
     }
 
@@ -199,7 +255,7 @@ public class HomeFragment extends Fragment {
         recyclerView_common = view.findViewById(R.id.rv_common_recipe);
         recyclerView_common.setHasFixedSize(true);
         recipeList_common = new ArrayList<>();
-        adapter_common = new Common_RecipeAdapter(requireContext(), recipeList_common, this::navigateToRecipeDetails);
+        adapter_common = new Common_RecipeAdapter(requireContext(), recipeList_common, this::navigateToRecipeDetails, this);
         recyclerView_common.setAdapter(adapter_common);
         recyclerView_common.setLayoutManager(new GridLayoutManager(requireContext(), 1));
 
@@ -517,5 +573,23 @@ public class HomeFragment extends Fragment {
          * @param errorMessage The error message.
          */
         void onError(String errorMessage);
+    }
+
+    /**
+     * Method to check if a recipe is saved
+     */
+    public boolean isRecipeSaved(String recipeId) {
+        return savedRecipesMap.containsKey(recipeId) && savedRecipesMap.get(recipeId);
+    }
+
+    /**
+     * Method to update saved recipe status
+     */
+    public void updateSavedRecipeStatus(String recipeId, boolean isSaved) {
+        savedRecipesMap.put(recipeId, isSaved);
+
+        // Notify adapters of the change
+        adapter_common.notifyDataSetChanged();
+        adapter_new.notifyDataSetChanged();
     }
 }

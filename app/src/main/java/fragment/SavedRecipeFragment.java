@@ -89,11 +89,9 @@ public class SavedRecipeFragment extends Fragment {
 
             @Override
             public void onSaveButtonClick(ModelResponse.RecipeResponse.Recipe recipe, int position) {
-                // Handle unsave functionality if needed
+                // Call our new deleteSavedRecipe method
                 if (recipe != null && recipe.getId() != null) {
-                    // Implement unsave functionality if desired
-                    // For now, just show a toast
-                    Toast.makeText(getContext(), "Recipe unsaved", Toast.LENGTH_SHORT).show();
+                    deleteSavedRecipe(recipe.getId(), position);
                 }
             }
         });
@@ -291,4 +289,56 @@ public class SavedRecipeFragment extends Fragment {
         }
     }
 
+    /**
+     * Delete a saved recipe
+     * @param recipeId ID of the recipe to unsave
+     * @param position Position in the adapter
+     */
+    private void deleteSavedRecipe(String recipeId, int position) {
+        if (token == null || token.isEmpty() || recipeId == null || recipeId.isEmpty()) {
+            Toast.makeText(getContext(), "Cannot unsave recipe: Invalid token or recipe ID", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Show loading
+        showLoading();
+
+        ApiService apiService = RetrofitClient.getApiService();
+        Call<ModelResponse.DeleteSavedRecipeResponse> call = apiService.deleteSavedRecipe("Bearer " + token, recipeId);
+
+        call.enqueue(new Callback<ModelResponse.DeleteSavedRecipeResponse>() {
+            @Override
+            public void onResponse(Call<ModelResponse.DeleteSavedRecipeResponse> call, Response<ModelResponse.DeleteSavedRecipeResponse> response) {
+                hideLoading();
+
+                if (response.isSuccessful()) {
+                    // Remove the recipe from the list
+                    if (position >= 0 && position < savedRecipes.size()) {
+                        savedRecipes.remove(position);
+                        adapter.notifyItemRemoved(position);
+
+                        // Show empty state if no more recipes
+                        if (savedRecipes.isEmpty()) {
+                            showEmptyState();
+                        }
+
+                        // Show success message
+                        Toast.makeText(getContext(), "Recipe removed from saved collection", Toast.LENGTH_SHORT).show();
+                        Log.d(TAG, "Successfully removed recipe from saved collection");
+                    }
+                } else {
+                    // Show error message
+                    Toast.makeText(getContext(), "Failed to remove recipe from collection", Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "Error removing recipe: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ModelResponse.DeleteSavedRecipeResponse> call, Throwable t) {
+                hideLoading();
+                Toast.makeText(getContext(), "Network error while removing recipe", Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "Network error: " + t.getMessage());
+            }
+        });
+    }
 }

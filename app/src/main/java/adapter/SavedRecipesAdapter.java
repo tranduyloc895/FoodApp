@@ -141,4 +141,5 @@ public class SavedRecipesAdapter extends RecyclerView.Adapter<SavedRecipesAdapte
             saveButton = itemView.findViewById(R.id.saveButton);
         }
     }
+
 }
