@@ -465,7 +465,7 @@ public class HomeFragment extends Fragment {
                     if (response.isSuccessful() && response.body() != null && isAdded()) {
                         ModelResponse.RecipeDetailResponse.Recipe detailedRecipe = response.body().getData().getRecipe();
                         double averageRating = detailedRecipe.getAverageRating();
-                        recipe.setAverageRating(averageRating);
+                        recipe.setRating(detailedRecipe.getRatings());
 
                         // Notify adapter of data change
                         if (recipeList_common.contains(recipe)) {

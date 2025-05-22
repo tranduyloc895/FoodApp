@@ -19,6 +19,7 @@ import fragment.ProfileFragment;
 public class HomeActivity extends AppCompatActivity {
     private BottomNavigationView bottomNavigationView;
     private FloatingActionButton fabAddRecipe;
+    private String token;
 
     /**
      * Được gọi khi Activity khởi động. Thiết lập BottomNavigation.
@@ -32,7 +33,7 @@ public class HomeActivity extends AppCompatActivity {
         fabAddRecipe = findViewById(R.id.fab_add);
         setupBottomNavigation();
 
-        String token = getIntent().getStringExtra("token");
+        token = getIntent().getStringExtra("token");
         setupAddRecipeButton(token);
 
         // Hiển thị HomeFragment mặc định khi ứng dụng khởi động
@@ -66,7 +67,7 @@ public class HomeActivity extends AppCompatActivity {
             if (itemId == R.id.nav_home) {
                 selectedFragment = new HomeFragment();
             } else if (itemId == R.id.nav_saved) {
-                selectedFragment = new SavedRecipeFragment();
+                selectedFragment = new SavedRecipeFragment().newInstance(token);
             } else if (itemId == R.id.nav_notifications) {
                 selectedFragment = new NotificationsFragment();
             } else if (itemId == R.id.nav_profile) {

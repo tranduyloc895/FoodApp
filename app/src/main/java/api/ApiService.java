@@ -149,4 +149,15 @@ public interface ApiService {
             @retrofit2.http.Header("Authorization") String token,
             @Part MultipartBody.Part avatar
     );
+
+    @GET("auth/saved-recipes/")
+    Call<ModelResponse.RecipeResponse> getSavedRecipes(
+            @retrofit2.http.Header("Authorization") String token
+    );
+
+    @POST("auth/save-recipe/")
+    Call<ModelResponse.SavedRecipeResponse> saveRecipe(
+            @retrofit2.http.Header("Authorization") String token,
+            @Field("recipeId") String recipeId
+    );
 }

@@ -276,7 +276,15 @@ public class ModelResponse {
             private String image_url;
             private List<String> ingredients;
             private List<String> instructions;
-            private double averageRating;
+            private String time;
+
+            public String getTime() {
+                return time;
+            }
+            public void setTime(String time) {
+                this.time = time;
+            }
+            private List<RecipeDetailResponse.Rating> rating;
 
             public String getId() {
                 return id;
@@ -310,12 +318,28 @@ public class ModelResponse {
                 this.image_url = image_url;
             }
 
+            // Calculate and return the average rating
             public double getAverageRating() {
-                return averageRating;
+                if (rating == null || rating.isEmpty()) {
+                    return 0.0;
+                }
+
+                double sum = 0.0;
+                for (RecipeDetailResponse.Rating r : rating) {
+                    sum += r.getRating();
+                }
+
+                return sum / rating.size();
             }
 
-            public void setAverageRating(double averageRating) {
-                this.averageRating = averageRating;
+            // Getter for the rating list
+            public List<RecipeDetailResponse.Rating> getRating() {
+                return rating;
+            }
+
+            // Setter for the rating list
+            public void setRating(List<RecipeDetailResponse.Rating> rating) {
+                this.rating = rating;
             }
 
             // With these correct getters:
@@ -337,7 +361,6 @@ public class ModelResponse {
             }
         }
     }
-
 
     public static class RecipeDetailResponse {
         private String status;
@@ -382,6 +405,7 @@ public class ModelResponse {
             private String updated_at;
             private List<Comment> comments;
             private List<Rating> rating;
+            private double AverageRating;
             private String time;
 
             public String getId() {
@@ -725,6 +749,58 @@ public class ModelResponse {
                 if (dislikedBy != null) {
                     userDisliked = dislikedBy.contains(userId);
                 }
+            }
+        }
+    }
+
+    public class SavedRecipeResponse {
+        private String status;
+        private String message;
+        private Data data;
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
+
+        public Data getData() {
+            return data;
+        }
+
+        public void setData(Data data) {
+            this.data = data;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
+
+        public class Data {
+            private String savedRecipe;
+
+            private int totalSavedRecipes;
+
+            public String getSavedRecipe() {
+                return savedRecipe;
+            }
+
+            public void setSavedRecipe(String savedRecipe) {
+                this.savedRecipe = savedRecipe;
+            }
+
+            public int getTotalSavedRecipes() {
+                return totalSavedRecipes;
+            }
+
+            public void setTotalSavedRecipes(int totalSavedRecipes) {
+                this.totalSavedRecipes = totalSavedRecipes;
             }
         }
     }
