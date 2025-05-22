@@ -12,6 +12,7 @@ import android.content.Intent;
 import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
+import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -21,6 +22,7 @@ import adapter.New_RecipeAdapter;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
+import com.example.appfood.MainActivity;
 import com.example.appfood.MainRecipe;
 import com.example.appfood.R;
 import com.example.appfood.UserProfileActivity;
@@ -237,6 +239,9 @@ public class HomeFragment extends Fragment {
 
         handleGreeting(token);
         setupProfileClick(token);
+
+        // Set up scroll listener for navigation bar hide/show
+        setupScrollListener(view);
 
         // Set up Add Recipe FAB if it exists
         if (fabAddRecipe != null) {
@@ -591,5 +596,34 @@ public class HomeFragment extends Fragment {
         // Notify adapters of the change
         adapter_common.notifyDataSetChanged();
         adapter_new.notifyDataSetChanged();
+    }
+
+    private void setupScrollListener(View view) {
+        NestedScrollView nestedScrollView = view.findViewById(R.id.nested_scroll_view);
+        if (nestedScrollView != null) {
+            nestedScrollView.setOnScrollChangeListener(new NestedScrollView.OnScrollChangeListener() {
+                private int lastScrollY = 0;
+
+                @Override
+                public void onScrollChange(NestedScrollView v, int scrollX, int scrollY,
+                                           int oldScrollX, int oldScrollY) {
+                    // Scroll down (user swipes up)
+                    if (scrollY > lastScrollY && scrollY - lastScrollY > 15) {
+                        // Hide navigation bar
+                        if (getActivity() instanceof MainActivity) {
+                            ((MainActivity) getActivity()).hideNavigationBar();
+                        }
+                    }
+                    // Scroll up (user swipes down)
+                    else if (scrollY < lastScrollY && lastScrollY - scrollY > 15) {
+                        // Show navigation bar
+                        if (getActivity() instanceof MainActivity) {
+                            ((MainActivity) getActivity()).showNavigationBar();
+                        }
+                    }
+                    lastScrollY = scrollY;
+                }
+            });
+        }
     }
 }

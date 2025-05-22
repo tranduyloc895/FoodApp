@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     android:background="@color/background_home">
 
+    <!-- Top section that stays fixed -->
     <TextView
         android:id="@+id/tv_greeting"
         android:layout_width="wrap_content"
@@ -30,8 +31,6 @@
         android:textSize="16sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tv_greeting" />
-
-    <!-- Search Bar -->
 
     <ImageView
         android:id="@+id/iv_profile"
@@ -59,6 +58,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tv_cooking_prompt">
 
+        <!-- Search bar content unchanged -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -113,177 +113,194 @@
             app:tint="@color/white" />
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- Category Pills -->
-    <HorizontalScrollView
-        android:id="@+id/scroll_categories"
+    <!-- Add NestedScrollView below the search bar -->
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/nested_scroll_view"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:scrollbars="none"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/card_search">
 
         <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp">
-
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="wrap_content"
-                android:layout_height="36dp"
-                android:layout_marginEnd="8dp"
-                app:cardBackgroundColor="#4CD964"
-                app:cardCornerRadius="18dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:text="All"
-                    android:textColor="@color/white"
-                    android:textSize="14sp" />
-            </com.google.android.material.card.MaterialCardView>
-
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="wrap_content"
-                android:layout_height="36dp"
-                android:layout_marginEnd="8dp"
-                app:cardBackgroundColor="#F5F5F5"
-                app:cardCornerRadius="18dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:text="Indian"
-                    android:textColor="#4CD964"
-                    android:textSize="14sp" />
-            </com.google.android.material.card.MaterialCardView>
-
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="wrap_content"
-                android:layout_height="36dp"
-                android:layout_marginEnd="8dp"
-                app:cardBackgroundColor="#F5F5F5"
-                app:cardCornerRadius="18dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:text="Italian"
-                    android:textColor="#4CD964"
-                    android:textSize="14sp" />
-            </com.google.android.material.card.MaterialCardView>
-
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="wrap_content"
-                android:layout_height="36dp"
-                android:layout_marginEnd="8dp"
-                app:cardBackgroundColor="#F5F5F5"
-                app:cardCornerRadius="18dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:text="Asian"
-                    android:textColor="#4CD964"
-                    android:textSize="14sp" />
-            </com.google.android.material.card.MaterialCardView>
-
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="wrap_content"
-                android:layout_height="36dp"
-                android:layout_marginEnd="8dp"
-                app:cardBackgroundColor="#F5F5F5"
-                app:cardCornerRadius="18dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:text="Chinese"
-                    android:textColor="#4CD964"
-                    android:textSize="14sp" />
-            </com.google.android.material.card.MaterialCardView>
-        </LinearLayout>
-    </HorizontalScrollView>
-
-    <HorizontalScrollView
-        android:id="@+id/common_recipe"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:fillViewport="true"
-        app:layout_constraintTop_toBottomOf="@id/scroll_categories"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <LinearLayout
-            android:id="@+id/ll_common_recipe"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal">
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rv_common_recipe"
+            <!-- Category Pills -->
+            <HorizontalScrollView
+                android:id="@+id/scroll_categories"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"
-                android:overScrollMode="never"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
                 android:scrollbars="none">
-            </androidx.recyclerview.widget.RecyclerView>
-        </LinearLayout>
-    </HorizontalScrollView>
 
-    <TextView
-        android:id="@+id/tv_new_recipe"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="New Recipes"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        app:layout_constraintTop_toBottomOf="@id/common_recipe"
-        app:layout_constraintStart_toStartOf="parent"
-        android:paddingStart="10dp"
-        android:paddingEnd="10dp"/>
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp">
 
-    <HorizontalScrollView
-        android:id="@+id/new_recipe"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:fillViewport="true"
-        app:layout_constraintTop_toBottomOf="@id/tv_new_recipe"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+                    <!-- Category pills unchanged -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:layout_marginEnd="8dp"
+                        app:cardBackgroundColor="#4CD964"
+                        app:cardCornerRadius="18dp">
 
-        <LinearLayout
-            android:id="@+id/ll_new_recipe"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="16dp"
+                            android:text="All"
+                            android:textColor="@color/white"
+                            android:textSize="14sp" />
+                    </com.google.android.material.card.MaterialCardView>
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rv_new_recipe"
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:layout_marginEnd="8dp"
+                        app:cardBackgroundColor="#F5F5F5"
+                        app:cardCornerRadius="18dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="16dp"
+                            android:text="Indian"
+                            android:textColor="#4CD964"
+                            android:textSize="14sp" />
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:layout_marginEnd="8dp"
+                        app:cardBackgroundColor="#F5F5F5"
+                        app:cardCornerRadius="18dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="16dp"
+                            android:text="Italian"
+                            android:textColor="#4CD964"
+                            android:textSize="14sp" />
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:layout_marginEnd="8dp"
+                        app:cardBackgroundColor="#F5F5F5"
+                        app:cardCornerRadius="18dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="16dp"
+                            android:text="Asian"
+                            android:textColor="#4CD964"
+                            android:textSize="14sp" />
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:layout_marginEnd="8dp"
+                        app:cardBackgroundColor="#F5F5F5"
+                        app:cardCornerRadius="18dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="16dp"
+                            android:text="Chinese"
+                            android:textColor="#4CD964"
+                            android:textSize="14sp" />
+                    </com.google.android.material.card.MaterialCardView>
+                </LinearLayout>
+            </HorizontalScrollView>
+
+            <!-- Common Recipe Section -->
+            <HorizontalScrollView
+                android:id="@+id/common_recipe"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
+                android:fillViewport="true">
+
+                <LinearLayout
+                    android:id="@+id/ll_common_recipe"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal">
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rv_common_recipe"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="10dp"
+                        android:overScrollMode="never"
+                        android:scrollbars="none">
+                    </androidx.recyclerview.widget.RecyclerView>
+                </LinearLayout>
+            </HorizontalScrollView>
+
+            <!-- New Recipe Section -->
+            <TextView
+                android:id="@+id/tv_new_recipe"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="New Recipes"
+                android:textSize="20sp"
+                android:textStyle="bold"
                 android:paddingStart="10dp"
-                android:paddingEnd="10dp">
-            </androidx.recyclerview.widget.RecyclerView>
+                android:paddingEnd="10dp"/>
+
+            <HorizontalScrollView
+                android:id="@+id/new_recipe"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fillViewport="true">
+
+                <LinearLayout
+                    android:id="@+id/ll_new_recipe"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal">
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rv_new_recipe"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="10dp">
+                    </androidx.recyclerview.widget.RecyclerView>
+                </LinearLayout>
+            </HorizontalScrollView>
+
+            <!-- Add some extra padding at the bottom -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="80dp" />
         </LinearLayout>
-    </HorizontalScrollView>
+    </androidx.core.widget.NestedScrollView>
 
     <FrameLayout
         android:id="@+id/loading_overlay"
