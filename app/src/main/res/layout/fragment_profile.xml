@@ -1,17 +1,208 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/fragment_profile"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:fillViewport="true">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Profile"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:padding="10dp"
+        android:orientation="vertical"
+        android:background="@color/background_home">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/fl_profile_top"
+            android:layout_width="match_parent"
+            android:layout_height="75dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tv_profile_title"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:text="Profile"
+                android:gravity="center"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent">
+            </TextView>
+            
+            <ImageButton
+                android:id="@+id/ib_profile_more"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="16dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="More options"
+                android:src="@drawable/ic_more"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+            </ImageButton>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <LinearLayout
+            android:id="@+id/ll_profile_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp">
+
+            <ImageView
+                android:id="@+id/iv_profile_picture"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_gravity="center_horizontal"
+                android:src="@drawable/ic_profile"
+                android:contentDescription="Profile Picture"
+                android:background="@drawable/rounded_iv"
+                android:backgroundTint="@color/black"
+                android:focusable="true"
+                android:clickable="true">
+            </ImageView>
+
+            <LinearLayout
+                android:id="@+id/ll_number_uploaded_recipes"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:layout_weight="1"
+                android:gravity="center">
+
+                <TextView
+                    android:id="@+id/tv_uploaded_recipes"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Uploaded"
+                    android:textSize="20sp"
+                    android:layout_gravity="center"
+                    android:textColor="@color/gray">
+                </TextView>
+
+                <TextView
+                    android:id="@+id/tv_number_uploaded_recipes"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:layout_gravity="center">
+                </TextView>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/ll_number_saved_recipes"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:layout_weight="1"
+                android:gravity="center">
+
+                <TextView
+                    android:id="@+id/tv_saved_recipes"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Saved"
+                    android:textSize="20sp"
+                    android:layout_gravity="center"
+                    android:textColor="@color/gray">
+                </TextView>
+
+                <TextView
+                    android:id="@+id/tv_number_saved_recipes"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:layout_gravity="center">
+                </TextView>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/ll_country"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:layout_weight="1"
+                android:gravity="center">
+
+                <TextView
+                    android:id="@+id/tv_country"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Country"
+                    android:textSize="20sp"
+                    android:layout_gravity="center"
+                    android:textColor="@color/gray">
+                </TextView>
+
+                <TextView
+                    android:id="@+id/tv_country_code"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="VIE"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:layout_gravity="center">
+                </TextView>
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tv_profile_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="User Name"
+            android:textSize="20dp"
+            android:textStyle="bold"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp">
+        </TextView>
+
+        <TextView
+            android:id="@+id/tv_profile_level"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Guest"
+            android:textColor="@color/gray"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp">
+        </TextView>
+
+        <TextView
+            android:id="@+id/tv_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="20dp"
+            android:paddingBottom="5dp"
+            android:text="Chào mừng bạn đến với không gian tuyệt vời nhất! Nơi mà sự sáng tạo không có giới hạn và mọi câu chuyện đều trở nên đặc biệt.\nMU vô địch – niềm tự hào của người hâm mộ!">
+        </TextView>
+
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/category_navigation"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="@color/background_home"
+            app:itemIconTint="@color/bottom_nav_color"
+            app:itemTextColor="@color/bottom_nav_color"
+            app:menu="@menu/profile_category_navigation_menu"
+            app:layout_constraintTop_toBottomOf="@id/tv_description">
+        </com.google.android.material.bottomnavigation.BottomNavigationView>
+
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/fragment_container_category"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toBottomOf="@id/bottom_navigation"
+            app:layout_constraintBottom_toBottomOf="parent">
+        </androidx.fragment.app.FragmentContainerView>
+    </LinearLayout>
+</ScrollView>

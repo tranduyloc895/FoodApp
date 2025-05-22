@@ -38,7 +38,7 @@
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:layout_marginEnd="32dp"
-        android:background="@color/white"
+        android:background="@color/background_home"
         android:clipToOutline="true"
         android:src="@drawable/ic_user"
         app:layout_constraintBottom_toBottomOf="@+id/tv_greeting"
@@ -240,6 +240,8 @@
                 android:id="@+id/rv_common_recipe"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
                 android:overScrollMode="never"
                 android:scrollbars="none">
             </androidx.recyclerview.widget.RecyclerView>
@@ -254,7 +256,9 @@
         android:textSize="20sp"
         android:textStyle="bold"
         app:layout_constraintTop_toBottomOf="@id/common_recipe"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"/>
 
     <HorizontalScrollView
         android:id="@+id/new_recipe"
@@ -274,7 +278,9 @@
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rv_new_recipe"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="match_parent"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp">
             </androidx.recyclerview.widget.RecyclerView>
         </LinearLayout>
     </HorizontalScrollView>
@@ -322,5 +328,4 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
     </FrameLayout>
-
 </androidx.constraintlayout.widget.ConstraintLayout>

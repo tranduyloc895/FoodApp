@@ -4,6 +4,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -44,7 +45,7 @@ public class IngredientsAdapter extends RecyclerView.Adapter<IngredientsAdapter.
         String ingredient = ingredientsList.get(position);
         holder.tvIngredient.setText(ingredient);
 
-        holder.btn_ingredient_delete.setOnClickListener(v -> {
+        holder.ib_ingredient_delete.setOnClickListener(v -> {
             if (deleteListener != null) {
                 deleteListener.onIngredientDelete(position);
             }
@@ -58,12 +59,12 @@ public class IngredientsAdapter extends RecyclerView.Adapter<IngredientsAdapter.
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvIngredient;
-        Button btn_ingredient_delete;
+        ImageButton ib_ingredient_delete;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             tvIngredient = itemView.findViewById(R.id.tv_ingredient_quantity_name);
-            btn_ingredient_delete = itemView.findViewById(R.id.btn_ingredient_delete);
+            ib_ingredient_delete = itemView.findViewById(R.id.ib_ingredient_delete);
         }
     }
 }
