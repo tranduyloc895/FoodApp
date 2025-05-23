@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="205dp"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical"
-    android:padding="5dp">
+    android:layout_width="match_parent"
+    android:layout_height="220dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="8dp"
+    app:cardUseCompatPadding="true">
 
     <LinearLayout
         android:id="@+id/ll_recipe_latest"
-        android:layout_width="350dp"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
 
@@ -16,123 +17,153 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <ImageView
+            <!-- Background gradient overlay -->
+            <View
                 android:id="@+id/iv_recipe_background_latest"
                 android:layout_width="match_parent"
-                android:layout_height="125dp"
+                android:layout_height="140dp"
                 android:background="@drawable/rounded_linear"
                 android:layout_gravity="bottom"
-                android:orientation="vertical"/>
+                android:alpha="0.9"/>
 
+            <!-- Main content layout -->
             <LinearLayout
                 android:id="@+id/ll_recipe_name_rating_image_latest"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_horizontal"
-                android:orientation="horizontal">
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:padding="16dp">
 
+                <!-- Left side: Recipe info -->
                 <LinearLayout
                     android:id="@+id/ll_recipe_name_rating_latest"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    android:gravity="center_vertical"
+                    android:layout_marginEnd="16dp">
 
                     <TextView
                         android:id="@+id/tv_recipe_name_latest"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Recipe Name"
-                        android:gravity="center"
-                        android:textSize="20sp"
+                        android:textSize="22sp"
                         android:textStyle="bold"
-                        android:singleLine="true"
-                        android:ellipsize="marquee"
-                        android:marqueeRepeatLimit="marquee_forever"
-                        android:scrollHorizontally="true"
-                        android:focusable="true"
-                        android:focusableInTouchMode="true"
-                        android:layout_marginTop="70dp"/>
+                        android:textColor="@android:color/black"
+                        android:maxLines="1"
+                        android:layout_marginStart="20dp"
+                        android:ellipsize="end"
+                        android:lineSpacingMultiplier="1.2"/>
 
                     <RatingBar
                         android:id="@+id/ratingBar_new"
                         android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
+                        android:layout_height="wrap_content"
                         android:numStars="5"
                         android:stepSize="0.5"
                         android:isIndicator="true"
                         android:rating="0"
-                        android:scaleX="0.5"
-                        android:scaleY="0.5"
-                        android:layout_marginBottom="55dp"
+                        android:scaleX="0.7"
+                        android:scaleY="0.7"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginStart="-20dp"
                         android:progressTint="@color/orange"/>
+
                 </LinearLayout>
+
+                <!-- Right side: Recipe image -->
                 <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/iv_recipe_image_latest"
-                    android:layout_width="112.5dp"
-                    android:layout_height="112.5dp"
-                    android:layout_weight="0"
-                    android:focusable="true"
+                    android:layout_width="110dp"
+                    android:layout_height="110dp"
                     android:scaleType="centerCrop"
                     android:contentDescription="Recipe Image"
-                    android:layout_gravity="right|center_vertical"
                     app:shapeAppearanceOverlay="@style/RoundedImage"
                     android:clickable="true"
-                    android:layout_marginBottom="35dp"/>
+                    android:foreground="?android:attr/selectableItemBackground"
+                    android:elevation="4dp"/>
 
             </LinearLayout>
 
+            <!-- Bottom info bar -->
             <LinearLayout
                 android:id="@+id/ll_recipe_time_save_common"
                 android:layout_width="match_parent"
-                android:layout_height="55dp"
+                android:layout_height="60dp"
                 android:orientation="horizontal"
-                android:layout_gravity="bottom">
+                android:layout_gravity="bottom"
+                android:background="@android:color/white"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="8dp"
+                android:elevation="2dp">
 
                 <LinearLayout
                     android:id="@+id/ll_recipe_author_latest"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
 
-                    <ImageView
+                    <com.google.android.material.imageview.ShapeableImageView
                         android:id="@+id/iv_recipe_author_image_latest"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1" />
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:scaleType="centerCrop"
+                        app:shapeAppearance="?attr/shapeAppearanceLargeComponent"
+                        app:cornerFamily="rounded"
+                        app:cornerSize="50%"
+                        android:layout_marginEnd="8dp"/>
 
                     <TextView
                         android:id="@+id/tv_recipe_author_name_latest"
                         android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="3"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
                         android:text="Author Name"
-                        android:textSize="20sp"
+                        android:textSize="14sp"
                         android:textColor="@android:color/darker_gray"
-                        android:gravity="center"
-                        android:layout_gravity="center"/>
+                        android:maxLines="1"
+                        android:ellipsize="end"/>
+
+                </LinearLayout>
+
+                <!-- Time info -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
 
                     <ImageView
                         android:id="@+id/iv_recipe_time_latest"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
                         android:background="@drawable/clock"
-                        android:scaleX="0.5"
-                        android:scaleY="0.5"/>
+                        android:layout_marginEnd="4dp"/>
+
                     <TextView
                         android:id="@+id/tv_recipe_time_latest"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:text="0"
-                        android:gravity="center"
-                        android:textSize="20sp"
+                        android:textSize="14sp"
                         android:textColor="@android:color/darker_gray"
+                        android:textStyle="bold"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="4dp"
                         android:background="@drawable/rounded_textview"
-                        android:layout_weight="1"/>
+                        android:minWidth="40dp"
+                        android:gravity="center"/>
+
                 </LinearLayout>
+
             </LinearLayout>
+
         </FrameLayout>
+
     </LinearLayout>
-</LinearLayout>
+
+</androidx.cardview.widget.CardView>

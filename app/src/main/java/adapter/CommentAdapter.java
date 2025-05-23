@@ -14,7 +14,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.example.appfood.R;
-import api.ModelResponse;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -25,36 +24,59 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 
+import api.ApiService;
+import api.ModelResponse;
+import api.RetrofitClient;
 import de.hdodenhof.circleimageview.CircleImageView;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-import api.RetrofitClient;
-import api.ApiService;
 
+/**
+ * Adapter for displaying comments in a RecyclerView
+ */
 public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentViewHolder> {
     private static final String TAG = "CommentAdapter";
+    private static final String DATE_FORMAT_INPUT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+    private static final String DATE_FORMAT_OUTPUT = "MMMM d, yyyy - HH:mm";
+    private static final String DEFAULT_DATE = "June 12, 2020 - ";
 
-    private Context context;
-    private List<ModelResponse.CommentResponse.Comment> commentList;
-    private OnCommentActionListener actionListener;
+    private final Context context;
+    private final List<ModelResponse.CommentResponse.Comment> commentList;
+    private final OnCommentActionListener actionListener;
 
     private String userAvatarUrl;
-    private String userName;
     private String token;
 
     // Cache for user data to avoid repeated API calls
-    private Map<String, String> userNameCache = new HashMap<>();
-    private Map<String, String> userAvatarCache = new HashMap<>();
+    private final Map<String, String> userNameCache = new HashMap<>();
+    private final Map<String, String> userAvatarCache = new HashMap<>();
 
-    // Interface for comment actions
+    /**
+     * Interface for comment action callbacks
+     */
     public interface OnCommentActionListener {
         void onLikeClicked(String commentId, int position);
         void onDislikeClicked(String commentId, int position);
     }
 
     /**
+     * Constructor for the adapter
+     *
+     * @param context The context
+     * @param commentList List of comments to display
+     * @param listener Listener for comment actions
+     */
+    public CommentAdapter(Context context, List<ModelResponse.CommentResponse.Comment> commentList,
+                          OnCommentActionListener listener) {
+        this.context = context;
+        this.commentList = commentList;
+        this.actionListener = listener;
+    }
+
+    /**
      * Set the current user's avatar URL
+     *
      * @param avatarUrl URL of the user's avatar image
      */
     public void setUserAvatarUrl(String avatarUrl) {
@@ -64,17 +86,11 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
 
     /**
      * Set the authentication token for API calls
+     *
      * @param token Authentication token
      */
     public void setToken(String token) {
         this.token = token;
-    }
-
-    public CommentAdapter(Context context, List<ModelResponse.CommentResponse.Comment> commentList,
-                          OnCommentActionListener listener) {
-        this.context = context;
-        this.commentList = commentList;
-        this.actionListener = listener;
     }
 
     @NonNull
@@ -89,6 +105,14 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
         ModelResponse.CommentResponse.Comment comment = commentList.get(position);
         String authorId = comment.getAuthor_id();
 
+        bindUserData(holder, authorId, position);
+        bindCommentData(holder, comment, position);
+    }
+
+    /**
+     * Bind user data (name and avatar) to the view holder
+     */
+    private void bindUserData(CommentViewHolder holder, String authorId, int position) {
         // Check if we already have author's name in cache
         if (userNameCache.containsKey(authorId)) {
             holder.tvUsername.setText(userNameCache.get(authorId));
@@ -113,7 +137,12 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
                 holder.tvUsername.setText(authorId);
             }
         }
+    }
 
+    /**
+     * Bind comment data to the view holder
+     */
+    private void bindCommentData(CommentViewHolder holder, ModelResponse.CommentResponse.Comment comment, int position) {
         // Set comment content
         holder.tvComment.setText(comment.getContent());
 
@@ -140,6 +169,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
 
     /**
      * Fetch user details using the API
+     *
      * @param userId User ID to fetch
      * @param holder ViewHolder to update
      * @param position Position in the RecyclerView
@@ -217,25 +247,8 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
     }
 
     /**
-     * ViewHolder class for comment items
-     */
-    static class CommentViewHolder extends RecyclerView.ViewHolder {
-        CircleImageView ivAvatar;
-        TextView tvUsername, tvDate, tvComment, tvLikes, tvFire;
-
-        public CommentViewHolder(@NonNull View itemView) {
-            super(itemView);
-            ivAvatar = itemView.findViewById(R.id.ivAvatar);
-            tvUsername = itemView.findViewById(R.id.tvUsername);
-            tvDate = itemView.findViewById(R.id.tvDate);
-            tvComment = itemView.findViewById(R.id.tvComment);
-            tvLikes = itemView.findViewById(R.id.tvLikes);
-            tvFire = itemView.findViewById(R.id.tvFire);
-        }
-    }
-
-    /**
      * Format ISO date string to a more readable format
+     *
      * @param dateTimeStr ISO formatted date string
      * @return Formatted date string
      */
@@ -245,23 +258,40 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
         }
 
         try {
-            SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
+            SimpleDateFormat inputFormat = new SimpleDateFormat(DATE_FORMAT_INPUT, Locale.US);
             inputFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 
-            SimpleDateFormat outputFormat = new SimpleDateFormat("MMMM d, yyyy - HH:mm", Locale.US);
+            SimpleDateFormat outputFormat = new SimpleDateFormat(DATE_FORMAT_OUTPUT, Locale.US);
             Date date = inputFormat.parse(dateTimeStr);
-            return outputFormat.format(date);
+            return date != null ? outputFormat.format(date) : "";
         } catch (ParseException e) {
             // If parsing fails, return a simpler format
             if (dateTimeStr.contains("T")) {
                 String[] parts = dateTimeStr.split("T");
                 if (parts.length > 1) {
-                    String datePart = parts[0];
                     String timePart = parts[1].split("\\.")[0];
-                    return "June 12, 2020 - " + timePart;  // Using fixed date as fallback
+                    return DEFAULT_DATE + timePart;
                 }
             }
             return dateTimeStr;
+        }
+    }
+
+    /**
+     * ViewHolder class for comment items
+     */
+    static class CommentViewHolder extends RecyclerView.ViewHolder {
+        final CircleImageView ivAvatar;
+        final TextView tvUsername, tvDate, tvComment, tvLikes, tvFire;
+
+        public CommentViewHolder(@NonNull View itemView) {
+            super(itemView);
+            ivAvatar = itemView.findViewById(R.id.ivAvatar);
+            tvUsername = itemView.findViewById(R.id.tvUsername);
+            tvDate = itemView.findViewById(R.id.tvDate);
+            tvComment = itemView.findViewById(R.id.tvComment);
+            tvLikes = itemView.findViewById(R.id.tvLikes);
+            tvFire = itemView.findViewById(R.id.tvFire);
         }
     }
 }

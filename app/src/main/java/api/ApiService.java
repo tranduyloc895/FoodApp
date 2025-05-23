@@ -20,49 +20,52 @@ import retrofit2.http.Query;
 
 public interface ApiService {
     @FormUrlEncoded
-    @POST("auth/login/")
+    @POST("auth/login")
     Call<ModelResponse.LoginResponse> login(
             @Field("email") String email,
             @Field("password") String password
     );
 
-    @GET("auth/me/")
+    @GET("users/me")
     Call<ModelResponse.UserResponse> getUserInfo(
             @retrofit2.http.Header("Authorization") String token
     );
 
-    @GET("auth/get-user-byID/")
+    @GET("users/user/{userId}")
     Call<ModelResponse.UserResponse> getUserById(
             @retrofit2.http.Header("Authorization") String token,
-            @Query("id") String userId
+            @Path("userId") String userId
     );
 
     @FormUrlEncoded
-    @POST("auth/signup/")
+    @POST("auth/signup")
     Call<ModelResponse.SignUpResponse> signUp(
             @Field("name") String name,
             @Field("email") String email,
             @Field("password") String password,
-            @Field("confirm_password") String confirmPassword
+            @Field("confirmPassword") String confirmPassword  // Changed from confirm_password
     );
-    @POST("auth/logout/")
+
+    @POST("auth/logout")
     Call<Void> logout(
             @retrofit2.http.Header("Authorization") String token
     );
+
     @FormUrlEncoded
-    @POST("auth/forgot-password/")
+    @POST("auth/forgot-password")
     Call<Void> forgotPassword(
             @Field("email") String email
     );
+
     @FormUrlEncoded
-    @POST("auth/verify-otp/")
+    @POST("auth/verify-otp")
     Call<ModelResponse.VerifyOtpResponse> verifyOtp(
             @Field("email") String email,
             @Field("otp") String otp
     );
 
     @FormUrlEncoded
-    @PATCH("auth/reset-password/")
+    @PATCH("auth/reset-password")
     Call<ModelResponse.LoginResponse> resetPassword(
             @Field("email") String email,
             @Field("password") String password,
@@ -70,7 +73,7 @@ public interface ApiService {
     );
 
     @FormUrlEncoded
-    @PATCH("auth/update-profile/")
+    @PATCH("users/update-profile")
     Call<ModelResponse.UpdateUserResponse> updateProfile(
             @retrofit2.http.Header("Authorization") String token,
             @Field("name") String name,
@@ -80,7 +83,7 @@ public interface ApiService {
     );
 
     @FormUrlEncoded
-    @PATCH("auth/update-password/")
+    @PATCH("users/update-password")
     Call<ModelResponse.ChangePasswordResponse> updatePassword(
             @retrofit2.http.Header("Authorization") String token,
             @Field("currentPassword") String currentPassword,
@@ -88,25 +91,25 @@ public interface ApiService {
             @Field("confirmNewPassword") String confirmNewPassword
     );
 
-    @GET("recipes/get-recipe-latest/")
+    @GET("recipes/get-recipe-latest")
     Call<ModelResponse.RecipeResponse> getRecipeLatest(
             @Header("Authorization") String token
     );
 
-    @GET("recipes/get-recipe-id/")
+    @GET("recipes/get-recipe-id")
     Call<ModelResponse.RecipeDetailResponse> getRecipeDetail(
             @retrofit2.http.Header("Authorization") String token,
             @Query("id") String recipeId
     );
 
-    @GET("recipes/get-recipe-comments/")
+    @GET("recipes/get-recipe-comments")
     Call<ModelResponse.CommentResponse> getRecipeComments(
             @retrofit2.http.Header("Authorization") String token,
             @Query("id") String recipeId
     );
 
     @FormUrlEncoded
-    @PATCH("recipes/comment-recipe/")
+    @PATCH("recipes/comment-recipe")
     Call<ModelResponse.RecipeDetailResponse> postComment(
             @retrofit2.http.Header("Authorization") String token,
             @Field("id") String recipeId,
@@ -114,7 +117,7 @@ public interface ApiService {
     );
 
     @FormUrlEncoded
-    @PATCH("recipes/like-comment/")
+    @PATCH("recipes/like-comment")
     Call<ModelResponse.RecipeDetailResponse> likeComment(
             @retrofit2.http.Header("Authorization") String token,
             @Field("recipeId") String recipeId,
@@ -122,7 +125,7 @@ public interface ApiService {
     );
 
     @FormUrlEncoded
-    @PATCH("recipes/dislike-comment/")
+    @PATCH("recipes/dislike-comment")
     Call<ModelResponse.RecipeDetailResponse> dislikeComment(
             @retrofit2.http.Header("Authorization") String token,
             @Field("recipeId") String recipeId,
@@ -130,7 +133,7 @@ public interface ApiService {
     );
 
     @Multipart
-    @POST("recipes/add-recipe/")
+    @POST("recipes/add-recipe")
     Call<ModelResponse.RecipeDetailResponse> addRecipeWithParts(
             @Header("Authorization") String token,
             @PartMap Map<String, RequestBody> parts,
@@ -138,7 +141,7 @@ public interface ApiService {
     );
 
     @FormUrlEncoded
-    @PATCH("recipes/rating-recipe/")
+    @PATCH("recipes/rating-recipe")
     Call<ModelResponse.RecipeDetailResponse> rateRecipe(
             @retrofit2.http.Header("Authorization") String token,
             @Field("id") String recipeId,
@@ -146,25 +149,25 @@ public interface ApiService {
     );
 
     @Multipart
-    @POST("auth/upload-avatar/")
+    @POST("users/upload-avatar")
     Call<ModelResponse.UserResponse> uploadAvatar(
             @retrofit2.http.Header("Authorization") String token,
             @Part MultipartBody.Part avatar
     );
 
-    @GET("auth/saved-recipes/")
+    @GET("users/saved-recipes")
     Call<ModelResponse.RecipeResponse> getSavedRecipes(
             @retrofit2.http.Header("Authorization") String token
     );
 
     @FormUrlEncoded
-    @POST("auth/save-recipe/")
+    @POST("users/save-recipe")
     Call<ModelResponse.SavedRecipeResponse> saveRecipe(
             @retrofit2.http.Header("Authorization") String token,
             @Field("recipeId") String recipeId
     );
 
-    @DELETE("auth/saved-recipes/{recipeId}")
+    @DELETE("users/saved-recipes/{recipeId}")
     Call<ModelResponse.DeleteSavedRecipeResponse> deleteSavedRecipe(
             @retrofit2.http.Header("Authorization") String token,
             @Path("recipeId") String recipeId
