@@ -3,6 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="220dp"
+    android:paddingStart="10dp"
+    android:paddingEnd="10dp"
     app:cardCornerRadius="16dp"
     app:cardElevation="8dp"
     app:cardUseCompatPadding="true">
@@ -53,8 +55,12 @@
                         android:textStyle="bold"
                         android:textColor="@android:color/black"
                         android:maxLines="1"
+                        android:ellipsize="marquee"
+                        android:marqueeRepeatLimit="marquee_forever"
+                        android:focusable="true"
+                        android:focusableInTouchMode="true"
+                        android:singleLine="true"
                         android:layout_marginStart="20dp"
-                        android:ellipsize="end"
                         android:lineSpacingMultiplier="1.2"/>
 
                     <RatingBar

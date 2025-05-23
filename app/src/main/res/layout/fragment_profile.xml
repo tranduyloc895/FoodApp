@@ -171,7 +171,7 @@
             android:id="@+id/tv_profile_level"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Guest"
+            android:text="Level"
             android:textColor="@color/gray"
             android:paddingTop="5dp"
             android:paddingBottom="5dp">
@@ -186,23 +186,29 @@
             android:text="Chào mừng bạn đến với không gian tuyệt vời nhất! Nơi mà sự sáng tạo không có giới hạn và mọi câu chuyện đều trở nên đặc biệt.\nMU vô địch – niềm tự hào của người hâm mộ!">
         </TextView>
 
-        <com.google.android.material.bottomnavigation.BottomNavigationView
-            android:id="@+id/category_navigation"
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:background="@color/background_home"
-            app:itemIconTint="@color/bottom_nav_color"
-            app:itemTextColor="@color/bottom_nav_color"
-            app:menu="@menu/profile_category_navigation_menu"
-            app:layout_constraintTop_toBottomOf="@id/tv_description">
-        </com.google.android.material.bottomnavigation.BottomNavigationView>
+            android:layout_height="match_parent">
 
-        <androidx.fragment.app.FragmentContainerView
-            android:id="@+id/fragment_container_category"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:layout_constraintTop_toBottomOf="@id/bottom_navigation"
-            app:layout_constraintBottom_toBottomOf="parent">
-        </androidx.fragment.app.FragmentContainerView>
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/tl_category"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/rounded_linear"
+                android:backgroundTint="@color/green"
+                app:tabIndicatorColor="@color/white"
+                app:tabSelectedTextColor="@color/white"
+                app:tabTextColor="@color/white"
+                app:layout_constraintTop_toTopOf="parent">
+            </com.google.android.material.tabs.TabLayout>
+
+            <androidx.viewpager2.widget.ViewPager2
+                android:id="@+id/vp_category"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                app:layout_constraintTop_toBottomOf="@id/tl_category"
+                app:layout_constraintBottom_toBottomOf="parent">
+            </androidx.viewpager2.widget.ViewPager2>
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </LinearLayout>
 </ScrollView>

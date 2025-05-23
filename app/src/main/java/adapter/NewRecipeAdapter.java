@@ -299,6 +299,7 @@ public class NewRecipeAdapter extends RecyclerView.Adapter<NewRecipeAdapter.View
 
             ivRecipeImage = itemView.findViewById(R.id.iv_recipe_image_latest);
             tvRecipeName = itemView.findViewById(R.id.tv_recipe_name_latest);
+            tvRecipeName.setSelected(true);
             tvRecipeAuthor = itemView.findViewById(R.id.tv_recipe_author_name_latest);
             ratingBar = itemView.findViewById(R.id.ratingBar_new);
             tvTime = itemView.findViewById(R.id.tv_recipe_time_latest);
