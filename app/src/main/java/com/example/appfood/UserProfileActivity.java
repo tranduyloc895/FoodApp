@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
@@ -44,7 +45,6 @@ import adapter.CountryAdapter;
 import api.ApiService;
 import api.ModelResponse;
 import api.RetrofitClient;
-import fragment.HomeFragment;
 import fragment.LogoutDialogFragment;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -59,6 +59,9 @@ import retrofit2.Response;
  * logout, and password change navigation.
  */
 public class UserProfileActivity extends AppCompatActivity {
+    private static final String TAG = "UserProfileActivity";
+    private static final String BEARER_PREFIX = "Bearer ";
+    private static final int STORAGE_PERMISSION_CODE = 100;
 
     // UI components
     private EditText etName, etEmail;
@@ -73,42 +76,65 @@ public class UserProfileActivity extends AppCompatActivity {
     private String country;
     private String currentAvatarUrl;
     private boolean isDataLoading = false;
-
-    // API token
     private String token;
-
-    // Permission request code
-    private static final int STORAGE_PERMISSION_CODE = 100;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Fullscreen mode
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        setContentView(R.layout.activity_user_profile);
-
-        // Initialize UI
+        setupWindowAndContentView();
         initViews();
-
-        btnBack.setOnClickListener(v -> finish());
-        iVdob.setOnClickListener(v -> showDatePicker());
-        setupCountrySpinner();
+        setupListeners();
 
         token = getIntent().getStringExtra("token");
         if (token != null) {
-            // Show loading before data loads
             showLoading(true);
             loadUserData();
         } else {
             etName.setText("Token is missing.");
             showLoading(false);
         }
+    }
+
+    /**
+     * Sets up window flags and content view
+     */
+    private void setupWindowAndContentView() {
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        setContentView(R.layout.activity_user_profile);
+    }
+
+    /**
+     * Initializes all UI components
+     */
+    private void initViews() {
+        etName = findViewById(R.id.et_username);
+        etEmail = findViewById(R.id.et_email);
+        btnBack = findViewById(R.id.btn_back);
+        btnUpdate = findViewById(R.id.btn_update);
+        iVdob = findViewById(R.id.iv_dropdown);
+        dobTextView = findViewById(R.id.tv_dateOfbirth_selected);
+        countrySpinner = findViewById(R.id.spinner_country);
+        tvChangePassword = findViewById(R.id.tv_change_password);
+        btnLogout = findViewById(R.id.btn_logout);
+        tvChangePicture = findViewById(R.id.tv_change_picture);
+        ivProfilePicture = findViewById(R.id.iv_profile);
+        loadingOverlay = findViewById(R.id.loading_overlay);
+    }
+
+    /**
+     * Sets up click listeners and other UI interactions
+     */
+    private void setupListeners() {
+        btnBack.setOnClickListener(v -> finish());
+        iVdob.setOnClickListener(v -> showDatePicker());
+        setupCountrySpinner();
 
         btnLogout.setOnClickListener(v -> LogoutDialogFragment.newInstance(token)
                 .show(getSupportFragmentManager(), "logoutDialog"));
 
         btnUpdate.setOnClickListener(v -> {
-            showLoading(true); // Show loading when update starts
+            showLoading(true);
             updateProfile(
                     token,
                     etName.getText().toString(),
@@ -119,15 +145,23 @@ public class UserProfileActivity extends AppCompatActivity {
         });
 
         tvChangePassword.setOnClickListener(v -> {
-            sendEmail(etEmail.getText().toString());
-            Intent intent = new Intent(UserProfileActivity.this, VerifyOTPChangePass.class);
-            intent.putExtra("email", etEmail.getText().toString());
-            intent.putExtra("token", token);
-            startActivity(intent);
-            finish();
+            String email = etEmail.getText().toString();
+            sendEmail(email);
+            navigateToVerifyOTP(email);
         });
 
         tvChangePicture.setOnClickListener(v -> changeProfilePicture());
+    }
+
+    /**
+     * Navigate to OTP verification for password change
+     */
+    private void navigateToVerifyOTP(String email) {
+        Intent intent = new Intent(UserProfileActivity.this, VerifyOTPChangePass.class);
+        intent.putExtra("email", email);
+        intent.putExtra("token", token);
+        startActivity(intent);
+        finish();
     }
 
     /**
@@ -137,18 +171,18 @@ public class UserProfileActivity extends AppCompatActivity {
         isDataLoading = true;
         showLoading(true);
 
-        getUserInfo(token, new HomeFragment.OnUserInfoCallback() {
+        getUserInfo(token, new UserInfoCallback() {
             @Override
-            public void onUserInfoReceived(String name, String email, String dateOfBirth, String country, String urlAvatar) {
+            public void onSuccess(String name, String email, String dateOfBirth, String country, String avatarUrl) {
                 etName.setText(name);
                 etEmail.setText(email);
                 dobTextView.setText(dateOfBirth);
 
                 // Save avatar URL
-                currentAvatarUrl = urlAvatar;
+                currentAvatarUrl = avatarUrl;
 
                 // Load avatar using Glide
-                loadProfileAvatar(urlAvatar);
+                loadProfileAvatar(avatarUrl);
 
                 // Set country in spinner if it exists
                 if (country != null && !country.isEmpty()) {
@@ -167,6 +201,7 @@ public class UserProfileActivity extends AppCompatActivity {
             public void onError(String errorMessage) {
                 etName.setText("Failed to load user info");
                 Toast.makeText(UserProfileActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "Error loading user info: " + errorMessage);
 
                 // Hide loading even on error
                 isDataLoading = false;
@@ -192,24 +227,6 @@ public class UserProfileActivity extends AppCompatActivity {
                 btnLogout.setEnabled(!isLoading);
             }
         });
-    }
-
-    /**
-     * Initializes the UI components and sets up listeners.
-     */
-    private void initViews() {
-        etName = findViewById(R.id.et_username);
-        etEmail = findViewById(R.id.et_email);
-        btnBack = findViewById(R.id.btn_back);
-        btnUpdate = findViewById(R.id.btn_update);
-        iVdob = findViewById(R.id.iv_dropdown);
-        dobTextView = findViewById(R.id.tv_dateOfbirth_selected);
-        countrySpinner = findViewById(R.id.spinner_country);
-        tvChangePassword = findViewById(R.id.tv_change_password);
-        btnLogout = findViewById(R.id.btn_logout);
-        tvChangePicture = findViewById(R.id.tv_change_picture);
-        ivProfilePicture = findViewById(R.id.iv_profile);
-        loadingOverlay = findViewById(R.id.loading_overlay);
     }
 
     /**
@@ -264,14 +281,23 @@ public class UserProfileActivity extends AppCompatActivity {
     /**
      * Retrieves the user's information from the API and passes it to the callback.
      */
-    public void getUserInfo(String token, HomeFragment.OnUserInfoCallback callback) {
+    public void getUserInfo(String token, UserInfoCallback callback) {
         ApiService apiService = RetrofitClient.getApiService();
-        apiService.getUserInfo("Bearer " + token).enqueue(new Callback<ModelResponse.UserResponse>() {
+        apiService.getUserInfo(BEARER_PREFIX + token).enqueue(new Callback<ModelResponse.UserResponse>() {
             @Override
             public void onResponse(Call<ModelResponse.UserResponse> call, Response<ModelResponse.UserResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
+                if (response.isSuccessful() && response.body() != null &&
+                        response.body().getData() != null &&
+                        response.body().getData().getUser() != null) {
+
                     ModelResponse.UserResponse.User user = response.body().getData().getUser();
-                    callback.onUserInfoReceived(user.getName(), user.getEmail(), user.getDateOfBirth(), user.getCountry(), user.getUrlAvatar());
+                    callback.onSuccess(
+                            user.getName(),
+                            user.getEmail(),
+                            user.getDateOfBirth(),
+                            user.getCountry(),
+                            user.getUrlAvatar()
+                    );
                 } else {
                     callback.onError("Response error: " + response.code());
                 }
@@ -288,10 +314,11 @@ public class UserProfileActivity extends AppCompatActivity {
      */
     public void updateProfile(String token, String name, String email, String dateOfBirth, String country) {
         ApiService apiService = RetrofitClient.getApiService();
-        apiService.updateProfile("Bearer " + token, name, email, dateOfBirth, country)
+        apiService.updateProfile(BEARER_PREFIX + token, name, email, dateOfBirth, country)
                 .enqueue(new Callback<ModelResponse.UpdateUserResponse>() {
                     @Override
-                    public void onResponse(Call<ModelResponse.UpdateUserResponse> call, Response<ModelResponse.UpdateUserResponse> response) {
+                    public void onResponse(Call<ModelResponse.UpdateUserResponse> call,
+                                           Response<ModelResponse.UpdateUserResponse> response) {
                         if (response.isSuccessful() && response.body() != null) {
                             Toast.makeText(UserProfileActivity.this,
                                     "Profile updated successfully",
@@ -311,7 +338,7 @@ public class UserProfileActivity extends AppCompatActivity {
                     @Override
                     public void onFailure(Call<ModelResponse.UpdateUserResponse> call, Throwable t) {
                         Toast.makeText(UserProfileActivity.this, "Request failed: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-                        // Hide loading on failure
+                        Log.e(TAG, "Update profile failed", t);
                         showLoading(false);
                     }
                 });
@@ -339,14 +366,12 @@ public class UserProfileActivity extends AppCompatActivity {
      * Sends a password reset email to the user via the API.
      */
     public void sendEmail(String email) {
-        // Show loading while sending email
         showLoading(true);
 
         ApiService apiService = RetrofitClient.getApiService();
         apiService.forgotPassword(email).enqueue(new Callback<Void>() {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
-                // Hide loading once we get a response
                 showLoading(false);
 
                 Toast.makeText(UserProfileActivity.this,
@@ -355,8 +380,8 @@ public class UserProfileActivity extends AppCompatActivity {
             }
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
-                // Hide loading on failure
                 showLoading(false);
+                Log.e(TAG, "Send email failed", t);
             }
         });
     }
@@ -366,16 +391,22 @@ public class UserProfileActivity extends AppCompatActivity {
      */
     private void changeProfilePicture() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            // For Android 13+ (API 33+), use new photo picker or request READ_MEDIA_IMAGES
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_MEDIA_IMAGES}, STORAGE_PERMISSION_CODE);
+            // For Android 13+ (API 33+)
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.READ_MEDIA_IMAGES},
+                        STORAGE_PERMISSION_CODE);
             } else {
                 openImagePicker();
             }
         } else {
             // For Android 12 and below
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, STORAGE_PERMISSION_CODE);
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                        STORAGE_PERMISSION_CODE);
             } else {
                 openImagePicker();
             }
@@ -386,30 +417,30 @@ public class UserProfileActivity extends AppCompatActivity {
      * Opens the image picker after permissions are granted.
      */
     private void openImagePicker() {
+        Intent intent;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
-            imagePicker.launch(intent);
+            intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
         } else {
-            Intent intent = new Intent(Intent.ACTION_PICK);
+            intent = new Intent(Intent.ACTION_PICK);
             intent.setType("image/*");
-            imagePicker.launch(intent);
         }
+        imagePicker.launch(intent);
     }
 
     /**
      * Handle permission request results
      */
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         if (requestCode == STORAGE_PERMISSION_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permission granted, proceed with image picking
                 openImagePicker();
             } else {
-                // Permission denied
-                Toast.makeText(this, "Storage permission is required to change profile picture", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Storage permission is required to change profile picture",
+                        Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -419,45 +450,26 @@ public class UserProfileActivity extends AppCompatActivity {
                 if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                     Uri imageUri = result.getData().getData();
                     if (imageUri != null) {
-                        // Show loading while uploading
-                        showLoading(true);
-
-                        // Show selected image immediately for better UX while uploading
-                        Glide.with(this)
-                                .load(imageUri)
-                                .apply(new RequestOptions().circleCrop())
-                                .into(ivProfilePicture);
-
-                        uploadProfilePicture(imageUri, token);
-                        Toast.makeText(this, "Image selected, uploading...", Toast.LENGTH_SHORT).show();
+                        handleSelectedImage(imageUri);
                     }
                 }
             });
 
     /**
-     * Improved method to get real file path from URI with better handling
+     * Handle the selected image for upload
      */
-    private String getRealPathFromURI(Uri uri) {
-        String result = null;
+    private void handleSelectedImage(Uri imageUri) {
+        // Show loading while uploading
+        showLoading(true);
 
-        // Check if the URI scheme is content
-        if ("content".equals(uri.getScheme())) {
-            try (Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
-                if (cursor != null && cursor.moveToFirst()) {
-                    int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-                    result = cursor.getString(columnIndex);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+        // Show selected image immediately for better UX while uploading
+        Glide.with(this)
+                .load(imageUri)
+                .apply(new RequestOptions().circleCrop())
+                .into(ivProfilePicture);
 
-        // If the scheme is file or we couldn't get the path from content, use the path directly
-        if (result == null) {
-            result = uri.getPath();
-        }
-
-        return result;
+        uploadProfilePicture(imageUri, token);
+        Toast.makeText(this, "Image selected, uploading...", Toast.LENGTH_SHORT).show();
     }
 
     /**
@@ -482,54 +494,80 @@ public class UserProfileActivity extends AppCompatActivity {
 
                 // Create MultipartBody.Part from the temp file
                 RequestBody requestFile = RequestBody.create(MediaType.parse("image/*"), tempFile);
-                MultipartBody.Part avatarPart = MultipartBody.Part.createFormData("avatar", tempFile.getName(), requestFile);
+                MultipartBody.Part avatarPart = MultipartBody.Part.createFormData(
+                        "avatar", tempFile.getName(), requestFile);
 
                 // Call API
                 ApiService apiService = RetrofitClient.getApiService();
-                Call<ModelResponse.UserResponse> call = apiService.uploadAvatar("Bearer " + token, avatarPart);
+                Call<ModelResponse.UserResponse> call = apiService.uploadAvatar(BEARER_PREFIX + token, avatarPart);
 
                 call.enqueue(new Callback<ModelResponse.UserResponse>() {
                     @Override
-                    public void onResponse(Call<ModelResponse.UserResponse> call, Response<ModelResponse.UserResponse> response) {
-                        if (response.isSuccessful() && response.body() != null) {
-                            Toast.makeText(UserProfileActivity.this, "Profile picture updated!", Toast.LENGTH_SHORT).show();
-
-                            // Reload entire user data after successful avatar update
-                            loadUserData();
-                        } else {
-                            Toast.makeText(UserProfileActivity.this,
-                                    "Upload failed: " + (response.message() != null ? response.message() : "Unknown error"),
-                                    Toast.LENGTH_SHORT).show();
-
-                            // If upload failed, revert to previous avatar
-                            loadProfileAvatar(currentAvatarUrl);
-
-                            // Hide loading overlay
-                            showLoading(false);
-                        }
+                    public void onResponse(Call<ModelResponse.UserResponse> call,
+                                           Response<ModelResponse.UserResponse> response) {
+                        handleAvatarUploadResponse(response);
                     }
 
                     @Override
                     public void onFailure(Call<ModelResponse.UserResponse> call, Throwable t) {
-                        Toast.makeText(UserProfileActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-
-                        // If upload failed, revert to previous avatar
-                        loadProfileAvatar(currentAvatarUrl);
-
-                        // Hide loading overlay
-                        showLoading(false);
+                        handleAvatarUploadFailure(t);
                     }
                 });
             }
         } catch (IOException e) {
-            e.printStackTrace();
-            Toast.makeText(this, "Error processing image: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            handleImageProcessingError(e);
+        }
+    }
 
-            // If there was an error, revert to previous avatar
+    /**
+     * Handle API response for avatar upload
+     */
+    private void handleAvatarUploadResponse(Response<ModelResponse.UserResponse> response) {
+        if (response.isSuccessful() && response.body() != null) {
+            Toast.makeText(UserProfileActivity.this, "Profile picture updated!", Toast.LENGTH_SHORT).show();
+            // Reload entire user data after successful avatar update
+            loadUserData();
+        } else {
+            String errorMsg = response.message() != null ? response.message() : "Unknown error";
+            Toast.makeText(UserProfileActivity.this, "Upload failed: " + errorMsg, Toast.LENGTH_SHORT).show();
+            Log.e(TAG, "Avatar upload failed: " + response.code() + " " + errorMsg);
+
+            // If upload failed, revert to previous avatar
             loadProfileAvatar(currentAvatarUrl);
-
-            // Hide loading overlay
             showLoading(false);
         }
+    }
+
+    /**
+     * Handle API failure for avatar upload
+     */
+    private void handleAvatarUploadFailure(Throwable t) {
+        Toast.makeText(UserProfileActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+        Log.e(TAG, "Avatar upload network failure", t);
+
+        // If upload failed, revert to previous avatar
+        loadProfileAvatar(currentAvatarUrl);
+        showLoading(false);
+    }
+
+    /**
+     * Handle image processing error
+     */
+    private void handleImageProcessingError(Exception e) {
+        e.printStackTrace();
+        Toast.makeText(this, "Error processing image: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        Log.e(TAG, "Error processing image", e);
+
+        // If there was an error, revert to previous avatar
+        loadProfileAvatar(currentAvatarUrl);
+        showLoading(false);
+    }
+
+    /**
+     * Callback interface for user information retrieval
+     */
+    public interface UserInfoCallback {
+        void onSuccess(String name, String email, String dateOfBirth, String country, String avatarUrl);
+        void onError(String errorMessage);
     }
 }

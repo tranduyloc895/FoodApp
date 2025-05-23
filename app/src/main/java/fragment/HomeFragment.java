@@ -1,32 +1,31 @@
 package fragment;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.util.Log;
-import android.widget.Toast;
-import android.widget.TextView;
-import android.content.Intent;
 import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
-import adapter.Common_RecipeAdapter;
-import adapter.New_RecipeAdapter;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
+import com.example.appfood.AddRecipeActivity;
 import com.example.appfood.MainActivity;
 import com.example.appfood.MainRecipe;
 import com.example.appfood.R;
 import com.example.appfood.UserProfileActivity;
-import com.example.appfood.AddRecipeActivity;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
@@ -35,6 +34,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import adapter.CommonRecipeAdapter;
+import adapter.NewRecipeAdapter;
 import api.ApiService;
 import api.ModelResponse;
 import api.RetrofitClient;
@@ -44,80 +45,182 @@ import retrofit2.Response;
 
 /**
  * HomeFragment displays lists of common and new recipes.
- * Handles loading data from API and updating RecyclerViews.
  */
 public class HomeFragment extends Fragment {
     private static final String TAG = "HomeFragment";
+    private static final String BEARER_PREFIX = "Bearer ";
     private static final int MAX_RECIPES_TO_DISPLAY = 10;
-    private RecyclerView recyclerView_common, recyclerView_new;
-    private Common_RecipeAdapter adapter_common;
-    private New_RecipeAdapter adapter_new;
-    private List<ModelResponse.RecipeResponse.Recipe> recipeList_common, recipeList_new;
-    private String token;
+
+    // UI Components
+    private RecyclerView rvCommonRecipes, rvNewRecipes;
     private TextView tvGreeting;
     private ImageView ivProfile;
     private FloatingActionButton fabAddRecipe;
-
-    // Loading overlay
     private View loadingOverlay;
 
-    // Counters for tracking loading state
+    // Data
+    private List<ModelResponse.RecipeResponse.Recipe> commonRecipeList, newRecipeList;
+    private CommonRecipeAdapter commonRecipeAdapter;
+    private NewRecipeAdapter newRecipeAdapter;
+    private String token;
+    private Map<String, Boolean> savedRecipesMap = new HashMap<>();
+
+    // Loading state tracking
     private AtomicInteger pendingLoads = new AtomicInteger(0);
     private boolean initialLoadComplete = false;
 
-    // Map to store saved recipes
-    private Map<String, Boolean> savedRecipesMap = new HashMap<>();
-
-
-    /**
-     * Inflates the fragment layout and initializes UI elements.
-     */
+    @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_home, container, false);
 
-        // Get token from activity
-        token = getActivity().getIntent().getStringExtra("token");
-        if (token == null || token.isEmpty()) {
-            Toast.makeText(requireContext(), "Token không hợp lệ!", Toast.LENGTH_SHORT).show();
+        if (!extractToken()) {
+            // Return early if token is invalid
             return view;
         }
 
-        // Initialize loading overlay
-        loadingOverlay = view.findViewById(R.id.loading_overlay);
-
+        // Initialize views and data
         initViews(view);
 
-        // Load saved recipes before initializing RecyclerViews
-        loadSavedRecipes(() -> {
-            // Initialize RecyclerViews after we've loaded saved recipes
-            initRecyclerViews(view);
-
-            // Show loading before initial data fetch
-            showLoading();
-            loadRecipeData();
-        });
+        // Start loading data
+        startInitialDataLoad(view);
 
         return view;
     }
 
     /**
-     * Loads saved recipes from user info
+     * Extracts token from activity intent
+     * @return true if token is valid, false otherwise
+     */
+    private boolean extractToken() {
+        if (getActivity() == null) return false;
+
+        token = getActivity().getIntent().getStringExtra("token");
+        if (token == null || token.isEmpty()) {
+            Toast.makeText(requireContext(), "Invalid token!", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        // Save token to shared preferences for backup access
+        saveTokenToPreferences();
+        return true;
+    }
+
+    /**
+     * Saves token to shared preferences
+     */
+    private void saveTokenToPreferences() {
+        requireContext().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                .edit()
+                .putString("token", token)
+                .apply();
+    }
+
+    /**
+     * Starts the initial data loading sequence
+     */
+    private void startInitialDataLoad(View view) {
+        // Initialize loading overlay
+        loadingOverlay = view.findViewById(R.id.loading_overlay);
+        showLoading();
+
+        // Load saved recipes first, then initialize everything else
+        loadSavedRecipes(() -> {
+            initRecyclerViews(view);
+            loadRecipeData();
+        });
+    }
+
+    /**
+     * Initializes UI elements
+     */
+    private void initViews(View view) {
+        tvGreeting = view.findViewById(R.id.tv_greeting);
+        ivProfile = view.findViewById(R.id.iv_profile);
+        fabAddRecipe = view.findViewById(R.id.fab_add);
+
+        setupProfileUI();
+        setupScrollListener(view);
+        setupAddRecipeButton();
+    }
+
+    /**
+     * Sets up profile UI elements and interactions
+     */
+    private void setupProfileUI() {
+        handleGreeting();
+
+        // Set up profile image click listener
+        if (ivProfile != null) {
+            ivProfile.setOnClickListener(v -> navigateToUserProfile());
+        }
+    }
+
+    /**
+     * Navigates to user profile activity
+     */
+    private void navigateToUserProfile() {
+        Intent intent = new Intent(requireContext(), UserProfileActivity.class);
+        intent.putExtra("token", token);
+        startActivity(intent);
+    }
+
+    /**
+     * Sets up Add Recipe button
+     */
+    private void setupAddRecipeButton() {
+        if (fabAddRecipe != null) {
+            fabAddRecipe.setOnClickListener(v -> {
+                Intent intent = new Intent(requireContext(), AddRecipeActivity.class);
+                intent.putExtra("token", token);
+                startActivity(intent);
+            });
+        }
+    }
+
+    /**
+     * Initializes RecyclerViews for both recipe types
+     */
+    private void initRecyclerViews(View view) {
+        // Common recipes RecyclerView
+        rvCommonRecipes = view.findViewById(R.id.rv_common_recipe);
+        rvCommonRecipes.setHasFixedSize(true);
+        commonRecipeList = new ArrayList<>();
+        commonRecipeAdapter = new CommonRecipeAdapter(requireContext(), commonRecipeList,
+                this::navigateToRecipeDetails, this);
+        rvCommonRecipes.setAdapter(commonRecipeAdapter);
+
+        // New recipes RecyclerView
+        rvNewRecipes = view.findViewById(R.id.rv_new_recipe);
+        rvNewRecipes.setHasFixedSize(true);
+        newRecipeList = new ArrayList<>();
+        newRecipeAdapter = new NewRecipeAdapter(requireContext(), newRecipeList,
+                this::navigateToRecipeDetails, token);
+        rvNewRecipes.setAdapter(newRecipeAdapter);
+    }
+
+    /**
+     * Loads saved recipe IDs for the current user
      */
     private void loadSavedRecipes(Runnable onComplete) {
-        registerPendingLoad(); // Register saved recipes load
+        registerPendingLoad();
 
         ApiService apiService = RetrofitClient.getApiService();
-        Call<ModelResponse.UserResponse> call = apiService.getUserInfo("Bearer " + token);
+        Call<ModelResponse.UserResponse> call = apiService.getUserInfo(BEARER_PREFIX + token);
 
         call.enqueue(new Callback<ModelResponse.UserResponse>() {
             @Override
-            public void onResponse(Call<ModelResponse.UserResponse> call, Response<ModelResponse.UserResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
+            public void onResponse(@NonNull Call<ModelResponse.UserResponse> call,
+                                   @NonNull Response<ModelResponse.UserResponse> response) {
+                if (response.isSuccessful() && response.body() != null &&
+                        response.body().getData() != null &&
+                        response.body().getData().getUser() != null) {
+
                     ModelResponse.UserResponse.User user = response.body().getData().getUser();
                     List<String> savedRecipes = user.getSavedRecipes();
 
-                    // Clear and update saved recipes map
+                    // Update saved recipes map
                     savedRecipesMap.clear();
                     if (savedRecipes != null) {
                         for (String recipeId : savedRecipes) {
@@ -130,207 +233,64 @@ public class HomeFragment extends Fragment {
                     Log.e(TAG, "Error loading saved recipes: " + response.code());
                 }
 
-                completeLoad(); // Complete saved recipes load
-                onComplete.run(); // Continue initialization
+                completeLoad();
+                onComplete.run();
             }
 
             @Override
-            public void onFailure(Call<ModelResponse.UserResponse> call, Throwable t) {
+            public void onFailure(@NonNull Call<ModelResponse.UserResponse> call, @NonNull Throwable t) {
                 Log.e(TAG, "Failed to load saved recipes: " + t.getMessage());
-                completeLoad(); // Complete saved recipes load despite error
-                onComplete.run(); // Continue initialization
+                completeLoad();
+                onComplete.run();
             }
         });
     }
 
     /**
-     * Called when the fragment is visible to the user.
-     * Reloads recipe data to ensure it is up-to-date.
+     * Handles loading the user greeting with name and avatar
      */
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (initialLoadComplete) {
-            // Show loading when refreshing data
-            showLoading();
-
-            // Reset counter before starting new loads
-            pendingLoads.set(0);
-
-            // Load saved recipes first, then refresh other data
-            loadSavedRecipes(() -> {
-                // Load recipe data after refreshing saved recipes list
-                loadRecipeData();
-
-                // Update user profile without changing the loading message
-                refreshUserProfile(token);
-            });
-        }
-    }
-
-    /**
-     * Show loading overlay
-     */
-    private void showLoading() {
-        if (loadingOverlay != null) {
-            loadingOverlay.setVisibility(View.VISIBLE);
-        }
-    }
-
-    /**
-     * Hide loading overlay
-     */
-    private void hideLoading() {
-        if (loadingOverlay != null && isAdded()) {
-            loadingOverlay.setVisibility(View.GONE);
-        }
-    }
-
-    /**
-     * Register a pending load operation
-     */
-    private void registerPendingLoad() {
-        pendingLoads.incrementAndGet();
-        showLoading(); // Show loading when registering a new load
-    }
-
-    /**
-     * Complete a loading operation and hide overlay if all are done
-     */
-    private void completeLoad() {
-        if (pendingLoads.decrementAndGet() <= 0) {
-            initialLoadComplete = true;
-            hideLoading(); // Hide loading when all loads are complete
-        }
-    }
-
-    /**
-     * Refreshes user profile without changing the loading message
-     */
-    private void refreshUserProfile(String token) {
+    private void handleGreeting() {
         if (token != null) {
-            registerPendingLoad(); // Register user info load
+            registerPendingLoad();
 
-            getUserInfo(token, new OnUserInfoCallback() {
+            getUserInfo(new UserInfoCallback() {
                 @Override
-                public void onUserInfoReceived(String name, String email, String dateOfBirth, String country, String url_avatar) {
-                    tvGreeting.setText("Hello, " + name + "!");
-                    loadProfileImage(url_avatar);
-                    completeLoad(); // Complete user info load
-                }
-
-                @Override
-                public void onError(String errorMessage) {
-                    // Don't change greeting if it fails on refresh
-                    Log.e(TAG, "Error refreshing user profile: " + errorMessage);
-                    completeLoad(); // Complete user info load despite error
-                }
-            });
-        }
-    }
-
-    /**
-     * Initializes view references.
-     */
-    private void initViews(View view) {
-        tvGreeting = view.findViewById(R.id.tv_greeting);
-        ivProfile = view.findViewById(R.id.iv_profile);
-        fabAddRecipe = view.findViewById(R.id.fab_add);
-
-        handleGreeting(token);
-        setupProfileClick(token);
-
-        // Set up scroll listener for navigation bar hide/show
-        setupScrollListener(view);
-
-        // Set up Add Recipe FAB if it exists
-        if (fabAddRecipe != null) {
-            fabAddRecipe.setOnClickListener(v -> {
-                Intent intent = new Intent(requireContext(), AddRecipeActivity.class);
-                intent.putExtra("token", token);
-                startActivity(intent);
-            });
-        }
-    }
-
-    /**
-     * Initializes RecyclerViews and their adapters for common and new recipes.
-     */
-    private void initRecyclerViews(View view) {
-        recyclerView_common = view.findViewById(R.id.rv_common_recipe);
-        recyclerView_common.setHasFixedSize(true);
-        recipeList_common = new ArrayList<>();
-        adapter_common = new Common_RecipeAdapter(requireContext(), recipeList_common, this::navigateToRecipeDetails, this);
-        recyclerView_common.setAdapter(adapter_common);
-        recyclerView_common.setLayoutManager(new GridLayoutManager(requireContext(), 1));
-
-        recyclerView_new = view.findViewById(R.id.rv_new_recipe);
-        recyclerView_new.setHasFixedSize(true);
-        recipeList_new = new ArrayList<>();
-
-        // Pass the token to the New_RecipeAdapter constructor
-        adapter_new = new New_RecipeAdapter(requireContext(), recipeList_new, this::navigateToRecipeDetails, token);
-
-        recyclerView_new.setAdapter(adapter_new);
-        recyclerView_new.setLayoutManager(new GridLayoutManager(requireContext(), 2));
-
-        // Save token to shared preferences for backup access
-        requireContext().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-                .edit()
-                .putString("token", token)
-                .apply();
-    }
-
-    /**
-     * Handles the greeting logic: fetches user info and displays greeting.
-     */
-    private void handleGreeting(String token) {
-        if (token != null) {
-            registerPendingLoad(); // Register user info load
-
-            getUserInfo(token, new OnUserInfoCallback() {
-                @Override
-                public void onUserInfoReceived(String name, String email, String dateOfBirth, String country, String url_avatar) {
+                public void onSuccess(String name, String email, String dateOfBirth,
+                                      String country, String avatarUrl) {
                     if (isAdded()) {
                         tvGreeting.setText("Hello, " + name + "!");
-
-                        // Load avatar image using Glide
-                        loadProfileImage(url_avatar);
+                        loadProfileImage(avatarUrl);
                     }
-                    completeLoad(); // Complete user info load
+                    completeLoad();
                 }
 
                 @Override
                 public void onError(String errorMessage) {
                     if (isAdded()) {
-                        tvGreeting.setText("Hello there!");
-                        // Set default avatar on error
+                        tvGreeting.setText("Hello, Welcome!");
                         ivProfile.setImageResource(R.drawable.ic_profile);
                         Log.e(TAG, "Error loading user info: " + errorMessage);
                     }
-                    completeLoad(); // Complete user info load despite error
+                    completeLoad();
                 }
             });
         } else {
-            tvGreeting.setText("Hello there!");
-            // Set default avatar if token is missing
+            tvGreeting.setText("Hello, Welcome!");
             ivProfile.setImageResource(R.drawable.ic_profile);
         }
     }
 
     /**
-     * Loads the user's profile image into the ivProfile ImageView.
-     * Uses the special case for "helenrecipes" user.
+     * Loads the user's profile image
      */
     private void loadProfileImage(String avatarUrl) {
         if (!isAdded() || getContext() == null) return;
 
         if (avatarUrl != null && !avatarUrl.isEmpty()) {
-            // Check if this is helenrecipes (special case)
+            // Special case for helenrecipes
             if (avatarUrl.contains("helenrecipes")) {
                 ivProfile.setImageResource(R.drawable.ic_helen);
             } else {
-                // Load avatar using Glide
                 Glide.with(this)
                         .load(avatarUrl)
                         .apply(new RequestOptions()
@@ -340,24 +300,43 @@ public class HomeFragment extends Fragment {
                         .into(ivProfile);
             }
         } else {
-            // Set default avatar if URL is empty
             ivProfile.setImageResource(R.drawable.ic_profile);
         }
     }
 
     /**
-     * Sets up the profile image click to open UserProfileActivity.
+     * Sets up scroll listener for navigation bar visibility
      */
-    private void setupProfileClick(String token) {
-        ivProfile.setOnClickListener(v -> {
-            Intent intent = new Intent(requireContext(), UserProfileActivity.class);
-            intent.putExtra("token", token);
-            startActivity(intent);
-        });
+    private void setupScrollListener(View view) {
+        NestedScrollView nestedScrollView = view.findViewById(R.id.nested_scroll_view);
+        if (nestedScrollView != null) {
+            nestedScrollView.setOnScrollChangeListener(new NestedScrollView.OnScrollChangeListener() {
+                private int lastScrollY = 0;
+                private static final int SCROLL_THRESHOLD = 15;
+
+                @Override
+                public void onScrollChange(NestedScrollView v, int scrollX, int scrollY,
+                                           int oldScrollX, int oldScrollY) {
+                    // Scroll down - hide navigation bar
+                    if (scrollY > lastScrollY && scrollY - lastScrollY > SCROLL_THRESHOLD) {
+                        if (getActivity() instanceof MainActivity) {
+                            ((MainActivity) getActivity()).hideNavigationBar();
+                        }
+                    }
+                    // Scroll up - show navigation bar
+                    else if (scrollY < lastScrollY && lastScrollY - scrollY > SCROLL_THRESHOLD) {
+                        if (getActivity() instanceof MainActivity) {
+                            ((MainActivity) getActivity()).showNavigationBar();
+                        }
+                    }
+                    lastScrollY = scrollY;
+                }
+            });
+        }
     }
 
     /**
-     * Navigate to recipe details screen with recipe ID and token.
+     * Navigate to recipe details screen
      */
     private void navigateToRecipeDetails(String recipeId) {
         Intent intent = new Intent(requireContext(), MainRecipe.class);
@@ -367,7 +346,7 @@ public class HomeFragment extends Fragment {
     }
 
     /**
-     * Loads recipe data from the API for both common and new recipes.
+     * Loads all recipe data
      */
     private void loadRecipeData() {
         loadCommonRecipes();
@@ -375,140 +354,142 @@ public class HomeFragment extends Fragment {
     }
 
     /**
-     * Fetches user information from the API.
-     */
-    public void getUserInfo(String token, OnUserInfoCallback callback) {
-        ApiService apiService = RetrofitClient.getApiService();
-        Call<ModelResponse.UserResponse> call = apiService.getUserInfo("Bearer " + token);
-
-        call.enqueue(new Callback<ModelResponse.UserResponse>() {
-            @Override
-            public void onResponse(Call<ModelResponse.UserResponse> call, Response<ModelResponse.UserResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    ModelResponse.UserResponse.User user = response.body().getData().getUser();
-                    String name = user.getName();
-                    String email = user.getEmail();
-                    String dateOfBirth = user.getDateOfBirth();
-                    String country = user.getCountry();
-                    String urlAvatar = user.getUrlAvatar();
-
-                    callback.onUserInfoReceived(name, email, dateOfBirth, country, urlAvatar);
-                } else {
-                    callback.onError("Response error: " + response.code());
-                }
-            }
-
-            @Override
-            public void onFailure(Call<ModelResponse.UserResponse> call, Throwable t) {
-                callback.onError("Request failed: " + t.getMessage());
-            }
-        });
-    }
-
-    /**
-     * Loads common recipes from the API and updates the corresponding RecyclerView.
+     * Loads common recipes from API
      */
     private void loadCommonRecipes() {
-        registerPendingLoad(); // Register common recipes load
+        registerPendingLoad();
 
         ApiService apiService = RetrofitClient.getApiService();
-        Call<ModelResponse.RecipeResponse> call = apiService.getRecipeLatest("Bearer " + token);
+        Call<ModelResponse.RecipeResponse> call = apiService.getRecipeLatest(BEARER_PREFIX + token);
 
         call.enqueue(new Callback<ModelResponse.RecipeResponse>() {
             @Override
-            public void onResponse(@NonNull Call<ModelResponse.RecipeResponse> call, @NonNull Response<ModelResponse.RecipeResponse> response) {
-                if (response.isSuccessful() && response.body() != null && isAdded()) {
-                    recipeList_common.clear();
-                    List<ModelResponse.RecipeResponse.Recipe> allRecipes = response.body().getData().getRecipes();
-                    List<ModelResponse.RecipeResponse.Recipe> displayRecipes =
-                            allRecipes.subList(0, Math.min(allRecipes.size(), MAX_RECIPES_TO_DISPLAY));
-                    recipeList_common.addAll(displayRecipes);
-
-                    // Fetch ratings for each recipe
-                    fetchRatingsForRecipes(apiService, recipeList_common);
-
-                    // Notify adapter of data changes
-                    adapter_common.notifyDataSetChanged();
-
-                    recyclerView_common.setLayoutManager(new GridLayoutManager(requireContext(),
-                            Math.max(1, recipeList_common.size()), GridLayoutManager.VERTICAL, false));
-
+            public void onResponse(@NonNull Call<ModelResponse.RecipeResponse> call,
+                                   @NonNull Response<ModelResponse.RecipeResponse> response) {
+                if (isSuccessfulRecipeResponse(response)) {
+                    processCommonRecipes(apiService, response.body().getData().getRecipes());
                 } else {
-                    Log.e(TAG, "Failed to load common recipes: " + (response.message() != null ? response.message() : "Unknown error"));
-                    if (isAdded()) {
-                        Toast.makeText(requireContext(), "Failed to load common recipes", Toast.LENGTH_SHORT).show();
-                    }
+                    handleRecipeLoadError("common recipes");
                 }
-                completeLoad(); // Complete common recipes load
+                completeLoad();
             }
 
             @Override
             public void onFailure(@NonNull Call<ModelResponse.RecipeResponse> call, @NonNull Throwable t) {
                 Log.e(TAG, "API Call Failed (Common): " + t.getMessage());
-                if (isAdded()) {
-                    Toast.makeText(requireContext(), "Failed to load common recipes", Toast.LENGTH_SHORT).show();
-                }
-                completeLoad(); // Complete common recipes load despite error
+                handleRecipeLoadError("common recipes");
+                completeLoad();
             }
         });
     }
 
     /**
-     * Loads new recipes from the API and updates the corresponding RecyclerView.
+     * Loads new recipes from API
      */
     private void loadNewRecipes() {
-        registerPendingLoad(); // Register new recipes load
+        registerPendingLoad();
 
         ApiService apiService = RetrofitClient.getApiService();
-        Call<ModelResponse.RecipeResponse> call = apiService.getRecipeLatest("Bearer " + token);
+        Call<ModelResponse.RecipeResponse> call = apiService.getRecipeLatest(BEARER_PREFIX + token);
 
         call.enqueue(new Callback<ModelResponse.RecipeResponse>() {
             @Override
-            public void onResponse(@NonNull Call<ModelResponse.RecipeResponse> call, @NonNull Response<ModelResponse.RecipeResponse> response) {
-                if (response.isSuccessful() && response.body() != null && isAdded()) {
-                    recipeList_new.clear();
-                    List<ModelResponse.RecipeResponse.Recipe> allRecipes = response.body().getData().getRecipes();
-                    List<ModelResponse.RecipeResponse.Recipe> displayRecipes =
-                            allRecipes.subList(0, Math.min(allRecipes.size(), MAX_RECIPES_TO_DISPLAY));
-                    recipeList_new.addAll(displayRecipes);
-
-                    // Fetch ratings for each recipe
-                    fetchRatingsForRecipes(apiService, recipeList_new);
-
-                    // Notify adapter of data changes
-                    adapter_new.notifyDataSetChanged();
-
-                    int spanCount = Math.max(1, recipeList_new.size());
-                    recyclerView_new.setLayoutManager(new GridLayoutManager(requireContext(),
-                            spanCount, GridLayoutManager.VERTICAL, false));
-
+            public void onResponse(@NonNull Call<ModelResponse.RecipeResponse> call,
+                                   @NonNull Response<ModelResponse.RecipeResponse> response) {
+                if (isSuccessfulRecipeResponse(response)) {
+                    processNewRecipes(apiService, response.body().getData().getRecipes());
                 } else {
-                    Log.e(TAG, "Failed to load new recipes: " + (response.message() != null ? response.message() : "Unknown error"));
-                    if (isAdded()) {
-                        Toast.makeText(requireContext(), "Failed to load new recipes", Toast.LENGTH_SHORT).show();
-                    }
+                    handleRecipeLoadError("new recipes");
                 }
-                completeLoad(); // Complete new recipes load
+                completeLoad();
             }
 
             @Override
             public void onFailure(@NonNull Call<ModelResponse.RecipeResponse> call, @NonNull Throwable t) {
                 Log.e(TAG, "API Call Failed (New): " + t.getMessage());
-                if (isAdded()) {
-                    Toast.makeText(requireContext(), "Failed to load new recipes", Toast.LENGTH_SHORT).show();
-                }
-                completeLoad(); // Complete new recipes load despite error
+                handleRecipeLoadError("new recipes");
+                completeLoad();
             }
         });
     }
 
     /**
-     * Fetches ratings for a list of recipes and updates their rating values.
-     * @param apiService The API service to use for requests
-     * @param recipes The list of recipes to fetch ratings for
+     * Checks if recipe response is successful and contains required data
+     */
+    private boolean isSuccessfulRecipeResponse(Response<ModelResponse.RecipeResponse> response) {
+        return response.isSuccessful() &&
+                response.body() != null &&
+                response.body().getData() != null &&
+                response.body().getData().getRecipes() != null &&
+                isAdded();
+    }
+
+    /**
+     * Handles error when loading recipes
+     */
+    private void handleRecipeLoadError(String recipeType) {
+        Log.e(TAG, "Failed to load " + recipeType);
+        if (isAdded()) {
+            Toast.makeText(requireContext(), "Failed to load " + recipeType, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * Processes retrieved common recipes
+     */
+    private void processCommonRecipes(ApiService apiService, List<ModelResponse.RecipeResponse.Recipe> recipes) {
+        commonRecipeList.clear();
+        List<ModelResponse.RecipeResponse.Recipe> displayRecipes =
+                recipes.subList(0, Math.min(recipes.size(), MAX_RECIPES_TO_DISPLAY));
+        commonRecipeList.addAll(displayRecipes);
+
+        // Fetch ratings for each recipe
+        fetchRatingsForRecipes(apiService, commonRecipeList);
+
+        // Update RecyclerView
+        commonRecipeAdapter.notifyDataSetChanged();
+        updateCommonRecipesLayout();
+    }
+
+    /**
+     * Updates layout for common recipes recycler view
+     */
+    private void updateCommonRecipesLayout() {
+        int spanCount = Math.max(1, commonRecipeList.size());
+        rvCommonRecipes.setLayoutManager(new GridLayoutManager(requireContext(),
+                spanCount, GridLayoutManager.VERTICAL, false));
+    }
+
+    /**
+     * Processes retrieved new recipes
+     */
+    private void processNewRecipes(ApiService apiService, List<ModelResponse.RecipeResponse.Recipe> recipes) {
+        newRecipeList.clear();
+        List<ModelResponse.RecipeResponse.Recipe> displayRecipes =
+                recipes.subList(0, Math.min(recipes.size(), MAX_RECIPES_TO_DISPLAY));
+        newRecipeList.addAll(displayRecipes);
+
+        // Fetch ratings for each recipe
+        fetchRatingsForRecipes(apiService, newRecipeList);
+
+        // Update RecyclerView
+        newRecipeAdapter.notifyDataSetChanged();
+        updateNewRecipesLayout();
+    }
+
+    /**
+     * Updates layout for new recipes recycler view
+     */
+    private void updateNewRecipesLayout() {
+        int spanCount = Math.max(1, newRecipeList.size());
+        rvNewRecipes.setLayoutManager(new GridLayoutManager(requireContext(),
+                1, GridLayoutManager.VERTICAL, false));
+    }
+
+    /**
+     * Fetches detailed ratings for recipes
      */
     private void fetchRatingsForRecipes(ApiService apiService, List<ModelResponse.RecipeResponse.Recipe> recipes) {
-        // Register a batch load for all rating requests
         int recipeCount = recipes.size();
         if (recipeCount > 0) {
             registerPendingLoad();
@@ -518,22 +499,24 @@ public class HomeFragment extends Fragment {
 
         for (ModelResponse.RecipeResponse.Recipe recipe : recipes) {
             String recipeId = recipe.getId();
-            Call<ModelResponse.RecipeDetailResponse> ratingCall = apiService.getRecipeDetail("Bearer " + token, recipeId);
+            Call<ModelResponse.RecipeDetailResponse> ratingCall =
+                    apiService.getRecipeDetail(BEARER_PREFIX + token, recipeId);
 
             ratingCall.enqueue(new Callback<ModelResponse.RecipeDetailResponse>() {
                 @Override
-                public void onResponse(@NonNull Call<ModelResponse.RecipeDetailResponse> call, @NonNull Response<ModelResponse.RecipeDetailResponse> response) {
-                    if (response.isSuccessful() && response.body() != null && isAdded()) {
-                        ModelResponse.RecipeDetailResponse.Recipe detailedRecipe = response.body().getData().getRecipe();
-                        double averageRating = detailedRecipe.getAverageRating();
+                public void onResponse(@NonNull Call<ModelResponse.RecipeDetailResponse> call,
+                                       @NonNull Response<ModelResponse.RecipeDetailResponse> response) {
+                    if (response.isSuccessful() && response.body() != null &&
+                            response.body().getData() != null &&
+                            response.body().getData().getRecipe() != null &&
+                            isAdded()) {
+
+                        ModelResponse.RecipeDetailResponse.Recipe detailedRecipe =
+                                response.body().getData().getRecipe();
                         recipe.setRating(detailedRecipe.getRatings());
 
-                        // Notify adapter of data change
-                        if (recipeList_common.contains(recipe)) {
-                            adapter_common.notifyDataSetChanged();
-                        } else if (recipeList_new.contains(recipe)) {
-                            adapter_new.notifyDataSetChanged();
-                        }
+                        // Notify appropriate adapter
+                        notifyAdapterForRecipe(recipe);
                     } else {
                         Log.e(TAG, "Failed to get details for Recipe ID: " + recipeId);
                     }
@@ -558,72 +541,166 @@ public class HomeFragment extends Fragment {
     }
 
     /**
-     * Callback interface for receiving user information or error from getUserInfo.
+     * Notifies the appropriate adapter when a recipe is updated
      */
-    public interface OnUserInfoCallback {
-        /**
-         * Called when user information is successfully received.
-         *
-         * @param name         The user's name.
-         * @param email        The user's email.
-         * @param dateOfBirth  The user's date of birth.
-         * @param country      The user's country.
-         * @param url_avatar   The user's avatar URL.
-         */
-        void onUserInfoReceived(String name, String email, String dateOfBirth, String country, String url_avatar);
-
-        /**
-         * Called when there is an error fetching user information.
-         *
-         * @param errorMessage The error message.
-         */
-        void onError(String errorMessage);
+    private void notifyAdapterForRecipe(ModelResponse.RecipeResponse.Recipe recipe) {
+        if (commonRecipeList.contains(recipe)) {
+            commonRecipeAdapter.notifyDataSetChanged();
+        } else if (newRecipeList.contains(recipe)) {
+            newRecipeAdapter.notifyDataSetChanged();
+        }
     }
 
     /**
-     * Method to check if a recipe is saved
+     * Fetches user info from API
+     */
+    private void getUserInfo(UserInfoCallback callback) {
+        ApiService apiService = RetrofitClient.getApiService();
+        Call<ModelResponse.UserResponse> call = apiService.getUserInfo(BEARER_PREFIX + token);
+
+        call.enqueue(new Callback<ModelResponse.UserResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<ModelResponse.UserResponse> call,
+                                   @NonNull Response<ModelResponse.UserResponse> response) {
+                if (response.isSuccessful() && response.body() != null &&
+                        response.body().getData() != null &&
+                        response.body().getData().getUser() != null) {
+
+                    ModelResponse.UserResponse.User user = response.body().getData().getUser();
+                    callback.onSuccess(
+                            user.getName(),
+                            user.getEmail(),
+                            user.getDateOfBirth(),
+                            user.getCountry(),
+                            user.getUrlAvatar()
+                    );
+                } else {
+                    callback.onError("Response error: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ModelResponse.UserResponse> call, @NonNull Throwable t) {
+                callback.onError("Request failed: " + t.getMessage());
+            }
+        });
+    }
+
+    /**
+     * Called when fragment resumes to refresh data
+     */
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (initialLoadComplete) {
+            refreshData();
+        }
+    }
+
+    /**
+     * Refreshes all data
+     */
+    private void refreshData() {
+        showLoading();
+        pendingLoads.set(0); // Reset counter
+
+        // Refresh data in sequence
+        loadSavedRecipes(() -> {
+            loadRecipeData();
+            refreshUserProfile();
+        });
+    }
+
+    /**
+     * Refreshes user profile information
+     */
+    private void refreshUserProfile() {
+        registerPendingLoad();
+
+        getUserInfo(new UserInfoCallback() {
+            @Override
+            public void onSuccess(String name, String email, String dateOfBirth,
+                                  String country, String avatarUrl) {
+                if (isAdded()) {
+                    tvGreeting.setText("Hello, " + name + "!");
+                    loadProfileImage(avatarUrl);
+                }
+                completeLoad();
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                // Keep existing greeting on refresh error
+                Log.e(TAG, "Error refreshing user profile: " + errorMessage);
+                completeLoad();
+            }
+        });
+    }
+
+    /**
+     * Shows loading overlay
+     */
+    private void showLoading() {
+        if (loadingOverlay != null) {
+            loadingOverlay.setVisibility(View.VISIBLE);
+        }
+    }
+
+    /**
+     * Hides loading overlay
+     */
+    private void hideLoading() {
+        if (loadingOverlay != null && isAdded()) {
+            loadingOverlay.setVisibility(View.GONE);
+        }
+    }
+
+    /**
+     * Registers a pending load operation
+     */
+    private void registerPendingLoad() {
+        pendingLoads.incrementAndGet();
+        showLoading();
+    }
+
+    /**
+     * Completes a loading operation and hides overlay if all are done
+     */
+    private void completeLoad() {
+        if (pendingLoads.decrementAndGet() <= 0) {
+            initialLoadComplete = true;
+            hideLoading();
+        }
+    }
+
+    /**
+     * Checks if a recipe is saved by current user
      */
     public boolean isRecipeSaved(String recipeId) {
         return savedRecipesMap.containsKey(recipeId) && savedRecipesMap.get(recipeId);
     }
 
     /**
-     * Method to update saved recipe status
+     * Updates saved status for a recipe
      */
     public void updateSavedRecipeStatus(String recipeId, boolean isSaved) {
         savedRecipesMap.put(recipeId, isSaved);
 
-        // Notify adapters of the change
-        adapter_common.notifyDataSetChanged();
-        adapter_new.notifyDataSetChanged();
+        // Notify adapters about the change
+        if (commonRecipeAdapter != null) {
+            commonRecipeAdapter.notifyDataSetChanged();
+        }
+
+        if (newRecipeAdapter != null) {
+            newRecipeAdapter.notifyDataSetChanged();
+        }
     }
 
-    private void setupScrollListener(View view) {
-        NestedScrollView nestedScrollView = view.findViewById(R.id.nested_scroll_view);
-        if (nestedScrollView != null) {
-            nestedScrollView.setOnScrollChangeListener(new NestedScrollView.OnScrollChangeListener() {
-                private int lastScrollY = 0;
-
-                @Override
-                public void onScrollChange(NestedScrollView v, int scrollX, int scrollY,
-                                           int oldScrollX, int oldScrollY) {
-                    // Scroll down (user swipes up)
-                    if (scrollY > lastScrollY && scrollY - lastScrollY > 15) {
-                        // Hide navigation bar
-                        if (getActivity() instanceof MainActivity) {
-                            ((MainActivity) getActivity()).hideNavigationBar();
-                        }
-                    }
-                    // Scroll up (user swipes down)
-                    else if (scrollY < lastScrollY && lastScrollY - scrollY > 15) {
-                        // Show navigation bar
-                        if (getActivity() instanceof MainActivity) {
-                            ((MainActivity) getActivity()).showNavigationBar();
-                        }
-                    }
-                    lastScrollY = scrollY;
-                }
-            });
-        }
+    /**
+     * Callback interface for user info
+     */
+    public interface UserInfoCallback {
+        void onSuccess(String name, String email, String dateOfBirth, String country, String avatarUrl);
+        void onError(String errorMessage);
     }
 }

@@ -11,7 +11,7 @@
         android:id="@+id/ll_recipe_latest"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:orientation="horizontal">
 
         <FrameLayout
             android:layout_width="match_parent"
@@ -61,15 +61,15 @@
                         android:id="@+id/ratingBar_new"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:numStars="5"
-                        android:stepSize="0.5"
+                        android:layout_marginStart="-20dp"
+                        android:layout_marginTop="8dp"
                         android:isIndicator="true"
+                        android:numStars="5"
+                        android:progressTint="@color/orange"
                         android:rating="0"
                         android:scaleX="0.7"
                         android:scaleY="0.7"
-                        android:layout_marginTop="8dp"
-                        android:layout_marginStart="-20dp"
-                        android:progressTint="@color/orange"/>
+                        android:stepSize="0.5" />
 
                 </LinearLayout>
 

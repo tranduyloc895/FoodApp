@@ -237,6 +237,18 @@
                 </LinearLayout>
             </HorizontalScrollView>
 
+            <!-- New Recipe Section -->
+            <TextView
+                android:id="@+id/tv_common_recipes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Reccomment for you"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:layout_marginTop="14dp"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"/>
+
             <!-- Common Recipe Section -->
             <HorizontalScrollView
                 android:id="@+id/common_recipe"
@@ -270,6 +282,7 @@
                 android:text="New Recipes"
                 android:textSize="20sp"
                 android:textStyle="bold"
+                android:layout_marginTop="14dp"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"/>
 
@@ -281,9 +294,9 @@
 
                 <LinearLayout
                     android:id="@+id/ll_new_recipe"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:orientation="horizontal">
+                    android:orientation="vertical">
 
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/rv_new_recipe"
