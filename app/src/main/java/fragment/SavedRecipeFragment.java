@@ -105,6 +105,7 @@ public class SavedRecipeFragment extends Fragment {
         loadSavedRecipes();
     }
 
+
     /**
      * Show loading overlay
      */
@@ -158,29 +159,87 @@ public class SavedRecipeFragment extends Fragment {
                         // Process recipes to get author names
                         processRecipesForAuthorNames(savedRecipes);
 
+                        // NEW: Fetch ratings for all recipes
+                        fetchRatingsForRecipes(savedRecipes);
+
                         if (savedRecipes.isEmpty()) {
                             showEmptyState();
                         }
                     } else {
-                        Log.e(TAG, "Response data or recipes is null");
-                        showError("Không có dữ liệu công thức");
+                        // Existing error handling...
                     }
                 } else {
-                    int errorCode = response.code();
-                    Log.e(TAG, "API error: " + errorCode);
-                    showError("Không thể tải danh sách công thức đã lưu (Mã: " + errorCode + ")");
+                    // Existing error handling...
                 }
             }
 
             @Override
             public void onFailure(Call<ModelResponse.RecipeResponse> call, Throwable t) {
-                // Hide loading on failure
-                hideLoading();
-
-                Log.e(TAG, "API call failed", t);
-                showError("Lỗi kết nối: " + t.getMessage());
+                // Existing failure handling...
             }
         });
+    }
+
+    /**
+     * Fetch ratings for a list of recipes
+     * @param recipes List of recipes to get ratings for
+     */
+    private void fetchRatingsForRecipes(List<ModelResponse.RecipeResponse.Recipe> recipes) {
+        if (recipes == null || recipes.isEmpty()) {
+            return;
+        }
+
+        ApiService apiService = RetrofitClient.getApiService();
+
+        for (ModelResponse.RecipeResponse.Recipe recipe : recipes) {
+            String recipeId = recipe.getId();
+
+            // Don't show loading here to keep your existing loading behavior
+            Call<ModelResponse.getRatingResponse> call =
+                    apiService.getRecipeRating("Bearer " + token, recipeId);
+
+            call.enqueue(new Callback<ModelResponse.getRatingResponse>() {
+                @Override
+                public void onResponse(@NonNull Call<ModelResponse.getRatingResponse> call,
+                                       @NonNull Response<ModelResponse.getRatingResponse> response) {
+                    try {
+                        if (response.isSuccessful() && response.body() != null &&
+                                response.body().getData() != null) {
+
+                            ModelResponse.getRatingResponse.Data ratingData = response.body().getData();
+
+                            // Log the rating values for debugging
+                            Log.d(TAG, "Recipe ID: " + recipeId +
+                                    " - Title: " + recipe.getTitle() +
+                                    " - Average Rating: " + ratingData.getAverageRating() +
+                                    " - Total Ratings: " + ratingData.getTotalRatings());
+
+                            // Update recipe with rating information
+                            recipe.setAverageRating(ratingData.getAverageRating());
+
+                            // Update UI for this specific recipe
+                            if (isAdded() && adapter != null) {
+                                requireActivity().runOnUiThread(() -> {
+                                    int position = savedRecipes.indexOf(recipe);
+                                    if (position >= 0) {
+                                        adapter.notifyItemChanged(position);
+                                    }
+                                });
+                            }
+                        } else {
+                            Log.e(TAG, "Failed to get ratings for Recipe ID: " + recipeId);
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error processing rating: " + e.getMessage());
+                    }
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<ModelResponse.getRatingResponse> call, @NonNull Throwable t) {
+                    Log.e(TAG, "API Call Failed (Ratings) - Recipe ID: " + recipeId + ", Error: " + t.getMessage());
+                }
+            });
+        }
     }
 
     private void showEmptyState() {
@@ -340,5 +399,147 @@ public class SavedRecipeFragment extends Fragment {
                 Log.e(TAG, "Network error: " + t.getMessage());
             }
         });
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.d(TAG, "SavedRecipeFragment onResume called");
+
+        // Always refresh data when returning to this fragment
+        if (isAdded() && token != null && !token.isEmpty() && adapter != null) {
+            Log.d(TAG, "Refreshing saved recipes on resume");
+            refreshSavedRecipes();
+        }
+    }
+
+    /**
+     * Refresh saved recipes with fresh ratings
+     * This method ensures we get updated rating data
+     */
+    private void refreshSavedRecipes() {
+        showLoading();
+
+        ApiService apiService = RetrofitClient.getApiService();
+        String authHeader = "Bearer " + token;
+
+        Call<ModelResponse.RecipeResponse> call = apiService.getSavedRecipes(authHeader);
+
+        call.enqueue(new Callback<ModelResponse.RecipeResponse>() {
+            @Override
+            public void onResponse(Call<ModelResponse.RecipeResponse> call, Response<ModelResponse.RecipeResponse> response) {
+                if (response.isSuccessful() && response.body() != null &&
+                        response.body().getData() != null &&
+                        response.body().getData().getRecipes() != null) {
+
+                    // Update our recipe list with the freshly loaded recipes
+                    savedRecipes.clear();
+                    List<ModelResponse.RecipeResponse.Recipe> recipes = response.body().getData().getRecipes();
+                    savedRecipes.addAll(recipes);
+
+                    // Update adapter with the new recipe list
+                    adapter.updateData(savedRecipes);
+
+                    // IMPORTANT: Fetch fresh ratings for all recipes
+                    // This will ensure we have the latest ratings
+                    if (!savedRecipes.isEmpty()) {
+                        refreshAllRecipeRatings(savedRecipes);
+                    } else {
+                        hideLoading();
+                        showEmptyState();
+                    }
+
+                    // Also update author names
+                    processRecipesForAuthorNames(savedRecipes);
+
+                } else {
+                    hideLoading();
+                    showError("Không thể tải danh sách công thức đã lưu");
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ModelResponse.RecipeResponse> call, Throwable t) {
+                hideLoading();
+                showError("Lỗi kết nối: " + t.getMessage());
+            }
+        });
+    }
+
+    /**
+     * Refresh ratings for all recipes with a dedicated counter
+     * @param recipes List of recipes to refresh ratings for
+     */
+    private void refreshAllRecipeRatings(List<ModelResponse.RecipeResponse.Recipe> recipes) {
+        if (recipes == null || recipes.isEmpty()) {
+            hideLoading();
+            return;
+        }
+
+        final int[] completedRequests = {0};
+        final int totalRequests = recipes.size();
+
+        Log.d(TAG, "Refreshing ratings for " + totalRequests + " recipes");
+
+        ApiService apiService = RetrofitClient.getApiService();
+
+        for (ModelResponse.RecipeResponse.Recipe recipe : recipes) {
+            String recipeId = recipe.getId();
+
+            Call<ModelResponse.getRatingResponse> call =
+                    apiService.getRecipeRating("Bearer " + token, recipeId);
+
+            call.enqueue(new Callback<ModelResponse.getRatingResponse>() {
+                @Override
+                public void onResponse(@NonNull Call<ModelResponse.getRatingResponse> call,
+                                       @NonNull Response<ModelResponse.getRatingResponse> response) {
+                    if (response.isSuccessful() && response.body() != null &&
+                            response.body().getData() != null) {
+
+                        ModelResponse.getRatingResponse.Data ratingData = response.body().getData();
+
+                        double newRating = ratingData.getAverageRating();
+                        String recipeTitle = recipe.getTitle();
+
+                        Log.d(TAG, "Updated rating for " + recipeTitle + ": " + newRating);
+
+                        // Update recipe with fresh rating data
+                        recipe.setAverageRating(newRating);
+
+                        // Update UI for this specific recipe
+                        if (isAdded()) {
+                            requireActivity().runOnUiThread(() -> {
+                                int position = savedRecipes.indexOf(recipe);
+                                if (position >= 0) {
+                                    adapter.notifyItemChanged(position);
+                                }
+                            });
+                        }
+                    }
+
+                    // Count this request as completed
+                    completedRequests[0]++;
+
+                    // If all requests are completed, hide loading
+                    if (completedRequests[0] >= totalRequests) {
+                        hideLoading();
+                        Log.d(TAG, "All " + totalRequests + " rating refreshes completed");
+                    }
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<ModelResponse.getRatingResponse> call, @NonNull Throwable t) {
+                    Log.e(TAG, "Failed to refresh rating for recipe: " + t.getMessage());
+
+                    // Count failed request as completed
+                    completedRequests[0]++;
+
+                    // If all requests are completed, hide loading
+                    if (completedRequests[0] >= totalRequests) {
+                        hideLoading();
+                    }
+                }
+            });
+        }
     }
 }

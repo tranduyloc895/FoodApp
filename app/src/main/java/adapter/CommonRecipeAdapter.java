@@ -143,7 +143,18 @@ public class CommonRecipeAdapter extends RecyclerView.Adapter<CommonRecipeAdapte
      * Binds rating and time information
      */
     private void bindRatingAndTime(ViewHolder holder, ModelResponse.RecipeResponse.Recipe recipe) {
-        holder.tvAverageRating.setText(String.format("%.1f", recipe.getAverageRating()));
+        // Log the value for debugging
+        Log.d(TAG, "Recipe: " + recipe.getTitle() + " - Average Rating: " + recipe.getAverageRating());
+
+        // Format the average rating
+        if (recipe.getAverageRating() > 0) {
+            // Format it with one decimal place
+            holder.tvAverageRating.setText(String.format("%.1f", (float)recipe.getAverageRating()));
+        } else {
+            // Show "0.0" or "N/A" for recipes with no ratings
+            holder.tvAverageRating.setText("0.0");
+        }
+
         holder.tvTime.setText(recipe.getTime());
     }
 

@@ -366,6 +366,11 @@ public class MainRecipe extends AppCompatActivity {
      * @param token Authentication token
      * @param id Recipe ID
      */
+    /**
+     * Get recipe details from API
+     * @param token Authentication token
+     * @param id Recipe ID
+     */
     public void getRecipe(String token, String id) {
         // Increment loading counter
         loadingCounter.incrementAndGet();
@@ -399,12 +404,11 @@ public class MainRecipe extends AppCompatActivity {
                         instructions = recipe.getInstructions();
                         recipeTime = recipe.getTime();
 
-                        // Calculate the average rating from the ratings list
-                        averageRating = recipe.getAverageRating();
-                        reviewCount = recipe.getReviewCount();
-
-                        // Update UI with recipe data
+                        // Update UI with recipe data (except rating)
                         updateUI();
+
+                        // Fetch separate rating data using the new API
+                        fetchRecipeRating(token, id);
                     } else {
                         showError("Recipe data structure is invalid");
                         Log.e(TAG, "Recipe data structure is invalid: " + response.body());
@@ -435,6 +439,73 @@ public class MainRecipe extends AppCompatActivity {
     }
 
     /**
+     * Fetch rating information for the recipe using the new rating API
+     * @param token Authentication token
+     * @param id Recipe ID
+     */
+    private void fetchRecipeRating(String token, String id) {
+        // Increment loading counter
+        loadingCounter.incrementAndGet();
+
+        ApiService apiService = RetrofitClient.getApiService();
+        Call<ModelResponse.getRatingResponse> call = apiService.getRecipeRating("Bearer " + token, id);
+
+        call.enqueue(new Callback<ModelResponse.getRatingResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<ModelResponse.getRatingResponse> call,
+                                   @NonNull Response<ModelResponse.getRatingResponse> response) {
+                // Decrement loading counter
+                checkAndUpdateLoadingState();
+
+                if (response.isSuccessful() && response.body() != null &&
+                        response.body().getData() != null) {
+
+                    ModelResponse.getRatingResponse.Data ratingData = response.body().getData();
+
+                    // Update rating information
+                    averageRating = ratingData.getAverageRating();
+                    reviewCount = ratingData.getTotalRatings();
+
+                    // Log the received rating data
+                    Log.d(TAG, "Received rating data: average=" + averageRating +
+                            ", totalRatings=" + reviewCount);
+
+                    // Update UI with rating information
+                    updateRatingUI();
+                } else {
+                    Log.e(TAG, "Failed to get rating info: " +
+                            (response.code() + " " + (response.errorBody() != null ?
+                                    "Error body available" : "No error body")));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ModelResponse.getRatingResponse> call, @NonNull Throwable t) {
+                // Decrement loading counter
+                checkAndUpdateLoadingState();
+                Log.e(TAG, "Network error fetching rating: " + t.getMessage());
+            }
+        });
+    }
+
+    /**
+     * Update the UI with recipe rating information
+     */
+    private void updateRatingUI() {
+        runOnUiThread(() -> {
+            // Set rating
+            tvRating.setText(String.format("%.1f", averageRating));
+
+            // Set reviews count
+            tvReviews.setText(String.format("(%d Reviews)", reviewCount));
+        });
+    }
+
+    /**
+     * Update UI with recipe data (excluding rating which is handled separately)
+     */
+
+    /**
      * Check if all loading operations are complete and update loading state
      */
     private void checkAndUpdateLoadingState() {
@@ -451,12 +522,6 @@ public class MainRecipe extends AppCompatActivity {
     private void updateUI() {
         // Set recipe title
         tvRecipeTitle.setText(title);
-
-        // Set rating
-        tvRating.setText(String.format("%.1f", averageRating));
-
-        // Set reviews count
-        tvReviews.setText(String.format("(%d Reviews)", reviewCount));
 
         // Load profile avatar based on author - this will handle setting the username too
         loadProfileAvatar();
@@ -942,21 +1007,21 @@ public class MainRecipe extends AppCompatActivity {
         ApiService apiService = RetrofitClient.getApiService();
 
         // Call the rate recipe API
-        Call<ModelResponse.RecipeDetailResponse> call = apiService.rateRecipe(
+        Call<ModelResponse.RatingResponse> call = apiService.rateRecipe(
                 "Bearer " + token,
                 recipeId,
                 rating);
 
-        call.enqueue(new Callback<ModelResponse.RecipeDetailResponse>() {
+        call.enqueue(new Callback<ModelResponse.RatingResponse>() {
             @Override
-            public void onResponse(Call<ModelResponse.RecipeDetailResponse> call, Response<ModelResponse.RecipeDetailResponse> response) {
+            public void onResponse(Call<ModelResponse.RatingResponse> call, Response<ModelResponse.RatingResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     // Rating submitted successfully
                     Toast.makeText(MainRecipe.this, "Rating submitted successfully", Toast.LENGTH_SHORT).show();
 
                     // Update the UI with the new rating if available
                     if (response.body().getData() != null) {
-                        averageRating = response.body().getData().getRecipe().getAverageRating();
+                        averageRating = response.body().getData().getAverageRating();
                         tvRating.setText(String.format("%.1f", averageRating));
                     }
 
@@ -990,7 +1055,7 @@ public class MainRecipe extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(Call<ModelResponse.RecipeDetailResponse> call, Throwable t) {
+            public void onFailure(Call<ModelResponse.RatingResponse> call, Throwable t) {
                 // Handle network failure - reset the dialog to allow retrying
                 progressBar.setVisibility(View.GONE);
                 sendButton.setEnabled(true);

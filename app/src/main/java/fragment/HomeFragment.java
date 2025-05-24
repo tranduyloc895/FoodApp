@@ -488,6 +488,60 @@ public class HomeFragment extends Fragment {
     /**
      * Fetches detailed ratings for recipes
      */
+//    private void fetchRatingsForRecipes(ApiService apiService, List<ModelResponse.RecipeResponse.Recipe> recipes) {
+//        int recipeCount = recipes.size();
+//        if (recipeCount > 0) {
+//            registerPendingLoad();
+//        }
+//
+//        final AtomicInteger completedRatings = new AtomicInteger(0);
+//
+//        for (ModelResponse.RecipeResponse.Recipe recipe : recipes) {
+//            String recipeId = recipe.getId();
+//            Call<ModelResponse.RecipeDetailResponse> ratingCall =
+//                    apiService.getRecipeDetail(BEARER_PREFIX + token, recipeId);
+//
+//            ratingCall.enqueue(new Callback<ModelResponse.RecipeDetailResponse>() {
+//                @Override
+//                public void onResponse(@NonNull Call<ModelResponse.RecipeDetailResponse> call,
+//                                       @NonNull Response<ModelResponse.RecipeDetailResponse> response) {
+//                    if (response.isSuccessful() && response.body() != null &&
+//                            response.body().getData() != null &&
+//                            response.body().getData().getRecipe() != null &&
+//                            isAdded()) {
+//
+//                        ModelResponse.RecipeDetailResponse.Recipe detailedRecipe =
+//                                response.body().getData().getRecipe();
+//                        recipe.setRating(detailedRecipe.getRatings());
+//
+//                        // Notify appropriate adapter
+//                        notifyAdapterForRecipe(recipe);
+//                    } else {
+//                        Log.e(TAG, "Failed to get details for Recipe ID: " + recipeId);
+//                    }
+//
+//                    // Check if all ratings are completed
+//                    if (completedRatings.incrementAndGet() >= recipeCount) {
+//                        completeLoad(); // Complete ratings batch load
+//                    }
+//                }
+//
+//                @Override
+//                public void onFailure(@NonNull Call<ModelResponse.RecipeDetailResponse> call, @NonNull Throwable t) {
+//                    Log.e(TAG, "API Call Failed (Details) - Recipe ID: " + recipeId + ", Error: " + t.getMessage());
+//
+//                    // Check if all ratings are completed
+//                    if (completedRatings.incrementAndGet() >= recipeCount) {
+//                        completeLoad(); // Complete ratings batch load despite errors
+//                    }
+//                }
+//            });
+//        }
+//    }
+
+    /**
+     * Fetches detailed ratings for recipes using the new Rating API
+     */
     private void fetchRatingsForRecipes(ApiService apiService, List<ModelResponse.RecipeResponse.Recipe> recipes) {
         int recipeCount = recipes.size();
         if (recipeCount > 0) {
@@ -498,26 +552,39 @@ public class HomeFragment extends Fragment {
 
         for (ModelResponse.RecipeResponse.Recipe recipe : recipes) {
             String recipeId = recipe.getId();
-            Call<ModelResponse.RecipeDetailResponse> ratingCall =
-                    apiService.getRecipeDetail(BEARER_PREFIX + token, recipeId);
+            // Change the type to match the API service return type
+            Call<ModelResponse.getRatingResponse> ratingCall =
+                    apiService.getRecipeRating(BEARER_PREFIX + token, recipeId);
 
-            ratingCall.enqueue(new Callback<ModelResponse.RecipeDetailResponse>() {
+            // Update the callback to use getRatingResponse instead of RatingResponse
+            ratingCall.enqueue(new Callback<ModelResponse.getRatingResponse>() {
                 @Override
-                public void onResponse(@NonNull Call<ModelResponse.RecipeDetailResponse> call,
-                                       @NonNull Response<ModelResponse.RecipeDetailResponse> response) {
+                public void onResponse(@NonNull Call<ModelResponse.getRatingResponse> call,
+                                       @NonNull Response<ModelResponse.getRatingResponse> response) {
                     if (response.isSuccessful() && response.body() != null &&
                             response.body().getData() != null &&
-                            response.body().getData().getRecipe() != null &&
                             isAdded()) {
 
-                        ModelResponse.RecipeDetailResponse.Recipe detailedRecipe =
-                                response.body().getData().getRecipe();
-                        recipe.setRating(detailedRecipe.getRatings());
+                        ModelResponse.getRatingResponse.Data ratingData = response.body().getData();
+
+                        // Log the rating values for debugging
+                        Log.d(TAG, "Recipe ID: " + recipeId +
+                                " - Average Rating: " + ratingData.getAverageRating() +
+                                " - Total Ratings: " + ratingData.getTotalRatings());
+
+                        // Update recipe with rating information
+                        recipe.setAverageRating(ratingData.getAverageRating());
+
+                        // If you need to handle user rating info as well, you can do it here
+                        if (ratingData.hasUserRated()) {
+                            // Store user's rating if needed
+                            // recipe.setUserRating(ratingData.getUserRating().getRating());
+                        }
 
                         // Notify appropriate adapter
                         notifyAdapterForRecipe(recipe);
                     } else {
-                        Log.e(TAG, "Failed to get details for Recipe ID: " + recipeId);
+                        Log.e(TAG, "Failed to get ratings for Recipe ID: " + recipeId);
                     }
 
                     // Check if all ratings are completed
@@ -527,8 +594,8 @@ public class HomeFragment extends Fragment {
                 }
 
                 @Override
-                public void onFailure(@NonNull Call<ModelResponse.RecipeDetailResponse> call, @NonNull Throwable t) {
-                    Log.e(TAG, "API Call Failed (Details) - Recipe ID: " + recipeId + ", Error: " + t.getMessage());
+                public void onFailure(@NonNull Call<ModelResponse.getRatingResponse> call, @NonNull Throwable t) {
+                    Log.e(TAG, "API Call Failed (Ratings) - Recipe ID: " + recipeId + ", Error: " + t.getMessage());
 
                     // Check if all ratings are completed
                     if (completedRatings.incrementAndGet() >= recipeCount) {
@@ -538,7 +605,6 @@ public class HomeFragment extends Fragment {
             });
         }
     }
-
     /**
      * Notifies the appropriate adapter when a recipe is updated
      */

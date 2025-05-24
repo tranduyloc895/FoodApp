@@ -2,6 +2,7 @@ package adapter;
 
 import android.content.Context;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -68,6 +69,9 @@ public class SavedRecipesAdapter extends RecyclerView.Adapter<SavedRecipesAdapte
         if (recipe.getTime() != null) {
             holder.recipeTime.setText(recipe.getTime());
         }
+
+        // Log rating for debugging purposes
+        Log.d(TAG, "Recipe: " + recipe.getTitle() + " - Rating: " + recipe.getAverageRating());
 
         // Calculate and set rating with one decimal place
         double avgRating = recipe.getAverageRating();
@@ -141,5 +145,4 @@ public class SavedRecipesAdapter extends RecyclerView.Adapter<SavedRecipesAdapte
             saveButton = itemView.findViewById(R.id.saveButton);
         }
     }
-
 }

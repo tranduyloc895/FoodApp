@@ -26,6 +26,8 @@ public class Profile_UploadedAdapter extends RecyclerView.Adapter<Profile_Upload
     private final List<ModelResponse.RecipeResponse.Recipe> recipeList;
     private final Context context;
     private final String token;
+    // Add this field to store the listener
+    private OnItemClickListener onItemClickListener;
 
     public Profile_UploadedAdapter(Context context, List<ModelResponse.RecipeResponse.Recipe> recipeList, String token) {
         this.context = context;
@@ -46,7 +48,10 @@ public class Profile_UploadedAdapter extends RecyclerView.Adapter<Profile_Upload
 
         holder.tvNameRecipe.setText(recipe.getTitle());
         holder.tvTime.setText(recipe.getTime());
-        holder.tvRating.setText(String.valueOf(recipe.getAverageRating()));
+
+        // Format and display rating with one decimal place
+        double rating = recipe.getAverageRating();
+        holder.tvRating.setText(String.format("%.1f", rating));
 
         // Gọi API để lấy username từ author ID
         fetchUsername(recipe.getAuthor(), holder.tvAuthor);
@@ -56,10 +61,16 @@ public class Profile_UploadedAdapter extends RecyclerView.Adapter<Profile_Upload
                 .into(holder.imgRecipe);
 
         holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(context, MainRecipe.class);
-            intent.putExtra("recipe_id", recipe.getId());
-            intent.putExtra("token", token);
-            context.startActivity(intent);
+            // Use the listener if available
+            if (onItemClickListener != null) {
+                onItemClickListener.onItemClick(holder.getAdapterPosition());
+            } else {
+                // Fall back to direct intent if no listener
+                Intent intent = new Intent(context, MainRecipe.class);
+                intent.putExtra("recipe_id", recipe.getId());
+                intent.putExtra("token", token);
+                context.startActivity(intent);
+            }
         });
     }
 
@@ -102,5 +113,14 @@ public class Profile_UploadedAdapter extends RecyclerView.Adapter<Profile_Upload
             tvRating = itemView.findViewById(R.id.tvRating);
             imgRecipe = itemView.findViewById(R.id.savedRecipesRecyclerView);
         }
+    }
+
+    public interface OnItemClickListener {
+        void onItemClick(int position);  // Make sure parameter is explicitly defined as int
+    }
+
+    // Add this setter method
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.onItemClickListener = listener;
     }
 }

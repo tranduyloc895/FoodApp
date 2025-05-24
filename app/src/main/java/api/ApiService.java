@@ -142,7 +142,7 @@ public interface ApiService {
 
     @FormUrlEncoded
     @PATCH("recipes/rating-recipe")
-    Call<ModelResponse.RecipeDetailResponse> rateRecipe(
+    Call<ModelResponse.RatingResponse> rateRecipe(
             @retrofit2.http.Header("Authorization") String token,
             @Field("id") String recipeId,
             @Field("rating") int rating
@@ -171,5 +171,11 @@ public interface ApiService {
     Call<ModelResponse.DeleteSavedRecipeResponse> deleteSavedRecipe(
             @retrofit2.http.Header("Authorization") String token,
             @Path("recipeId") String recipeId
+    );
+
+    @GET("recipes/get-recipe-rating")
+    Call<ModelResponse.getRatingResponse> getRecipeRating(
+            @retrofit2.http.Header("Authorization") String token,
+            @Query("id") String recipeId
     );
 }

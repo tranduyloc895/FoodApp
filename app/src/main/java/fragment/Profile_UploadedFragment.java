@@ -18,6 +18,8 @@ import com.example.appfood.MainRecipe;
 import com.example.appfood.R;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import adapter.Profile_UploadedAdapter;
 import api.ModelResponse;
 import api.ApiService;
@@ -34,6 +36,7 @@ public class Profile_UploadedFragment extends Fragment {
     private String token;
     private String currentUserId;
     private List<ModelResponse.RecipeResponse.Recipe> uploadedRecipes;
+    private View loadingOverlay;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -45,10 +48,17 @@ public class Profile_UploadedFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         recyclerView = view.findViewById(R.id.rv_uploaded_profile);
         titleTextView = view.findViewById(R.id.titleTextView);
+        // Check if loading overlay exists in the layout
+        loadingOverlay = view.findViewById(R.id.loading_overlay);
+
         uploadedRecipes = new ArrayList<>();
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         if (extractToken()) {
+            // Show loading if available
+            if (loadingOverlay != null) {
+                loadingOverlay.setVisibility(View.VISIBLE);
+            }
             fetchUserProfile();
         }
     }
@@ -76,12 +86,14 @@ public class Profile_UploadedFragment extends Fragment {
                     currentUserId = response.body().getData().getUser().getId();
                     fetchUploadedRecipes();
                 } else {
+                    hideLoading();
                     Toast.makeText(requireContext(), "Failed to load profile", Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<ModelResponse.UserResponse> call, @NonNull Throwable t) {
+                hideLoading();
                 Toast.makeText(requireContext(), "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
@@ -97,7 +109,7 @@ public class Profile_UploadedFragment extends Fragment {
                 if (response.isSuccessful() && response.body() != null) {
                     List<ModelResponse.RecipeResponse.Recipe> allRecipes = response.body().getData().getRecipes();
 
-                    List<ModelResponse.RecipeResponse.Recipe> uploadedRecipes = new ArrayList<>();
+                    uploadedRecipes.clear();
                     for (ModelResponse.RecipeResponse.Recipe recipe : allRecipes) {
                         if (recipe.getAuthor().equals(currentUserId)) {
                             uploadedRecipes.add(recipe);
@@ -105,27 +117,131 @@ public class Profile_UploadedFragment extends Fragment {
                     }
 
                     if (uploadedRecipes.isEmpty()) {
+                        hideLoading();
                         Toast.makeText(requireContext(), "Bạn chưa đăng tải bất kỳ công thức nào.", Toast.LENGTH_SHORT).show();
                     } else {
-                        adapter = new Profile_UploadedAdapter(getContext(), uploadedRecipes, token);
-
-                        recyclerView.setAdapter(adapter);
+                        // Fetch ratings for each recipe before displaying
+                        fetchRatingsForRecipes(uploadedRecipes);
                     }
                 } else {
+                    hideLoading();
                     Toast.makeText(requireContext(), "Failed to load uploaded recipes", Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<ModelResponse.RecipeResponse> call, @NonNull Throwable t) {
+                hideLoading();
                 Toast.makeText(requireContext(), "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
 
+    /**
+     * Fetch ratings for a list of recipes
+     * @param recipes List of recipes to get ratings for
+     */
+    private void fetchRatingsForRecipes(List<ModelResponse.RecipeResponse.Recipe> recipes) {
+        if (recipes == null || recipes.isEmpty()) {
+            hideLoading();
+            return;
+        }
+
+        final AtomicInteger pendingRatings = new AtomicInteger(recipes.size());
+
+        Log.d(TAG, "Fetching ratings for " + recipes.size() + " uploaded recipes");
+        ApiService apiService = RetrofitClient.getApiService();
+
+        for (ModelResponse.RecipeResponse.Recipe recipe : recipes) {
+            String recipeId = recipe.getId();
+
+            Call<ModelResponse.getRatingResponse> call =
+                    apiService.getRecipeRating("Bearer " + token, recipeId);
+
+            call.enqueue(new Callback<ModelResponse.getRatingResponse>() {
+                @Override
+                public void onResponse(@NonNull Call<ModelResponse.getRatingResponse> call,
+                                       @NonNull Response<ModelResponse.getRatingResponse> response) {
+                    try {
+                        if (response.isSuccessful() && response.body() != null &&
+                                response.body().getData() != null) {
+
+                            ModelResponse.getRatingResponse.Data ratingData = response.body().getData();
+
+                            // Log the rating values for debugging
+                            Log.d(TAG, "Recipe: " + recipe.getTitle() +
+                                    " - Average Rating: " + ratingData.getAverageRating() +
+                                    " - Total Ratings: " + ratingData.getTotalRatings());
+
+                            // Update recipe with rating information
+                            recipe.setAverageRating(ratingData.getAverageRating());
+                        } else {
+                            Log.e(TAG, "Failed to get ratings for recipe: " + recipe.getTitle());
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error processing rating response: " + e.getMessage());
+                    } finally {
+                        // If all ratings have been fetched (or failed), update the UI
+                        if (pendingRatings.decrementAndGet() <= 0) {
+                            updateUI();
+                        }
+                    }
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<ModelResponse.getRatingResponse> call, @NonNull Throwable t) {
+                    Log.e(TAG, "API Call Failed (Ratings) - Recipe: " + recipe.getTitle() + ", Error: " + t.getMessage());
+
+                    // If all ratings have been fetched (or failed), update the UI
+                    if (pendingRatings.decrementAndGet() <= 0) {
+                        updateUI();
+                    }
+                }
+            });
+        }
+    }
+
+    /**
+     * Update the UI with recipe data after ratings are fetched
+     */
+    private void updateUI() {
+        if (isAdded()) {
+            requireActivity().runOnUiThread(() -> {
+                hideLoading();
+                adapter = new Profile_UploadedAdapter(getContext(), uploadedRecipes, token);
+                recyclerView.setAdapter(adapter);
+
+                // Set up click listeners if needed
+                adapter.setOnItemClickListener((int position ) -> {
+                    if (position < 0 || position >= uploadedRecipes.size()) return;
+
+                    ModelResponse.RecipeResponse.Recipe recipe = uploadedRecipes.get(position);
+                    Intent intent = new Intent(getActivity(), MainRecipe.class);
+                    intent.putExtra("recipe_id", recipe.getId());
+                    intent.putExtra("token", token);
+                    startActivity(intent);
+                });
+            });
+        }
+    }
+
+    private void hideLoading() {
+        if (loadingOverlay != null && isAdded()) {
+            requireActivity().runOnUiThread(() -> {
+                loadingOverlay.setVisibility(View.GONE);
+            });
+        }
+    }
+
     @Override
     public void onResume() {
         super.onResume();
-        fetchUserProfile();
+        if (token != null && !token.isEmpty()) {
+            // Show loading if available
+            if (loadingOverlay != null) {
+                loadingOverlay.setVisibility(View.VISIBLE);
+            }
+            fetchUserProfile();
+        }
     }
 }

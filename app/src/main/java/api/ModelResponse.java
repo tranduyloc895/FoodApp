@@ -1,5 +1,7 @@
 package api;
 
+import android.util.Log;
+
 import java.util.List;
 
 public class ModelResponse {
@@ -292,6 +294,7 @@ public class ModelResponse {
             private List<String> ingredients;
             private List<String> instructions;
             private String time;
+            private double averageRating;
 
             public String getTime() {
                 return time;
@@ -333,8 +336,13 @@ public class ModelResponse {
                 this.image_url = image_url;
             }
 
-            // Calculate and return the average rating
             public double getAverageRating() {
+                // First check if the averageRating field has been set from the API
+                if (averageRating > 0) {
+                    return averageRating;
+                }
+
+                // Fall back to calculating from rating list if available
                 if (rating == null || rating.isEmpty()) {
                     return 0.0;
                 }
@@ -345,6 +353,13 @@ public class ModelResponse {
                 }
 
                 return sum / rating.size();
+            }
+
+            // Setter for the average rating field
+            public void setAverageRating(double averageRating) {
+                this.averageRating = averageRating;
+                // Log to verify it's being set
+                Log.d("Recipe", "Setting average rating to: " + averageRating + " for recipe: " + title);
             }
 
             // Getter for the rating list
@@ -523,6 +538,8 @@ public class ModelResponse {
                 return sum / rating.size();
             }
 
+            // Setter for average rating
+
             // Method to get number of reviews
             public int getReviewCount() {
                 return (rating != null) ? rating.size() : 0;
@@ -651,7 +668,7 @@ public class ModelResponse {
 
         public class Comment {
             private String id;
-            private String author_id;
+            private String user_id;
             private String content;
             private String created_at;
 
@@ -677,11 +694,11 @@ public class ModelResponse {
             }
 
             public String getAuthor_id() {
-                return author_id;
+                return user_id;
             }
 
             public void setAuthor_id(String author_id) {
-                this.author_id = author_id;
+                this.user_id = author_id;
             }
 
             public String getContent() {
@@ -838,6 +855,259 @@ public class ModelResponse {
 
         public void setMessage(String message) {
             this.message = message;
+        }
+    }
+
+    public class RatingResponse {
+        private String status;
+        private Data data;
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
+
+        public Data getData() {
+            return data;
+        }
+
+        public void setData(Data data) {
+            this.data = data;
+        }
+
+        public class Data {
+            private Rating rating;
+            private int averageRating;
+            private int totalRatings;
+
+            public Rating getRating() {
+                return rating;
+            }
+
+            public void setRating(Rating rating) {
+                this.rating = rating;
+            }
+
+            public int getAverageRating() {
+                return averageRating;
+            }
+
+            public void setAverageRating(int averageRating) {
+                this.averageRating = averageRating;
+            }
+
+            public int getTotalRatings() {
+                return totalRatings;
+            }
+
+            public void setTotalRatings(int totalRatings) {
+                this.totalRatings = totalRatings;
+            }
+        }
+
+        public class Rating {
+            private String id;
+            private String recipe_id;
+            private String user_id;
+            private int rating;
+            private String created_at;
+            private String updated_at;
+
+            public String getId() {
+                return id;
+            }
+
+            public void setId(String id) {
+                this.id = id;
+            }
+
+            public String getRecipe_id() {
+                return recipe_id;
+            }
+
+            public void setRecipe_id(String recipe_id) {
+                this.recipe_id = recipe_id;
+            }
+
+            public String getUser_id() {
+                return user_id;
+            }
+
+            public void setUser_id(String user_id) {
+                this.user_id = user_id;
+            }
+
+            public int getRating() {
+                return rating;
+            }
+
+            public void setRating(int rating) {
+                this.rating = rating;
+            }
+
+            public String getCreated_at() {
+                return created_at;
+            }
+
+            public void setCreated_at(String created_at) {
+                this.created_at = created_at;
+            }
+
+            public String getUpdated_at() {
+                return updated_at;
+            }
+
+            public void setUpdated_at(String updated_at) {
+                this.updated_at = updated_at;
+            }
+
+            // Helper method to get formatted date if needed
+            public String getFormattedCreatedDate() {
+                if (created_at != null && created_at.length() > 16) {
+                    return created_at.replace("T", " ").substring(0, 16);
+                }
+                return created_at;
+            }
+
+            // Helper method to get formatted update date if needed
+            public String getFormattedUpdatedDate() {
+                if (updated_at != null && updated_at.length() > 16) {
+                    return updated_at.replace("T", " ").substring(0, 16);
+                }
+                return updated_at;
+            }
+        }
+    }
+
+    public class getRatingResponse {
+        private String status;
+        private Data data;
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
+
+        public Data getData() {
+            return data;
+        }
+
+        public void setData(Data data) {
+            this.data = data;
+        }
+
+        public class Data {
+            private double averageRating;
+            private int totalRatings;
+            private UserRating userRating; // Can be null if user hasn't rated
+
+            public double getAverageRating() {
+                return averageRating;
+            }
+
+            public void setAverageRating(double averageRating) {
+                this.averageRating = averageRating;
+            }
+
+            public int getTotalRatings() {
+                return totalRatings;
+            }
+
+            public void setTotalRatings(int totalRatings) {
+                this.totalRatings = totalRatings;
+            }
+
+            public UserRating getUserRating() {
+                return userRating;
+            }
+
+            public void setUserRating(UserRating userRating) {
+                this.userRating = userRating;
+            }
+
+            // Helper method to check if user has rated
+            public boolean hasUserRated() {
+                return userRating != null;
+            }
+        }
+
+        public class UserRating {
+            private String id;
+            private String recipe_id;
+            private String user_id;
+            private int rating;
+            private String created_at;
+            private String updated_at;
+
+            public String getId() {
+                return id;
+            }
+
+            public void setId(String id) {
+                this.id = id;
+            }
+
+            public String getRecipe_id() {
+                return recipe_id;
+            }
+
+            public void setRecipe_id(String recipe_id) {
+                this.recipe_id = recipe_id;
+            }
+
+            public String getUser_id() {
+                return user_id;
+            }
+
+            public void setUser_id(String user_id) {
+                this.user_id = user_id;
+            }
+
+            public int getRating() {
+                return rating;
+            }
+
+            public void setRating(int rating) {
+                this.rating = rating;
+            }
+
+            public String getCreated_at() {
+                return created_at;
+            }
+
+            public void setCreated_at(String created_at) {
+                this.created_at = created_at;
+            }
+
+            public String getUpdated_at() {
+                return updated_at;
+            }
+
+            public void setUpdated_at(String updated_at) {
+                this.updated_at = updated_at;
+            }
+
+            // Helper method to get formatted date if needed
+            public String getFormattedCreatedDate() {
+                if (created_at != null && created_at.length() > 16) {
+                    return created_at.replace("T", " ").substring(0, 16);
+                }
+                return created_at;
+            }
+
+            // Helper method to get formatted update date if needed
+            public String getFormattedUpdatedDate() {
+                if (updated_at != null && updated_at.length() > 16) {
+                    return updated_at.replace("T", " ").substring(0, 16);
+                }
+                return updated_at;
+            }
         }
     }
 }
