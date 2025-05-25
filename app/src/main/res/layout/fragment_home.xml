@@ -83,7 +83,9 @@
                 android:background="@null"
                 android:hint="Search recipe"
                 android:textColorHint="#AAAAAA"
-                android:textSize="16sp" />
+                android:textSize="16sp"
+                android:imeOptions="actionSearch"
+                android:inputType="text" />
 
             <ImageView
                 android:id="@+id/iv_camera"
@@ -112,6 +114,37 @@
             android:src="@android:drawable/ic_menu_sort_by_size"
             app:tint="@color/white" />
     </com.google.android.material.card.MaterialCardView>
+
+    <!-- Search Results Container (New) -->
+    <FrameLayout
+        android:id="@+id/search_results_container"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@+id/card_search"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_search_results"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingTop="8dp"
+            android:paddingBottom="80dp" />
+
+        <TextView
+            android:id="@+id/tv_no_results"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:text="No recipes found"
+            android:textSize="18sp"
+            android:textColor="#666666"
+            android:visibility="gone" />
+    </FrameLayout>
 
     <!-- Add NestedScrollView below the search bar -->
     <androidx.core.widget.NestedScrollView

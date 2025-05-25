@@ -3,10 +3,16 @@ package fragment;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -16,6 +22,7 @@ import androidx.annotation.Nullable;
 import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -25,6 +32,7 @@ import com.example.appfood.MainActivity;
 import com.example.appfood.MainRecipe;
 import com.example.appfood.R;
 import com.example.appfood.UserProfileActivity;
+import com.example.appfood.RecipeCache;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
@@ -35,6 +43,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import adapter.CommonRecipeAdapter;
 import adapter.NewRecipeAdapter;
+import adapter.SearchResultAdapter;
 import api.ApiService;
 import api.ModelResponse;
 import api.RetrofitClient;
@@ -51,22 +60,27 @@ public class HomeFragment extends Fragment {
     private static final int MAX_RECIPES_TO_DISPLAY = 10;
 
     // UI Components
-    private RecyclerView rvCommonRecipes, rvNewRecipes;
+    private RecyclerView rvCommonRecipes, rvNewRecipes, rvSearchResults;
     private TextView tvGreeting;
     private ImageView ivProfile;
     private FloatingActionButton fabAddRecipe;
     private View loadingOverlay;
+    private EditText etSearch;
+    private View nestedScrollView, searchResultsContainer;
+    private TextView tvNoResults;
 
     // Data
-    private List<ModelResponse.RecipeResponse.Recipe> commonRecipeList, newRecipeList;
+    private List<ModelResponse.RecipeResponse.Recipe> commonRecipeList, newRecipeList, searchResultsList;
     private CommonRecipeAdapter commonRecipeAdapter;
     private NewRecipeAdapter newRecipeAdapter;
+    private SearchResultAdapter searchResultAdapter;
     private String token;
     private Map<String, Boolean> savedRecipesMap = new HashMap<>();
 
     // Loading state tracking
     private AtomicInteger pendingLoads = new AtomicInteger(0);
     private boolean initialLoadComplete = false;
+    private boolean isSearchActive = false;
 
     @Nullable
     @Override
@@ -81,6 +95,9 @@ public class HomeFragment extends Fragment {
 
         // Initialize views and data
         initViews(view);
+
+        // Set up search functionality
+        setupSearch();
 
         // Start loading data
         startInitialDataLoad(view);
@@ -138,10 +155,76 @@ public class HomeFragment extends Fragment {
         tvGreeting = view.findViewById(R.id.tv_greeting);
         ivProfile = view.findViewById(R.id.iv_profile);
         fabAddRecipe = view.findViewById(R.id.fab_add);
+        etSearch = view.findViewById(R.id.et_search);
+        nestedScrollView = view.findViewById(R.id.nested_scroll_view);
+
+        // Add search results RecyclerView and container
+        searchResultsContainer = view.findViewById(R.id.search_results_container);
+        rvSearchResults = view.findViewById(R.id.rv_search_results);
+        tvNoResults = view.findViewById(R.id.tv_no_results);
+
+        if (searchResultsContainer != null) {
+            searchResultsContainer.setVisibility(View.GONE); // Hide initially
+        }
 
         setupProfileUI();
         setupScrollListener(view);
         setupAddRecipeButton();
+    }
+
+    /**
+     * Sets up search functionality
+     */
+    private void setupSearch() {
+        if (etSearch == null) return;
+
+        // Initialize search results list and adapter
+        searchResultsList = new ArrayList<>();
+        searchResultAdapter = new SearchResultAdapter(
+                requireContext(),
+                searchResultsList,
+                this::navigateToRecipeDetails);
+
+        // Set up RecyclerView for search results
+        if (rvSearchResults != null) {
+            rvSearchResults.setLayoutManager(new LinearLayoutManager(requireContext()));
+            rvSearchResults.setAdapter(searchResultAdapter);
+        }
+
+        // Set up search action listener (when user presses search button on keyboard)
+        etSearch.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH ||
+                    (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
+                performSearch(etSearch.getText().toString());
+                hideKeyboard();
+                return true;
+            }
+            return false;
+        });
+
+        // Set up text change listener for real-time search
+        etSearch.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                // Not needed
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                // Handle search as user types
+                if (s.length() >= 2) { // Only search if 2 or more characters
+                    performSearch(s.toString());
+                } else if (s.length() == 0) {
+                    // Hide search results when search box is cleared
+                    hideSearchResults();
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                // Not needed
+            }
+        });
     }
 
     /**
@@ -197,6 +280,79 @@ public class HomeFragment extends Fragment {
         newRecipeAdapter = new NewRecipeAdapter(requireContext(), newRecipeList,
                 this::navigateToRecipeDetails, token);
         rvNewRecipes.setAdapter(newRecipeAdapter);
+    }
+
+    /**
+     * Performs search on cached recipes
+     */
+    private void performSearch(String query) {
+        if (query == null || query.trim().isEmpty()) {
+            hideSearchResults();
+            return;
+        }
+
+        List<ModelResponse.RecipeResponse.Recipe> results =
+                RecipeCache.searchRecipesByTitle(requireContext(), query);
+
+        if (results.isEmpty()) {
+            // Show "no results" message
+            if (tvNoResults != null) {
+                tvNoResults.setVisibility(View.VISIBLE);
+                rvSearchResults.setVisibility(View.GONE);
+            }
+            showSearchResults(); // Still show the container
+        } else {
+            // Update and display search results
+            if (tvNoResults != null) {
+                tvNoResults.setVisibility(View.GONE);
+                rvSearchResults.setVisibility(View.VISIBLE);
+            }
+            searchResultsList.clear();
+            searchResultsList.addAll(results);
+            searchResultAdapter.notifyDataSetChanged();
+            showSearchResults();
+
+            Log.d(TAG, "Found " + results.size() + " recipes matching '" + query + "'");
+        }
+    }
+
+    /**
+     * Shows search results container and hides main content
+     */
+    private void showSearchResults() {
+        if (searchResultsContainer != null && nestedScrollView != null) {
+            searchResultsContainer.setVisibility(View.VISIBLE);
+            nestedScrollView.setVisibility(View.GONE);
+            isSearchActive = true;
+        }
+    }
+
+    /**
+     * Hides search results container and shows main content
+     */
+    private void hideSearchResults() {
+        if (searchResultsContainer != null && nestedScrollView != null) {
+            searchResultsContainer.setVisibility(View.GONE);
+            nestedScrollView.setVisibility(View.VISIBLE);
+            isSearchActive = false;
+
+            if (tvNoResults != null) {
+                tvNoResults.setVisibility(View.GONE);
+            }
+        }
+    }
+
+    /**
+     * Hides the keyboard
+     */
+    private void hideKeyboard() {
+        if (getActivity() != null) {
+            InputMethodManager imm = (InputMethodManager) getActivity()
+                    .getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null && etSearch != null) {
+                imm.hideSoftInputFromWindow(etSearch.getWindowToken(), 0);
+            }
+        }
     }
 
     /**
@@ -350,6 +506,9 @@ public class HomeFragment extends Fragment {
     private void loadRecipeData() {
         loadCommonRecipes();
         loadNewRecipes();
+
+        // Cache all recipes for search functionality
+        loadAllRecipes();
     }
 
     /**
@@ -407,6 +566,38 @@ public class HomeFragment extends Fragment {
             public void onFailure(@NonNull Call<ModelResponse.RecipeResponse> call, @NonNull Throwable t) {
                 Log.e(TAG, "API Call Failed (New): " + t.getMessage());
                 handleRecipeLoadError("new recipes");
+                completeLoad();
+            }
+        });
+    }
+
+    /**
+     * Loads all recipes for caching and search functionality
+     */
+    private void loadAllRecipes() {
+        registerPendingLoad();
+
+        ApiService apiService = RetrofitClient.getApiService();
+        Call<ModelResponse.RecipeResponse> call = apiService.getAllRecipes(BEARER_PREFIX + token);
+
+        call.enqueue(new Callback<ModelResponse.RecipeResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<ModelResponse.RecipeResponse> call,
+                                   @NonNull Response<ModelResponse.RecipeResponse> response) {
+                if (isSuccessfulRecipeResponse(response)) {
+                    // Save recipes to cache for search functionality
+                    List<ModelResponse.RecipeResponse.Recipe> allRecipes = response.body().getData().getRecipes();
+                    RecipeCache.saveRecipesToCache(requireContext(), allRecipes);
+                    Log.d(TAG, "Cached " + allRecipes.size() + " recipes for search functionality");
+                } else {
+                    Log.e(TAG, "Failed to load all recipes for caching");
+                }
+                completeLoad();
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ModelResponse.RecipeResponse> call, @NonNull Throwable t) {
+                Log.e(TAG, "API Call Failed (All Recipes): " + t.getMessage());
                 completeLoad();
             }
         });
@@ -486,60 +677,6 @@ public class HomeFragment extends Fragment {
     }
 
     /**
-     * Fetches detailed ratings for recipes
-     */
-//    private void fetchRatingsForRecipes(ApiService apiService, List<ModelResponse.RecipeResponse.Recipe> recipes) {
-//        int recipeCount = recipes.size();
-//        if (recipeCount > 0) {
-//            registerPendingLoad();
-//        }
-//
-//        final AtomicInteger completedRatings = new AtomicInteger(0);
-//
-//        for (ModelResponse.RecipeResponse.Recipe recipe : recipes) {
-//            String recipeId = recipe.getId();
-//            Call<ModelResponse.RecipeDetailResponse> ratingCall =
-//                    apiService.getRecipeDetail(BEARER_PREFIX + token, recipeId);
-//
-//            ratingCall.enqueue(new Callback<ModelResponse.RecipeDetailResponse>() {
-//                @Override
-//                public void onResponse(@NonNull Call<ModelResponse.RecipeDetailResponse> call,
-//                                       @NonNull Response<ModelResponse.RecipeDetailResponse> response) {
-//                    if (response.isSuccessful() && response.body() != null &&
-//                            response.body().getData() != null &&
-//                            response.body().getData().getRecipe() != null &&
-//                            isAdded()) {
-//
-//                        ModelResponse.RecipeDetailResponse.Recipe detailedRecipe =
-//                                response.body().getData().getRecipe();
-//                        recipe.setRating(detailedRecipe.getRatings());
-//
-//                        // Notify appropriate adapter
-//                        notifyAdapterForRecipe(recipe);
-//                    } else {
-//                        Log.e(TAG, "Failed to get details for Recipe ID: " + recipeId);
-//                    }
-//
-//                    // Check if all ratings are completed
-//                    if (completedRatings.incrementAndGet() >= recipeCount) {
-//                        completeLoad(); // Complete ratings batch load
-//                    }
-//                }
-//
-//                @Override
-//                public void onFailure(@NonNull Call<ModelResponse.RecipeDetailResponse> call, @NonNull Throwable t) {
-//                    Log.e(TAG, "API Call Failed (Details) - Recipe ID: " + recipeId + ", Error: " + t.getMessage());
-//
-//                    // Check if all ratings are completed
-//                    if (completedRatings.incrementAndGet() >= recipeCount) {
-//                        completeLoad(); // Complete ratings batch load despite errors
-//                    }
-//                }
-//            });
-//        }
-//    }
-
-    /**
      * Fetches detailed ratings for recipes using the new Rating API
      */
     private void fetchRatingsForRecipes(ApiService apiService, List<ModelResponse.RecipeResponse.Recipe> recipes) {
@@ -605,6 +742,7 @@ public class HomeFragment extends Fragment {
             });
         }
     }
+
     /**
      * Notifies the appropriate adapter when a recipe is updated
      */
@@ -659,6 +797,12 @@ public class HomeFragment extends Fragment {
         super.onResume();
         if (initialLoadComplete) {
             refreshData();
+        }
+
+        // Clear search if active
+        if (isSearchActive && etSearch != null) {
+            etSearch.setText("");
+            hideSearchResults();
         }
     }
 

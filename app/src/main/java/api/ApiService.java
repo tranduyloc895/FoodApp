@@ -19,27 +19,12 @@ import retrofit2.http.Path;
 import retrofit2.http.Query;
 
 public interface ApiService {
+    // Authentication & Account Management
     @FormUrlEncoded
     @POST("auth/login")
     Call<ModelResponse.LoginResponse> login(
             @Field("email") String email,
             @Field("password") String password
-    );
-
-    @GET("users/me")
-    Call<ModelResponse.UserResponse> getUserInfo(
-            @retrofit2.http.Header("Authorization") String token
-    );
-
-    @GET("users/user/{userId}")
-    Call<ModelResponse.UserResponse> getUserById(
-            @retrofit2.http.Header("Authorization") String token,
-            @Path("userId") String userId
-    );
-
-    @DELETE("users/delete-account")
-    Call<ModelResponse.readNotificationResponse> deleteAccount(
-            @retrofit2.http.Header("Authorization") String token
     );
 
     @FormUrlEncoded
@@ -48,7 +33,7 @@ public interface ApiService {
             @Field("name") String name,
             @Field("email") String email,
             @Field("password") String password,
-            @Field("confirmPassword") String confirmPassword  // Changed from confirm_password
+            @Field("confirmPassword") String confirmPassword
     );
 
     @POST("auth/logout")
@@ -78,6 +63,32 @@ public interface ApiService {
     );
 
     @FormUrlEncoded
+    @PATCH("users/update-password")
+    Call<ModelResponse.ChangePasswordResponse> updatePassword(
+            @retrofit2.http.Header("Authorization") String token,
+            @Field("currentPassword") String currentPassword,
+            @Field("newPassword") String newPassword,
+            @Field("confirmNewPassword") String confirmNewPassword
+    );
+
+    @DELETE("users/delete-account")
+    Call<ModelResponse.readNotificationResponse> deleteAccount(
+            @retrofit2.http.Header("Authorization") String token
+    );
+
+    // User Profile Management
+    @GET("users/me")
+    Call<ModelResponse.UserResponse> getUserInfo(
+            @retrofit2.http.Header("Authorization") String token
+    );
+
+    @GET("users/user/{userId}")
+    Call<ModelResponse.UserResponse> getUserById(
+            @retrofit2.http.Header("Authorization") String token,
+            @Path("userId") String userId
+    );
+
+    @FormUrlEncoded
     @PATCH("users/update-profile")
     Call<ModelResponse.UpdateUserResponse> updateProfile(
             @retrofit2.http.Header("Authorization") String token,
@@ -87,15 +98,14 @@ public interface ApiService {
             @Field("country") String country
     );
 
-    @FormUrlEncoded
-    @PATCH("users/update-password")
-    Call<ModelResponse.ChangePasswordResponse> updatePassword(
+    @Multipart
+    @POST("users/upload-avatar")
+    Call<ModelResponse.UserResponse> uploadAvatar(
             @retrofit2.http.Header("Authorization") String token,
-            @Field("currentPassword") String currentPassword,
-            @Field("newPassword") String newPassword,
-            @Field("confirmNewPassword") String confirmNewPassword
+            @Part MultipartBody.Part avatar
     );
 
+    // Recipe Management
     @GET("recipes/get-recipe-latest")
     Call<ModelResponse.RecipeResponse> getRecipeLatest(
             @Header("Authorization") String token
@@ -112,6 +122,59 @@ public interface ApiService {
             @Query("id") String recipeId
     );
 
+    @GET("recipes/get-all-recipes")
+    Call<ModelResponse.RecipeResponse> getAllRecipes(
+            @retrofit2.http.Header("Authorization") String token
+    );
+
+    @Multipart
+    @POST("recipes/add-recipe")
+    Call<ModelResponse.RecipeDetailResponse> addRecipeWithParts(
+            @Header("Authorization") String token,
+            @PartMap Map<String, RequestBody> parts,
+            @Part MultipartBody.Part imageRecipe
+    );
+
+    @DELETE("recipes/{recipeId}")
+    Call<ModelResponse.readNotificationResponse> deleteRecipe(
+            @retrofit2.http.Header("Authorization") String token,
+            @Path("recipeId") String recipeId
+    );
+
+    @FormUrlEncoded
+    @PATCH("recipes/rating-recipe")
+    Call<ModelResponse.RatingResponse> rateRecipe(
+            @retrofit2.http.Header("Authorization") String token,
+            @Field("id") String recipeId,
+            @Field("rating") int rating
+    );
+
+    @GET("recipes/get-recipe-rating")
+    Call<ModelResponse.getRatingResponse> getRecipeRating(
+            @retrofit2.http.Header("Authorization") String token,
+            @Query("id") String recipeId
+    );
+
+    // Recipe Saved/Bookmarks
+    @GET("users/saved-recipes")
+    Call<ModelResponse.RecipeResponse> getSavedRecipes(
+            @retrofit2.http.Header("Authorization") String token
+    );
+
+    @FormUrlEncoded
+    @POST("users/save-recipe")
+    Call<ModelResponse.SavedRecipeResponse> saveRecipe(
+            @retrofit2.http.Header("Authorization") String token,
+            @Field("recipeId") String recipeId
+    );
+
+    @DELETE("users/saved-recipes/{recipeId}")
+    Call<ModelResponse.DeleteSavedRecipeResponse> deleteSavedRecipe(
+            @retrofit2.http.Header("Authorization") String token,
+            @Path("recipeId") String recipeId
+    );
+
+    // Comments
     @GET("recipes/get-recipe-comments")
     Call<ModelResponse.CommentResponse> getRecipeComments(
             @retrofit2.http.Header("Authorization") String token,
@@ -142,53 +205,13 @@ public interface ApiService {
             @Field("commentId") String commentId
     );
 
-    @Multipart
-    @POST("recipes/add-recipe")
-    Call<ModelResponse.RecipeDetailResponse> addRecipeWithParts(
-            @Header("Authorization") String token,
-            @PartMap Map<String, RequestBody> parts,
-            @Part MultipartBody.Part imageRecipe
-    );
-
-    @FormUrlEncoded
-    @PATCH("recipes/rating-recipe")
-    Call<ModelResponse.RatingResponse> rateRecipe(
+    @DELETE("comments/{commentId}")
+    Call<ModelResponse.readNotificationResponse> deleteComment(
             @retrofit2.http.Header("Authorization") String token,
-            @Field("id") String recipeId,
-            @Field("rating") int rating
+            @Path("commentId") String commentId
     );
 
-    @Multipart
-    @POST("users/upload-avatar")
-    Call<ModelResponse.UserResponse> uploadAvatar(
-            @retrofit2.http.Header("Authorization") String token,
-            @Part MultipartBody.Part avatar
-    );
-
-    @GET("users/saved-recipes")
-    Call<ModelResponse.RecipeResponse> getSavedRecipes(
-            @retrofit2.http.Header("Authorization") String token
-    );
-
-    @FormUrlEncoded
-    @POST("users/save-recipe")
-    Call<ModelResponse.SavedRecipeResponse> saveRecipe(
-            @retrofit2.http.Header("Authorization") String token,
-            @Field("recipeId") String recipeId
-    );
-
-    @DELETE("users/saved-recipes/{recipeId}")
-    Call<ModelResponse.DeleteSavedRecipeResponse> deleteSavedRecipe(
-            @retrofit2.http.Header("Authorization") String token,
-            @Path("recipeId") String recipeId
-    );
-
-    @GET("recipes/get-recipe-rating")
-    Call<ModelResponse.getRatingResponse> getRecipeRating(
-            @retrofit2.http.Header("Authorization") String token,
-            @Query("id") String recipeId
-    );
-
+    // Notifications
     @GET("notifications/")
     Call<ModelResponse.NotificationsResponse> getNotifications(
             @retrofit2.http.Header("Authorization") String token
@@ -200,21 +223,9 @@ public interface ApiService {
             @Path("notificationId") String notificationId
     );
 
-    @DELETE("comments/{commentId}")
-    Call<ModelResponse.readNotificationResponse> deleteComment(
-            @retrofit2.http.Header("Authorization") String token,
-            @Path("commentId") String commentId
-    );
-
     @DELETE("notifications/{notificationId}")
     Call<ModelResponse.readNotificationResponse> deleteNotification(
             @retrofit2.http.Header("Authorization") String token,
             @Path("notificationId") String notificationId
-    );
-
-    @DELETE("recipes/{recipeId}")
-    Call<ModelResponse.readNotificationResponse> deleteRecipe(
-            @retrofit2.http.Header("Authorization") String token,
-            @Path("recipeId") String recipeId
     );
 }

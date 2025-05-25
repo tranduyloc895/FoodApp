@@ -2,6 +2,7 @@ package com.example.appfood;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ProgressBar;
@@ -18,6 +19,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class SignInActivity extends AppCompatActivity {
+    private static final String TAG = "SignInActivity";
     // UI components for user input and actions
     private EditText etEmail, etPassword;
     private View btnSignInWithLoading;
@@ -100,15 +102,15 @@ public class SignInActivity extends AppCompatActivity {
         call.enqueue(new Callback<ModelResponse.LoginResponse>() {
             @Override
             public void onResponse(Call<ModelResponse.LoginResponse> call, Response<ModelResponse.LoginResponse> response) {
-                // Reset button state
-                setLoadingState(false);
-
                 if (response.isSuccessful() && response.body() != null) {
                     ModelResponse.LoginResponse loginResponse = response.body();
 
                     // Check if login was successful
                     if ("success".equals(loginResponse.getMessage())) {
                         String token = loginResponse.getToken();
+
+                        // Don't reset loading state yet - we're still fetching recipes
+                        fetchAndCacheRecipes(token);
 
                         Toast.makeText(SignInActivity.this, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show();
 
@@ -118,9 +120,11 @@ public class SignInActivity extends AppCompatActivity {
                         startActivity(intent);
                         finish();
                     } else {
+                        setLoadingState(false);
                         Toast.makeText(SignInActivity.this, "Đăng nhập thất bại", Toast.LENGTH_SHORT).show();
                     }
                 } else {
+                    setLoadingState(false);
                     Toast.makeText(SignInActivity.this, "Sai tài khoản hoặc mật khẩu", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -131,6 +135,40 @@ public class SignInActivity extends AppCompatActivity {
                 setLoadingState(false);
 
                 Toast.makeText(SignInActivity.this, "Không thể kết nối đến máy chủ: " + t.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void fetchAndCacheRecipes(String token) {
+        String authToken = "Bearer " + token;
+        ApiService apiService = RetrofitClient.getApiService();
+        Call<ModelResponse.RecipeResponse> call = apiService.getAllRecipes(authToken);
+
+        call.enqueue(new Callback<ModelResponse.RecipeResponse>() {
+            @Override
+            public void onResponse(Call<ModelResponse.RecipeResponse> call, Response<ModelResponse.RecipeResponse> response) {
+                // Reset loading state since we're done with API calls
+                setLoadingState(false);
+
+                if (response.isSuccessful() && response.body() != null) {
+                    ModelResponse.RecipeResponse recipeResponse = response.body();
+                    if (recipeResponse.getData() != null && recipeResponse.getData().getRecipes() != null) {
+                        // Cache the recipes
+                        RecipeCache.saveRecipesToCache(SignInActivity.this, recipeResponse.getData().getRecipes());
+                        Log.d(TAG, "Recipes cached successfully");
+                    } else {
+                        Log.d(TAG, "No recipes to cache");
+                    }
+                } else {
+                    Log.e(TAG, "Failed to fetch recipes");
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ModelResponse.RecipeResponse> call, Throwable t) {
+                // We still proceed with login even if recipe caching fails
+                setLoadingState(false);
+                Log.e(TAG, "Error fetching recipes: " + t.getMessage());
             }
         });
     }
