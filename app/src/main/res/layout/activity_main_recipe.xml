@@ -157,39 +157,34 @@
         app:layout_constraintStart_toEndOf="@+id/imgProfile"
         app:layout_constraintTop_toBottomOf="@+id/tvUserName" />
 
-    <!-- Tab Buttons -->
-    <LinearLayout
-        android:id="@+id/tabButtons"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+    <!-- Tab Layout (replaced buttons with TabLayout that matches notification style) -->
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabLayout"
+        android:layout_width="0dp"
+        android:layout_height="34dp"
         android:layout_marginStart="16dp"
         android:layout_marginTop="24dp"
         android:layout_marginEnd="16dp"
-        android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imgProfile">
+        app:layout_constraintTop_toBottomOf="@+id/imgProfile"
+        app:tabBackground="@drawable/tab_selector"
+        app:tabIndicatorHeight="0dp"
+        app:tabRippleColor="@null"
+        app:tabSelectedTextColor="@android:color/white"
+        app:tabTextColor="@color/green">
 
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/btnIngredient"
-            android:layout_width="0dp"
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:layout_weight="1"
-            android:background="@drawable/rounded_button_background"
-            android:text="Ingredient"
-            android:textColor="@color/white" />
+            android:text="Ingredient" />
 
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/btnProcedure"
-            android:layout_width="0dp"
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_weight="1"
-            android:background="@drawable/rounded_button_background"
-            android:text="Procedure"
-            android:textColor="@color/white" />
-    </LinearLayout>
+            android:text="Procedure" />
+
+    </com.google.android.material.tabs.TabLayout>
 
     <!-- Serving Information -->
     <LinearLayout
@@ -202,7 +197,7 @@
         android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tabButtons">
+        app:layout_constraintTop_toBottomOf="@+id/tabLayout">
 
         <LinearLayout
             android:layout_width="0dp"

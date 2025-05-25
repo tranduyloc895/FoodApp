@@ -28,6 +28,7 @@ import androidx.core.widget.NestedScrollView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
+import com.google.android.material.tabs.TabLayout;
 
 import java.io.IOException;
 import java.util.List;
@@ -68,7 +69,8 @@ public class MainRecipe extends AppCompatActivity {
     private TextView tvRating, tvTime, tvRecipeTitle, tvReviews;
     private CircleImageView imgProfile;
     private TextView tvUserName, tvUserLocation, tvItemCount;
-    private Button btnIngredient, btnProcedure;
+    // Replace buttons with TabLayout
+    private TabLayout tabLayout;
     private NestedScrollView scrollIngredients, scrollProcedure;
     private FrameLayout loadingOverlay;
 
@@ -160,8 +162,10 @@ public class MainRecipe extends AppCompatActivity {
         tvUserName = findViewById(R.id.tvUserName);
         tvUserLocation = findViewById(R.id.tvUserLocation);
         tvItemCount = findViewById(R.id.tvItemCount);
-        btnIngredient = findViewById(R.id.btnIngredient);
-        btnProcedure = findViewById(R.id.btnProcedure);
+
+        // Replace buttons with TabLayout
+        tabLayout = findViewById(R.id.tabLayout);
+
         scrollIngredients = findViewById(R.id.scrollIngredients);
         scrollProcedure = findViewById(R.id.scrollProcedure);
         loadingOverlay = findViewById(R.id.loadingOverlay);
@@ -176,26 +180,39 @@ public class MainRecipe extends AppCompatActivity {
             showOptionsMenu();
         });
 
-        // Tab button clicks
-        btnIngredient.setOnClickListener(v -> {
-            scrollIngredients.setVisibility(View.VISIBLE);
-            scrollProcedure.setVisibility(View.GONE);
-            btnIngredient.setAlpha(1.0f);
-            btnProcedure.setAlpha(0.7f);
-            // Update item count to show number of ingredients
-            if (ingredients != null) {
-                tvItemCount.setText(ingredients.size() + " Items");
-            }
-        });
+        // Replace button click listeners with TabLayout listener
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                if (tab.getPosition() == 0) {
+                    // Ingredient tab selected
+                    scrollIngredients.setVisibility(View.VISIBLE);
+                    scrollProcedure.setVisibility(View.GONE);
 
-        btnProcedure.setOnClickListener(v -> {
-            scrollIngredients.setVisibility(View.GONE);
-            scrollProcedure.setVisibility(View.VISIBLE);
-            btnIngredient.setAlpha(0.7f);
-            btnProcedure.setAlpha(1.0f);
-            // Update item count to show number of steps
-            if (instructions != null) {
-                tvItemCount.setText(instructions.size() + " Steps");
+                    // Update item count to show number of ingredients
+                    if (ingredients != null) {
+                        tvItemCount.setText(ingredients.size() + " Items");
+                    }
+                } else {
+                    // Procedure tab selected
+                    scrollIngredients.setVisibility(View.GONE);
+                    scrollProcedure.setVisibility(View.VISIBLE);
+
+                    // Update item count to show number of steps
+                    if (instructions != null) {
+                        tvItemCount.setText(instructions.size() + " Steps");
+                    }
+                }
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+                // Not needed
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+                // Not needed
             }
         });
 
@@ -366,11 +383,6 @@ public class MainRecipe extends AppCompatActivity {
      * @param token Authentication token
      * @param id Recipe ID
      */
-    /**
-     * Get recipe details from API
-     * @param token Authentication token
-     * @param id Recipe ID
-     */
     public void getRecipe(String token, String id) {
         // Increment loading counter
         loadingCounter.incrementAndGet();
@@ -502,10 +514,6 @@ public class MainRecipe extends AppCompatActivity {
     }
 
     /**
-     * Update UI with recipe data (excluding rating which is handled separately)
-     */
-
-    /**
      * Check if all loading operations are complete and update loading state
      */
     private void checkAndUpdateLoadingState() {
@@ -572,6 +580,14 @@ public class MainRecipe extends AppCompatActivity {
         // Update procedures
         if (instructions != null) {
             updateProcedureView();
+        }
+
+        // Select the first tab by default to show ingredients
+        if (tabLayout != null && tabLayout.getTabCount() > 0) {
+            TabLayout.Tab tab = tabLayout.getTabAt(0);
+            if (tab != null) {
+                tab.select();
+            }
         }
     }
 
@@ -778,71 +794,6 @@ public class MainRecipe extends AppCompatActivity {
         // TODO: Implement share functionality
         Toast.makeText(this, "Share Recipe functionality", Toast.LENGTH_SHORT).show();
     }
-
-    /**
-     * Toggle between saving and unsaving the recipe
-     */
-//    private void toggleSaveRecipe() {
-//        showLoading(true);
-//
-//        ApiService apiService = RetrofitClient.getApiService();
-//
-//        if (isRecipeSaved) {
-//            // Recipe is saved, so unsave it
-//            Call<ModelResponse.DeleteSavedRecipeResponse> call =
-//                    apiService.deleteSavedRecipe("Bearer " + token, recipeId);
-//
-//            call.enqueue(new Callback<ModelResponse.DeleteSavedRecipeResponse>() {
-//                @Override
-//                public void onResponse(Call<ModelResponse.DeleteSavedRecipeResponse> call,
-//                                       Response<ModelResponse.DeleteSavedRecipeResponse> response) {
-//                    showLoading(false);
-//
-//                    if (response.isSuccessful()) {
-//                        isRecipeSaved = false;
-//                        Toast.makeText(MainRecipe.this, "Recipe removed from saved collection",
-//                                Toast.LENGTH_SHORT).show();
-//                    } else {
-//                        showError("Failed to unsave recipe: " + response.code());
-//                    }
-//                }
-//
-//                @Override
-//                public void onFailure(Call<ModelResponse.DeleteSavedRecipeResponse> call, Throwable t) {
-//                    showLoading(false);
-//                    showError("Network error while unsaving recipe");
-//                    Log.e(TAG, "Network error: " + t.getMessage());
-//                }
-//            });
-//        } else {
-//            // Recipe is not saved, so save it
-//            Call<ModelResponse.SavedRecipeResponse> call =
-//                    apiService.saveRecipe("Bearer " + token, recipeId);
-//
-//            call.enqueue(new Callback<ModelResponse.SavedRecipeResponse>() {
-//                @Override
-//                public void onResponse(Call<ModelResponse.SavedRecipeResponse> call,
-//                                       Response<ModelResponse.SavedRecipeResponse> response) {
-//                    showLoading(false);
-//
-//                    if (response.isSuccessful() && response.body() != null) {
-//                        isRecipeSaved = true;
-//                        Toast.makeText(MainRecipe.this, "Recipe saved successfully",
-//                                Toast.LENGTH_SHORT).show();
-//                    } else {
-//                        showError("Failed to save recipe: " + response.code());
-//                    }
-//                }
-//
-//                @Override
-//                public void onFailure(Call<ModelResponse.SavedRecipeResponse> call, Throwable t) {
-//                    showLoading(false);
-//                    showError("Network error while saving recipe");
-//                    Log.e(TAG, "Network error: " + t.getMessage());
-//                }
-//            });
-//        }
-//    }
 
     /**
      * Toggle between saving and unsaving the recipe

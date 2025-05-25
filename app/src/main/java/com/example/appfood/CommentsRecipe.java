@@ -1,6 +1,8 @@
 package com.example.appfood;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
@@ -35,6 +37,12 @@ public class CommentsRecipe extends AppCompatActivity implements CommentAdapter.
     private static final String TAG = "CommentsRecipe";
     private static final String BEARER_PREFIX = "Bearer ";
 
+    // Auto refresh settings
+    private boolean isAutoRefreshEnabled = true;
+    private long refreshInterval = 10000; // 10 seconds
+    private Handler refreshHandler = new Handler(Looper.getMainLooper());
+    private Runnable refreshRunnable;
+
     // Comments data
     private final List<ModelResponse.CommentResponse.Comment> commentList = new ArrayList<>();
     private String token;
@@ -53,6 +61,7 @@ public class CommentsRecipe extends AppCompatActivity implements CommentAdapter.
     // User info
     private String userId;
     private String url_avatar;
+    private String recipeName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,12 +81,123 @@ public class CommentsRecipe extends AppCompatActivity implements CommentAdapter.
         loadInitialData();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        startAutoRefresh();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        stopAutoRefresh();
+    }
+
+    /**
+     * Start automatic refresh of comments
+     */
+    private void startAutoRefresh() {
+        if (isAutoRefreshEnabled) {
+            refreshRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    refreshCommentsInBackground();
+                    // Re-run this after delay
+                    refreshHandler.postDelayed(this, refreshInterval);
+                }
+            };
+            refreshHandler.postDelayed(refreshRunnable, refreshInterval);
+        }
+    }
+
+    /**
+     * Stop automatic refresh of comments
+     */
+    private void stopAutoRefresh() {
+        if (refreshRunnable != null) {
+            refreshHandler.removeCallbacks(refreshRunnable);
+        }
+    }
+
+    /**
+     * Refresh comments in background without showing loading indicator
+     */
+    private void refreshCommentsInBackground() {
+        if (token == null || recipeId == null) {
+            return;
+        }
+
+        ApiService apiService = RetrofitClient.getApiService();
+        Call<ModelResponse.CommentResponse> call = apiService.getRecipeComments(BEARER_PREFIX + token, recipeId);
+
+        call.enqueue(new Callback<ModelResponse.CommentResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<ModelResponse.CommentResponse> call,
+                                   @NonNull Response<ModelResponse.CommentResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    ModelResponse.CommentResponse commentResponse = response.body();
+
+                    if ("success".equals(commentResponse.getStatus()) &&
+                            commentResponse.getData() != null &&
+                            commentResponse.getData().getComments() != null) {
+
+                        List<ModelResponse.CommentResponse.Comment> newComments =
+                                commentResponse.getData().getComments();
+
+                        // Check if comments have changed
+                        if (commentsHaveChanged(commentList, newComments)) {
+                            Log.d(TAG, "Comments updated in background");
+
+                            // Update our list
+                            commentList.clear();
+                            commentList.addAll(newComments);
+
+                            // Update UI on the main thread
+                            runOnUiThread(() -> updateUI());
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ModelResponse.CommentResponse> call, @NonNull Throwable t) {
+                // Silent failure in background
+                Log.e(TAG, "Background comments refresh failed", t);
+            }
+        });
+    }
+
+    /**
+     * Check if comments have changed
+     */
+    private boolean commentsHaveChanged(
+            List<ModelResponse.CommentResponse.Comment> oldList,
+            List<ModelResponse.CommentResponse.Comment> newList) {
+
+        if (oldList.size() != newList.size()) {
+            return true;
+        }
+
+        // Compare comments for changes
+        for (int i = 0; i < oldList.size(); i++) {
+            if (!oldList.get(i).getId().equals(newList.get(i).getId()) ||
+                    !oldList.get(i).getContent().equals(newList.get(i).getContent()) ||
+                    oldList.get(i).getLikes() != newList.get(i).getLikes() ||
+                    oldList.get(i).getDislikes() != newList.get(i).getDislikes()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Extract data from intent
      */
     private void extractIntentData() {
         token = getIntent().getStringExtra("token");
         recipeId = getIntent().getStringExtra("recipeId");
+        recipeName = getIntent().getStringExtra("recipeName");
 
         if (token == null || recipeId == null) {
             Toast.makeText(this, "Missing token or recipe ID", Toast.LENGTH_SHORT).show();
@@ -104,7 +224,7 @@ public class CommentsRecipe extends AppCompatActivity implements CommentAdapter.
         rvComments.setAdapter(commentAdapter);
 
         // Set title
-        tvTitle.setText("Reviews");
+        tvTitle.setText(recipeName != null ? "Reviews for " + recipeName : "Reviews");
 
         // Back button click listener
         btnBack.setOnClickListener(v -> finish());
@@ -182,9 +302,11 @@ public class CommentsRecipe extends AppCompatActivity implements CommentAdapter.
                 commentResponse.getData() != null &&
                 commentResponse.getData().getComments() != null) {
 
+            List<ModelResponse.CommentResponse.Comment> newComments = commentResponse.getData().getComments();
+
             // Store comments data
             commentList.clear();
-            commentList.addAll(commentResponse.getData().getComments());
+            commentList.addAll(newComments);
 
             // Update UI with comments data
             updateUI();
@@ -466,5 +588,34 @@ public class CommentsRecipe extends AppCompatActivity implements CommentAdapter.
     @Override
     public void onDeleteClicked(String commentId, int position) {
         deleteComment(commentId, position);
+    }
+
+    /**
+     * Enable or disable auto-refresh
+     */
+    public void setAutoRefreshEnabled(boolean enabled) {
+        this.isAutoRefreshEnabled = enabled;
+        if (enabled) {
+            startAutoRefresh();
+        } else {
+            stopAutoRefresh();
+        }
+    }
+
+    /**
+     * Set refresh interval
+     */
+    public void setRefreshInterval(long milliseconds) {
+        this.refreshInterval = milliseconds;
+        if (isAutoRefreshEnabled) {
+            stopAutoRefresh();
+            startAutoRefresh();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        stopAutoRefresh();
     }
 }
