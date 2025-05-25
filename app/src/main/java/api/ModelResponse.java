@@ -2,6 +2,9 @@ package api;
 
 import android.util.Log;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 public class ModelResponse {
@@ -1108,6 +1111,273 @@ public class ModelResponse {
                 }
                 return updated_at;
             }
+        }
+    }
+
+    public class NotificationsResponse {
+        private String status;
+        private int results;
+        private Data data;
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
+
+        public int getResults() {
+            return results;
+        }
+
+        public void setResults(int results) {
+            this.results = results;
+        }
+
+        public Data getData() {
+            return data;
+        }
+
+        public void setData(Data data) {
+            this.data = data;
+        }
+
+        public class Data {
+            private List<Notification> notifications;
+
+            public List<Notification> getNotifications() {
+                return notifications;
+            }
+
+            public void setNotifications(List<Notification> notifications) {
+                this.notifications = notifications;
+            }
+        }
+
+        public class Notification {
+            private String id;
+            private String recipient_id;
+            private String sender_id;
+            private String type;
+            private String content;
+            private String reference_id;
+            private String reference_type;
+            private boolean is_read;
+            private String created_at;
+            private String updated_at;
+            private Sender sender;
+
+            public String getId() {
+                return id;
+            }
+
+            public void setId(String id) {
+                this.id = id;
+            }
+
+            public String getRecipientId() {
+                return recipient_id;
+            }
+
+            public void setRecipientId(String recipient_id) {
+                this.recipient_id = recipient_id;
+            }
+
+            public String getSenderId() {
+                return sender_id;
+            }
+
+            public void setSenderId(String sender_id) {
+                this.sender_id = sender_id;
+            }
+
+            public String getType() {
+                return type;
+            }
+
+            public void setType(String type) {
+                this.type = type;
+            }
+
+            public String getContent() {
+                return content;
+            }
+
+            public void setContent(String content) {
+                this.content = content;
+            }
+
+            public String getReferenceId() {
+                return reference_id;
+            }
+
+            public void setReferenceId(String reference_id) {
+                this.reference_id = reference_id;
+            }
+
+            public String getReferenceType() {
+                return reference_type;
+            }
+
+            public void setReferenceType(String reference_type) {
+                this.reference_type = reference_type;
+            }
+
+            public boolean isRead() {
+                return is_read;
+            }
+
+            public void setRead(boolean is_read) {
+                this.is_read = is_read;
+            }
+
+            public String getCreatedAt() {
+                return created_at;
+            }
+
+            public void setCreatedAt(String created_at) {
+                this.created_at = created_at;
+            }
+
+            public String getUpdatedAt() {
+                return updated_at;
+            }
+
+            public void setUpdatedAt(String updated_at) {
+                this.updated_at = updated_at;
+            }
+
+            public Sender getSender() {
+                return sender;
+            }
+
+            public void setSender(Sender sender) {
+                this.sender = sender;
+            }
+
+            // Helper method to format time as "X mins ago", "X hours ago", "Yesterday", or date
+            public String getFormattedTime() {
+                try {
+                    // Parse ISO 8601 timestamp
+                    SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+                    Date notifDate = isoFormat.parse(created_at);
+                    Date now = new Date();
+
+                    // Calculate time difference in milliseconds
+                    long diffMillis = now.getTime() - notifDate.getTime();
+                    long diffMinutes = diffMillis / (60 * 1000);
+
+                    // Less than 60 minutes: show as "X mins ago"
+                    if (diffMinutes < 60) {
+                        return diffMinutes + " mins ago";
+                    }
+
+                    // Less than 24 hours: show as "X hours ago"
+                    long diffHours = diffMillis / (60 * 60 * 1000);
+                    if (diffHours < 24) {
+                        return diffHours + " hours ago";
+                    }
+
+                    // Check if yesterday
+                    Calendar notifCal = Calendar.getInstance();
+                    notifCal.setTime(notifDate);
+                    Calendar yesterdayCal = Calendar.getInstance();
+                    yesterdayCal.add(Calendar.DAY_OF_YEAR, -1);
+
+                    if (notifCal.get(Calendar.YEAR) == yesterdayCal.get(Calendar.YEAR) &&
+                            notifCal.get(Calendar.DAY_OF_YEAR) == yesterdayCal.get(Calendar.DAY_OF_YEAR)) {
+                        return "Yesterday";
+                    }
+
+                    // Otherwise return date
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd");
+                    return dateFormat.format(notifDate);
+
+                } catch (Exception e) {
+                    // Fallback in case of parsing error
+                    return created_at;
+                }
+            }
+
+            // Get category for displaying in grouped sections
+            public String getDateCategory() {
+                try {
+                    SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+                    Date notifDate = isoFormat.parse(created_at);
+                    Date now = new Date();
+
+                    Calendar notifCal = Calendar.getInstance();
+                    notifCal.setTime(notifDate);
+                    Calendar todayCal = Calendar.getInstance();
+                    Calendar yesterdayCal = Calendar.getInstance();
+                    yesterdayCal.add(Calendar.DAY_OF_YEAR, -1);
+
+                    if (notifCal.get(Calendar.YEAR) == todayCal.get(Calendar.YEAR) &&
+                            notifCal.get(Calendar.DAY_OF_YEAR) == todayCal.get(Calendar.DAY_OF_YEAR)) {
+                        return "Today";
+                    } else if (notifCal.get(Calendar.YEAR) == yesterdayCal.get(Calendar.YEAR) &&
+                            notifCal.get(Calendar.DAY_OF_YEAR) == yesterdayCal.get(Calendar.DAY_OF_YEAR)) {
+                        return "Yesterday";
+                    } else {
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy");
+                        return dateFormat.format(notifDate);
+                    }
+                } catch (Exception e) {
+                    return "Earlier";
+                }
+            }
+        }
+
+        public class Sender {
+            private String id;
+            private String name;
+            private String url_avatar;
+
+            public String getId() {
+                return id;
+            }
+
+            public void setId(String id) {
+                this.id = id;
+            }
+
+            public String getName() {
+                return name;
+            }
+
+            public void setName(String name) {
+                this.name = name;
+            }
+
+            public String getUrlAvatar() {
+                return url_avatar;
+            }
+
+            public void setUrlAvatar(String url_avatar) {
+                this.url_avatar = url_avatar;
+            }
+        }
+    }
+
+    public class readNotificationResponse {
+        private String status;
+        private String message;
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
         }
     }
 }

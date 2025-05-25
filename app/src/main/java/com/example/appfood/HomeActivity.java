@@ -1,8 +1,15 @@
 package com.example.appfood;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.widget.Toast;
+
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -11,32 +18,56 @@ import fragment.HomeFragment;
 import fragment.SavedRecipeFragment;
 import fragment.NotificationsFragment;
 import fragment.ProfileFragment;
+import android.Manifest;
 
-/**
- * HomeActivity là màn hình chính sau khi đăng nhập.
- * Nó sử dụng BottomNavigationView để điều hướng giữa các Fragment.
- */
 public class HomeActivity extends AppCompatActivity {
     private BottomNavigationView bottomNavigationView;
     private FloatingActionButton fabAddRecipe;
     private String token;
 
-    /**
-     * Được gọi khi Activity khởi động. Thiết lập BottomNavigation.
-     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
+                    PackageManager.PERMISSION_GRANTED) {
+                registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                    // Handle permission result if needed
+                }).launch(Manifest.permission.POST_NOTIFICATIONS);
+            }
+        }
+
         bottomNavigationView = findViewById(R.id.bottom_navigation);
         fabAddRecipe = findViewById(R.id.fab_add);
-        setupBottomNavigation();
 
+        // Get token from intent first
         token = getIntent().getStringExtra("token");
+
+        // If token is null, try to get from SharedPreferences
+        if (token == null || token.isEmpty()) {
+            SharedPreferences sharedPreferences = getSharedPreferences("user_prefs", MODE_PRIVATE);
+            token = sharedPreferences.getString("token", "");
+
+            if (token == null || token.isEmpty()) {
+                // Try another possible location
+                sharedPreferences = getSharedPreferences("user_data", MODE_PRIVATE);
+                token = sharedPreferences.getString("token", "");
+            }
+
+            // Save token in both places to ensure consistency
+            if (token != null && !token.isEmpty()) {
+                SharedPreferences.Editor editor = getSharedPreferences("user_prefs", MODE_PRIVATE).edit();
+                editor.putString("token", token);
+                editor.apply();
+            }
+        }
+
+        setupBottomNavigation();
         setupAddRecipeButton(token);
 
-        // Hiển thị HomeFragment mặc định khi ứng dụng khởi động
+        // Display HomeFragment by default when app starts
         if (savedInstanceState == null) {
             getSupportFragmentManager()
                     .beginTransaction()
@@ -45,9 +76,6 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Handles the click event for the add recipe button.
-     */
     private void setupAddRecipeButton(String token) {
         fabAddRecipe.setOnClickListener(v -> {
             Intent intent = new Intent(HomeActivity.this, AddRecipeActivity.class);
@@ -56,9 +84,6 @@ public class HomeActivity extends AppCompatActivity {
         });
     }
 
-    /**
-     * Thiết lập BottomNavigation để chuyển đổi giữa các Fragment.
-     */
     private void setupBottomNavigation() {
         bottomNavigationView.setOnItemSelectedListener(item -> {
             Fragment selectedFragment = null;
@@ -67,9 +92,9 @@ public class HomeActivity extends AppCompatActivity {
             if (itemId == R.id.nav_home) {
                 selectedFragment = new HomeFragment();
             } else if (itemId == R.id.nav_saved) {
-                selectedFragment = new SavedRecipeFragment().newInstance(token);
+                selectedFragment = SavedRecipeFragment.newInstance(token);
             } else if (itemId == R.id.nav_notifications) {
-                selectedFragment = new NotificationsFragment();
+                selectedFragment = NotificationsFragment.newInstance(token);
             } else if (itemId == R.id.nav_profile) {
                 selectedFragment = new ProfileFragment();
             }

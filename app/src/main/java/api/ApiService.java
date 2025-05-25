@@ -178,4 +178,15 @@ public interface ApiService {
             @retrofit2.http.Header("Authorization") String token,
             @Query("id") String recipeId
     );
+
+    @GET("notifications/")
+    Call<ModelResponse.NotificationsResponse> getNotifications(
+            @retrofit2.http.Header("Authorization") String token
+    );
+
+    @PATCH("notifications/{notificationId}/read")
+    Call<ModelResponse.readNotificationResponse> markNotificationAsRead(
+            @retrofit2.http.Header("Authorization") String token,
+            @Path("notificationId") String notificationId
+    );
 }

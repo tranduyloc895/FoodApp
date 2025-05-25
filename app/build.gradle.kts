@@ -49,4 +49,7 @@ dependencies {
     implementation ("com.github.bumptech.glide:glide:4.12.0")
     annotationProcessor ("com.github.bumptech.glide:compiler:4.12.0")
     annotationProcessor ("com.github.bumptech.glide:compiler:4.16.0")
+    implementation ("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+    implementation ("com.google.firebase:firebase-messaging:23.2.1")
+    implementation ("androidx.core:core:1.12.0")
 }

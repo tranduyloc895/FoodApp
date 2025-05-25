@@ -140,42 +140,63 @@ public class SavedRecipeFragment extends Fragment {
         call.enqueue(new Callback<ModelResponse.RecipeResponse>() {
             @Override
             public void onResponse(Call<ModelResponse.RecipeResponse> call, Response<ModelResponse.RecipeResponse> response) {
-                // Hide loading when response is received
                 hideLoading();
 
                 if (response.isSuccessful() && response.body() != null) {
                     Log.d(TAG, "API response successful");
                     ModelResponse.RecipeResponse recipeResponse = response.body();
-                    if (recipeResponse.getData() != null && recipeResponse.getData().getRecipes() != null) {
-                        savedRecipes.clear();
 
-                        // Process recipes to calculate average ratings if needed
-                        List<ModelResponse.RecipeResponse.Recipe> recipes = recipeResponse.getData().getRecipes();
-                        Log.d(TAG, "Received " + recipes.size() + " saved recipes");
+                    // Handle case when data is null - treat as empty list
+                    if (recipeResponse.getData() == null) {
+                        Log.d(TAG, "Recipe response data is null - showing empty state");
+                        showEmptyState();
+                        return;
+                    }
 
-                        savedRecipes.addAll(recipes);
-                        adapter.updateData(savedRecipes);
+                    // Handle case when recipes list is null - treat as empty list
+                    if (recipeResponse.getData().getRecipes() == null) {
+                        Log.d(TAG, "Recipes list is null - showing empty state");
+                        showEmptyState();
+                        return;
+                    }
 
-                        // Process recipes to get author names
-                        processRecipesForAuthorNames(savedRecipes);
+                    // Process recipes normally
+                    savedRecipes.clear();
+                    List<ModelResponse.RecipeResponse.Recipe> recipes = recipeResponse.getData().getRecipes();
+                    Log.d(TAG, "Received " + recipes.size() + " saved recipes");
 
-                        // NEW: Fetch ratings for all recipes
-                        fetchRatingsForRecipes(savedRecipes);
+                    savedRecipes.addAll(recipes);
+                    adapter.updateData(savedRecipes);
 
-                        if (savedRecipes.isEmpty()) {
-                            showEmptyState();
-                        }
-                    } else {
-                        // Existing error handling...
+                    // Process recipes to get author names
+                    processRecipesForAuthorNames(savedRecipes);
+
+                    // Fetch ratings for all recipes
+                    fetchRatingsForRecipes(savedRecipes);
+
+                    // Check if the list is empty
+                    if (savedRecipes.isEmpty()) {
+                        Log.d(TAG, "Saved recipes list is empty - showing empty state");
+                        showEmptyState();
                     }
                 } else {
-                    // Existing error handling...
+                    // Only show error if the response isn't successful
+                    int code = response.code();
+                    Log.e(TAG, "API error: " + code);
+
+                    // For 404 errors, it could mean no recipes are found - show empty state
+                    if (code == 404) {
+                        Log.d(TAG, "404 error - likely no saved recipes - showing empty state");
+                        showEmptyState();
+                    }
                 }
             }
 
             @Override
             public void onFailure(Call<ModelResponse.RecipeResponse> call, Throwable t) {
-                // Existing failure handling...
+                hideLoading();
+                Log.e(TAG, "API call failure: " + t.getMessage());
+                showError("Lỗi kết nối: " + t.getMessage());
             }
         });
     }
@@ -243,15 +264,10 @@ public class SavedRecipeFragment extends Fragment {
     }
 
     private void showEmptyState() {
-        if (titleTextView != null) {
-            titleTextView.setText("Bạn chưa lưu công thức nào");
-        }
+        Toast.makeText(getContext(), "Không có công thức nào đã lưu", Toast.LENGTH_SHORT).show();
     }
 
     private void showError(String message) {
-        if (isAdded()) {
-            Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
-        }
         Log.e(TAG, "Error: " + message);
     }
 
