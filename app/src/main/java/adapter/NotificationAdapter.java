@@ -25,6 +25,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     public interface OnNotificationClickListener {
         void onNotificationClick(ModelResponse.NotificationsResponse.Notification notification);
+        void onNotificationDeleteClick(ModelResponse.NotificationsResponse.Notification notification, int position);
     }
 
     public NotificationAdapter(OnNotificationClickListener listener) {
@@ -97,7 +98,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         } else if (holder instanceof NotificationViewHolder &&
                 item instanceof ModelResponse.NotificationsResponse.Notification) {
             ((NotificationViewHolder) holder).bind(
-                    (ModelResponse.NotificationsResponse.Notification) item);
+                    (ModelResponse.NotificationsResponse.Notification) item, position);
         }
     }
 
@@ -109,6 +110,47 @@ public class NotificationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     @Override
     public int getItemViewType(int position) {
         return items.get(position) instanceof String ? VIEW_TYPE_HEADER : VIEW_TYPE_NOTIFICATION;
+    }
+
+    public void removeNotification(int position) {
+        if (position >= 0 && position < items.size()) {
+            // Check if this is a notification and not a header
+            if (items.get(position) instanceof ModelResponse.NotificationsResponse.Notification) {
+                items.remove(position);
+                notifyItemRemoved(position);
+
+                // Check if we need to remove a header that has no more notifications
+                checkAndRemoveEmptyHeaders();
+            }
+        }
+    }
+
+    private void checkAndRemoveEmptyHeaders() {
+        int position = 0;
+        while (position < items.size()) {
+            if (items.get(position) instanceof String) {
+                String header = (String) items.get(position);
+
+                // Check if this header has any notifications following it
+                boolean hasNotifications = false;
+                int nextPos = position + 1;
+                while (nextPos < items.size() && !(items.get(nextPos) instanceof String)) {
+                    hasNotifications = true;
+                    break;
+                }
+
+                // If no notifications, remove the header
+                if (!hasNotifications) {
+                    items.remove(position);
+                    notifyItemRemoved(position);
+                    // Don't increment position since we removed an item
+                } else {
+                    position++;
+                }
+            } else {
+                position++;
+            }
+        }
     }
 
     class HeaderViewHolder extends RecyclerView.ViewHolder {
@@ -129,6 +171,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         private TextView tvNotificationMessage;
         private TextView tvTime;
         private View ivUnread;
+        private TextView tvDelete;
 
         NotificationViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -136,6 +179,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             tvNotificationMessage = itemView.findViewById(R.id.tvNotificationMessage);
             tvTime = itemView.findViewById(R.id.tvTime);
             ivUnread = itemView.findViewById(R.id.ivUnread);
+            tvDelete = itemView.findViewById(R.id.tvDelete);
 
             itemView.setOnClickListener(v -> {
                 int position = getAdapterPosition();
@@ -146,9 +190,22 @@ public class NotificationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                     listener.onNotificationClick(notification);
                 }
             });
+
+            // Set up delete button click listener
+            if (tvDelete != null) {
+                tvDelete.setOnClickListener(v -> {
+                    int position = getAdapterPosition();
+                    if (position != RecyclerView.NO_POSITION &&
+                            items.get(position) instanceof ModelResponse.NotificationsResponse.Notification) {
+                        ModelResponse.NotificationsResponse.Notification notification =
+                                (ModelResponse.NotificationsResponse.Notification) items.get(position);
+                        listener.onNotificationDeleteClick(notification, position);
+                    }
+                });
+            }
         }
 
-        void bind(ModelResponse.NotificationsResponse.Notification notification) {
+        void bind(ModelResponse.NotificationsResponse.Notification notification, int position) {
             // Display notification type as title
             tvNotificationTitle.setText(getNotificationTitle(notification));
 

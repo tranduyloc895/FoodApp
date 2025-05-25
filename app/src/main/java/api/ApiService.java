@@ -96,6 +96,11 @@ public interface ApiService {
             @Header("Authorization") String token
     );
 
+    @GET("recipes/get-random-recipe")
+    Call<ModelResponse.RecipeResponse> getRandomRecipe(
+            @retrofit2.http.Header("Authorization") String token
+    );
+
     @GET("recipes/get-recipe-id")
     Call<ModelResponse.RecipeDetailResponse> getRecipeDetail(
             @retrofit2.http.Header("Authorization") String token,
@@ -194,5 +199,11 @@ public interface ApiService {
     Call<ModelResponse.readNotificationResponse> deleteComment(
             @retrofit2.http.Header("Authorization") String token,
             @Path("commentId") String commentId
+    );
+
+    @DELETE("notifications/{notificationId}")
+    Call<ModelResponse.readNotificationResponse> deleteNotification(
+            @retrofit2.http.Header("Authorization") String token,
+            @Path("notificationId") String notificationId
     );
 }

@@ -1,5 +1,6 @@
 package fragment;
 
+import android.app.AlertDialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -400,6 +401,129 @@ public class NotificationsFragment extends Fragment implements NotificationAdapt
         if (notification.getReferenceType().equals("RECIPE") && notification.getReferenceId() != null) {
             navigateToRecipeDetail(notification.getReferenceId());
         }
+    }
+
+    @Override
+    public void onNotificationDeleteClick(ModelResponse.NotificationsResponse.Notification notification, int position) {
+        // Show confirmation dialog before deleting
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Delete Notification")
+                .setMessage("Are you sure you want to delete this notification?")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    deleteNotification(notification.getId(), position);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    /**
+     * Delete a notification
+     */
+    private void deleteNotification(String notificationId, int position) {
+        if (token == null || token.isEmpty()) {
+            Toast.makeText(requireContext(), "Authentication required", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Find the notification index in the allNotifications list
+        int notificationIndex = -1;
+        for (int i = 0; i < allNotifications.size(); i++) {
+            if (allNotifications.get(i).getId().equals(notificationId)) {
+                notificationIndex = i;
+                break;
+            }
+        }
+
+        if (notificationIndex == -1) {
+            Log.e("NotificationsFragment", "Notification not found for deletion: " + notificationId);
+            return;
+        }
+
+        // Store index for later use
+        final int finalNotificationIndex = notificationIndex;
+
+        // Optimistically update UI (remove from adapter first)
+        adapter.removeNotification(position);
+
+        // Also remove from our main list
+        ModelResponse.NotificationsResponse.Notification removedNotification =
+                allNotifications.remove(finalNotificationIndex);
+
+        // Make API call to delete the notification
+        ApiService apiService = RetrofitClient.getApiService();
+        apiService.deleteNotification("Bearer " + token, notificationId)
+                .enqueue(new Callback<ModelResponse.readNotificationResponse>() {
+                    @Override
+                    public void onResponse(Call<ModelResponse.readNotificationResponse> call,
+                                           Response<ModelResponse.readNotificationResponse> response) {
+                        if (response.isSuccessful() && response.body() != null) {
+                            if (response.body().getStatus().equals("success")) {
+                                Log.d("NotificationsFragment", "Notification deleted: " + notificationId);
+                                // Already removed from UI optimistically, nothing more to do
+
+                                // Show a brief success message
+                                if (isAdded()) {
+                                    Toast.makeText(requireContext(), "Notification deleted",
+                                            Toast.LENGTH_SHORT).show();
+                                }
+                            } else {
+                                Log.e("NotificationsFragment", "Failed to delete notification: " +
+                                        (response.body().getMessage() != null ?
+                                                response.body().getMessage() : "Unknown error"));
+
+                                // Restore notification to our list since deletion failed
+                                restoreNotification(removedNotification, finalNotificationIndex);
+
+                                if (isAdded()) {
+                                    Toast.makeText(requireContext(), "Failed to delete notification",
+                                            Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        } else {
+                            Log.e("NotificationsFragment", "Error deleting notification: " +
+                                    (response.errorBody() != null ?
+                                            response.errorBody().toString() : "Unknown error"));
+
+                            // Restore notification to our list since deletion failed
+                            restoreNotification(removedNotification, finalNotificationIndex);
+
+                            if (isAdded()) {
+                                Toast.makeText(requireContext(), "Failed to delete notification",
+                                        Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<ModelResponse.readNotificationResponse> call, Throwable t) {
+                        Log.e("NotificationsFragment", "Network error deleting notification", t);
+
+                        // Restore notification to our list since deletion failed
+                        restoreNotification(removedNotification, finalNotificationIndex);
+
+                        if (isAdded()) {
+                            Toast.makeText(requireContext(), "Network error: " + t.getMessage(),
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+    }
+
+    /**
+     * Restore a notification to the list if deletion fails
+     */
+    private void restoreNotification(ModelResponse.NotificationsResponse.Notification notification, int index) {
+        if (notification == null) return;
+
+        // Add back to our main list
+        if (index >= 0 && index <= allNotifications.size()) {
+            allNotifications.add(index, notification);
+        } else {
+            allNotifications.add(notification);
+        }
+
+        // Update UI
+        filterNotifications(tabLayout.getSelectedTabPosition());
     }
 
     private void markNotificationAsRead(String notificationId) {

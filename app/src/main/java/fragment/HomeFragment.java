@@ -359,7 +359,7 @@ public class HomeFragment extends Fragment {
         registerPendingLoad();
 
         ApiService apiService = RetrofitClient.getApiService();
-        Call<ModelResponse.RecipeResponse> call = apiService.getRecipeLatest(BEARER_PREFIX + token);
+        Call<ModelResponse.RecipeResponse> call = apiService.getRandomRecipe(BEARER_PREFIX + token);
 
         call.enqueue(new Callback<ModelResponse.RecipeResponse>() {
             @Override
