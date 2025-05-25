@@ -74,6 +74,8 @@ public class MainRecipe extends AppCompatActivity {
     private NestedScrollView scrollIngredients, scrollProcedure;
     private FrameLayout loadingOverlay;
 
+    private String currentUserId;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -249,6 +251,8 @@ public class MainRecipe extends AppCompatActivity {
                     ModelResponse.UserResponse userProfile = response.body();
                     url_avatar = userProfile.getData().getUser().getUrlAvatar();
                     country = userProfile.getData().getUser().getCountry();
+
+                    currentUserId = userProfile.getData().getUser().getId();
 
                     // Load avatar image once we have the URL
                     loadProfileAvatar();
@@ -743,12 +747,19 @@ public class MainRecipe extends AppCompatActivity {
         }
 
         // Get option views
-        View layoutShare = dialog.findViewById(R.id.layoutShare);
+        View layoutDelete = dialog.findViewById(R.id.layoutDelete);
         View layoutRate = dialog.findViewById(R.id.layoutRate);
         View layoutReview = dialog.findViewById(R.id.layoutReview);
         View layoutUnsave = dialog.findViewById(R.id.layoutUnsave);
         TextView tvSaveOption = dialog.findViewById(R.id.tvSaveOption);
         ImageView ivSaveIcon = dialog.findViewById(R.id.ivSaveIcon);
+
+        // Show delete option only if current user is the recipe owner
+        if (currentUserId != null && author != null && currentUserId.equals(author)) {
+            layoutDelete.setVisibility(View.VISIBLE);
+        } else {
+            layoutDelete.setVisibility(View.GONE);
+        }
 
         // Update save/unsave text and icon based on current state
         if (isRecipeSaved) {
@@ -766,9 +777,9 @@ public class MainRecipe extends AppCompatActivity {
         }
 
         // Set click listeners for each option
-        layoutShare.setOnClickListener(v -> {
+        layoutDelete.setOnClickListener(v -> {
             dialog.dismiss();
-            shareRecipe();
+            showDeleteConfirmationDialog();
         });
 
         layoutRate.setOnClickListener(v -> {
@@ -789,10 +800,72 @@ public class MainRecipe extends AppCompatActivity {
         dialog.show();
     }
 
-    // Implementation of the actions
-    private void shareRecipe() {
-        // TODO: Implement share functionality
-        Toast.makeText(this, "Share Recipe functionality", Toast.LENGTH_SHORT).show();
+    /**
+     * Show confirmation dialog before deleting recipe
+     */
+    private void showDeleteConfirmationDialog() {
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
+        builder.setTitle("Delete Recipe");
+        builder.setMessage("Are you sure you want to delete this recipe? This action cannot be undone.");
+
+        builder.setPositiveButton("Delete", (dialog, which) -> {
+            // Call API to delete the recipe
+            deleteRecipe();
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> {
+            dialog.dismiss();
+        });
+
+        // Create and show the alert dialog
+        androidx.appcompat.app.AlertDialog dialog = builder.create();
+        dialog.show();
+
+        // Set delete button color to red
+        dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
+                .setTextColor(ContextCompat.getColor(this, android.R.color.holo_red_dark));
+    }
+
+    /**
+     * Delete recipe via API
+     */
+    private void deleteRecipe() {
+        // Show loading
+        showLoading(true);
+
+        ApiService apiService = RetrofitClient.getApiService();
+        apiService.deleteRecipe("Bearer " + token, recipeId)
+                .enqueue(new Callback<ModelResponse.readNotificationResponse>() {
+                    @Override
+                    public void onResponse(Call<ModelResponse.readNotificationResponse> call,
+                                           Response<ModelResponse.readNotificationResponse> response) {
+                        showLoading(false);
+
+                        if (response.isSuccessful() && response.body() != null) {
+                            if ("success".equals(response.body().getStatus())) {
+                                Toast.makeText(MainRecipe.this,
+                                        "Recipe deleted successfully", Toast.LENGTH_SHORT).show();
+
+                                // Return to previous screen
+                                finish();
+                            } else {
+                                String errorMsg = response.body().getMessage() != null ?
+                                        response.body().getMessage() : "Failed to delete recipe";
+                                showError(errorMsg);
+                            }
+                        } else {
+                            showError("Error: " + response.code());
+                            Log.e(TAG, "Failed to delete recipe: " + response.code());
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<ModelResponse.readNotificationResponse> call, Throwable t) {
+                        showLoading(false);
+                        showError("Network error: " + t.getMessage());
+                        Log.e(TAG, "Network error while deleting recipe", t);
+                    }
+                });
     }
 
     /**

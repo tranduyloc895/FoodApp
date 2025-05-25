@@ -37,6 +37,11 @@ public interface ApiService {
             @Path("userId") String userId
     );
 
+    @DELETE("users/delete-account")
+    Call<ModelResponse.readNotificationResponse> deleteAccount(
+            @retrofit2.http.Header("Authorization") String token
+    );
+
     @FormUrlEncoded
     @POST("auth/signup")
     Call<ModelResponse.SignUpResponse> signUp(
@@ -205,5 +210,11 @@ public interface ApiService {
     Call<ModelResponse.readNotificationResponse> deleteNotification(
             @retrofit2.http.Header("Authorization") String token,
             @Path("notificationId") String notificationId
+    );
+
+    @DELETE("recipes/{recipeId}")
+    Call<ModelResponse.readNotificationResponse> deleteRecipe(
+            @retrofit2.http.Header("Authorization") String token,
+            @Path("recipeId") String recipeId
     );
 }

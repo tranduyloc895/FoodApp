@@ -217,6 +217,7 @@
                 android:paddingStart="12dp"
                 android:paddingEnd="12dp" />
 
+            <!-- Change Password Text -->
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/btn_update"
                 android:layout_width="match_parent"
@@ -228,7 +229,6 @@
                 android:textColor="@color/white"
                 android:textSize="16sp" />
 
-            <!-- Change Password Text -->
             <TextView
                 android:id="@+id/tv_change_password"
                 android:layout_width="wrap_content"
@@ -237,6 +237,25 @@
                 android:layout_marginTop="16dp"
                 android:text="Change Password"
                 android:textColor="#00C853"
+                android:textSize="14sp" />
+
+            <!-- Divider Line -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="16dp"
+                android:background="#E0E0E0" />
+
+            <!-- Delete Account Button -->
+            <TextView
+                android:id="@+id/tv_delete_account"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:padding="8dp"
+                android:text="Delete Account"
+                android:textColor="#D32F2F"
                 android:textSize="14sp" />
         </LinearLayout>
     </ScrollView>

@@ -77,6 +77,8 @@ public class UserProfileActivity extends AppCompatActivity {
     private String currentAvatarUrl;
     private boolean isDataLoading = false;
     private String token;
+    private TextView tvDeleteAccount;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -120,6 +122,7 @@ public class UserProfileActivity extends AppCompatActivity {
         tvChangePicture = findViewById(R.id.tv_change_picture);
         ivProfilePicture = findViewById(R.id.iv_profile);
         loadingOverlay = findViewById(R.id.loading_overlay);
+        tvDeleteAccount = findViewById(R.id.tv_delete_account);
     }
 
     /**
@@ -151,6 +154,10 @@ public class UserProfileActivity extends AppCompatActivity {
         });
 
         tvChangePicture.setOnClickListener(v -> changeProfilePicture());
+
+        tvDeleteAccount.setOnClickListener(v -> {
+            showDeleteAccountConfirmationDialog();
+        });
     }
 
     /**
@@ -569,5 +576,87 @@ public class UserProfileActivity extends AppCompatActivity {
     public interface UserInfoCallback {
         void onSuccess(String name, String email, String dateOfBirth, String country, String avatarUrl);
         void onError(String errorMessage);
+    }
+
+    /**
+     * Shows a confirmation dialog before deleting the account
+     */
+    private void showDeleteAccountConfirmationDialog() {
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
+        builder.setTitle("Delete Account");
+        builder.setMessage("Are you sure you want to delete your account? This action cannot be undone.");
+
+        builder.setPositiveButton("Delete", (dialog, which) -> {
+            // Proceed with account deletion
+            deleteAccount();
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> {
+            // User cancelled the operation
+            dialog.dismiss();
+        });
+
+        // Create the alert dialog with red buttons for warning
+        androidx.appcompat.app.AlertDialog dialog = builder.create();
+        dialog.show();
+
+        // Set delete button color to red
+        dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setTextColor(
+                ContextCompat.getColor(this, android.R.color.holo_red_dark));
+    }
+
+    /**
+     * Delete user account via API
+     */
+    private void deleteAccount() {
+        showLoading(true);
+
+        ApiService apiService = RetrofitClient.getApiService();
+        apiService.deleteAccount(BEARER_PREFIX + token).enqueue(new Callback<ModelResponse.readNotificationResponse>() {
+            @Override
+            public void onResponse(Call<ModelResponse.readNotificationResponse> call,
+                                   Response<ModelResponse.readNotificationResponse> response) {
+                showLoading(false);
+
+                if (response.isSuccessful() && response.body() != null) {
+                    if ("success".equals(response.body().getStatus())) {
+                        Toast.makeText(UserProfileActivity.this,
+                                "Account deleted successfully", Toast.LENGTH_SHORT).show();
+
+                        // Navigate to login screen
+                        navigateToLogin();
+                    } else {
+                        String errorMsg = response.body().getMessage() != null ?
+                                response.body().getMessage() : "Failed to delete account";
+                        Toast.makeText(UserProfileActivity.this, errorMsg, Toast.LENGTH_LONG).show();
+                    }
+                } else {
+                    Toast.makeText(UserProfileActivity.this,
+                            "Error: " + response.code(), Toast.LENGTH_SHORT).show();
+
+                    Log.e(TAG, "Failed to delete account: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ModelResponse.readNotificationResponse> call, Throwable t) {
+                showLoading(false);
+                Toast.makeText(UserProfileActivity.this,
+                        "Network error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+
+                Log.e(TAG, "Network error while deleting account", t);
+            }
+        });
+    }
+
+    /**
+     * Navigate to login screen after account deletion
+     */
+    private void navigateToLogin() {
+        // Clear all activities and start fresh with login
+        Intent intent = new Intent(UserProfileActivity.this, SignInActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 }
