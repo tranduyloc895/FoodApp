@@ -189,4 +189,10 @@ public interface ApiService {
             @retrofit2.http.Header("Authorization") String token,
             @Path("notificationId") String notificationId
     );
+
+    @DELETE("comments/{commentId}")
+    Call<ModelResponse.readNotificationResponse> deleteComment(
+            @retrofit2.http.Header("Authorization") String token,
+            @Path("commentId") String commentId
+    );
 }

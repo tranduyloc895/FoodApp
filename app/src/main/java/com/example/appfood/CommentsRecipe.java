@@ -10,6 +10,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -235,6 +236,74 @@ public class CommentsRecipe extends AppCompatActivity implements CommentAdapter.
     }
 
     /**
+     * Delete a comment
+     * @param commentId ID of the comment to delete
+     * @param position Position of the comment in the list
+     */
+    private void deleteComment(String commentId, int position) {
+        if (token == null || commentId == null) {
+            showError("Missing required data for deleting comment");
+            return;
+        }
+
+        // Show confirmation dialog
+        new AlertDialog.Builder(this)
+                .setTitle("Delete Comment")
+                .setMessage("Are you sure you want to delete this comment?")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    proceedWithCommentDeletion(commentId, position);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    /**
+     * Proceed with the actual comment deletion after confirmation
+     */
+    private void proceedWithCommentDeletion(String commentId, int position) {
+        showLoading(true);
+        Log.d(TAG, "Deleting comment ID: " + commentId);
+
+        ApiService apiService = RetrofitClient.getApiService();
+        Call<ModelResponse.readNotificationResponse> call = apiService.deleteComment(
+                BEARER_PREFIX + token,
+                commentId
+        );
+
+        call.enqueue(new Callback<ModelResponse.readNotificationResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<ModelResponse.readNotificationResponse> call,
+                                   @NonNull Response<ModelResponse.readNotificationResponse> response) {
+                showLoading(false);
+
+                if (response.isSuccessful()) {
+                    // Comment deleted successfully
+                    Log.d(TAG, "Comment deleted successfully");
+                    Toast.makeText(CommentsRecipe.this, "Comment deleted successfully", Toast.LENGTH_SHORT).show();
+
+                    // Remove the comment from list and update UI
+                    if (position >= 0 && position < commentList.size()) {
+                        commentList.remove(position);
+                        commentAdapter.notifyItemRemoved(position);
+                        tvCommentsCount.setText(String.format("%d Comments", commentList.size()));
+                    } else {
+                        getComments(); // Refresh all comments if position is invalid
+                    }
+                } else {
+                    handleErrorResponse(response, "Failed to delete comment");
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ModelResponse.readNotificationResponse> call, @NonNull Throwable t) {
+                showLoading(false);
+                showError("Network error while deleting comment: " + t.getMessage());
+                Log.e(TAG, "Network error while deleting comment", t);
+            }
+        });
+    }
+
+    /**
      * Get user info with token
      */
     private void getUserInfo() {
@@ -254,9 +323,12 @@ public class CommentsRecipe extends AppCompatActivity implements CommentAdapter.
                     userId = response.body().getData().getUser().getId();
                     url_avatar = response.body().getData().getUser().getUrlAvatar();
 
-                    // Set the avatar URL in the adapter when received
-                    if (commentAdapter != null && url_avatar != null) {
-                        commentAdapter.setUserAvatarUrl(url_avatar);
+                    // Set the user ID and avatar URL in the adapter
+                    if (commentAdapter != null) {
+                        commentAdapter.setCurrentUserId(userId);
+                        if (url_avatar != null) {
+                            commentAdapter.setUserAvatarUrl(url_avatar);
+                        }
                     }
                 } else {
                     handleErrorResponse(response, "Error loading user info");
@@ -389,5 +461,10 @@ public class CommentsRecipe extends AppCompatActivity implements CommentAdapter.
     @Override
     public void onDislikeClicked(String commentId, int position) {
         reactToComment(commentId, false);
+    }
+
+    @Override
+    public void onDeleteClicked(String commentId, int position) {
+        deleteComment(commentId, position);
     }
 }

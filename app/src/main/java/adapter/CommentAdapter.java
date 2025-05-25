@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -47,6 +48,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
 
     private String userAvatarUrl;
     private String token;
+    private String currentUserId; // Added to track the current user ID
 
     // Cache for user data to avoid repeated API calls
     private final Map<String, String> userNameCache = new HashMap<>();
@@ -58,6 +60,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
     public interface OnCommentActionListener {
         void onLikeClicked(String commentId, int position);
         void onDislikeClicked(String commentId, int position);
+        void onDeleteClicked(String commentId, int position); // Added delete callback
     }
 
     /**
@@ -93,6 +96,16 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
         this.token = token;
     }
 
+    /**
+     * Set the current user's ID
+     *
+     * @param userId ID of the current user
+     */
+    public void setCurrentUserId(String userId) {
+        this.currentUserId = userId;
+        notifyDataSetChanged(); // Refresh to update delete buttons visibility
+    }
+
     @NonNull
     @Override
     public CommentViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -107,6 +120,14 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
 
         bindUserData(holder, authorId, position);
         bindCommentData(holder, comment, position);
+
+        // Check if current user is the author of this comment
+        boolean isCommentOwner = currentUserId != null && currentUserId.equals(authorId);
+
+        // Only show delete button for comment owner
+        if (holder.tvDelete != null) {
+            holder.tvDelete.setVisibility(isCommentOwner ? View.VISIBLE : View.GONE);
+        }
     }
 
     /**
@@ -165,6 +186,15 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
                 actionListener.onDislikeClicked(comment.getId(), position);
             }
         });
+
+        // Set click listener for delete button (text)
+        if (holder.tvDelete != null) {
+            holder.tvDelete.setOnClickListener(v -> {
+                if (actionListener != null) {
+                    actionListener.onDeleteClicked(comment.getId(), position);
+                }
+            });
+        }
     }
 
     /**
@@ -283,6 +313,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
     static class CommentViewHolder extends RecyclerView.ViewHolder {
         final CircleImageView ivAvatar;
         final TextView tvUsername, tvDate, tvComment, tvLikes, tvFire;
+        final TextView tvDelete;
 
         public CommentViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -292,6 +323,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
             tvComment = itemView.findViewById(R.id.tvComment);
             tvLikes = itemView.findViewById(R.id.tvLikes);
             tvFire = itemView.findViewById(R.id.tvFire);
+            tvDelete = itemView.findViewById(R.id.tvDelete);
         }
     }
 }
