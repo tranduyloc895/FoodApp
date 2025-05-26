@@ -25,4 +25,12 @@
     <color name="fireActive">#FF9800</color>
     <color name="fireInactive">#FFF8E1</color>
 
+    <!-- ChatBot colors -->
+    <color name="primary_light">#DCEDC8</color>
+    <color name="primary_dark">#689F38</color>
+    <color name="accent">#4CAF50</color>
+    <color name="light_gray">#F1F1F1</color>
+    <color name="user_message_background">#E8F5E9</color>
+    <color name="bot_message_background">@color/primary_light</color>
+
 </resources>

@@ -20,11 +20,12 @@
 
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tabLayout"
-        android:layout_width="382dp"
-        android:layout_height="34dp"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
+        android:background="@null"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
@@ -33,7 +34,12 @@
         app:tabIndicatorHeight="0dp"
         app:tabRippleColor="@null"
         app:tabSelectedTextColor="@android:color/white"
-        app:tabTextColor="@color/green">
+        app:tabTextColor="@color/green"
+        app:tabMinWidth="0dp"
+        app:tabPaddingStart="0dp"
+        app:tabPaddingEnd="0dp"
+        app:tabPadding="0dp"
+        app:elevation="0dp">
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
