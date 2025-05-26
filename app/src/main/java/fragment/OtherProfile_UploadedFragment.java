@@ -54,7 +54,6 @@ public class OtherProfile_UploadedFragment extends Fragment {
         if (extractToken() && getArguments() != null) {
             List<String> uploadedRecipeIds = getArguments().getStringArrayList("uploaded_recipe_ids");
 
-            // Thêm log kiểm tra dữ liệu nhận được từ Bundle
             if (uploadedRecipeIds != null) {
                 Log.d(TAG, "Received uploaded recipe IDs count in Fragment: " + uploadedRecipeIds.size());
                 for (String recipeId : uploadedRecipeIds) {

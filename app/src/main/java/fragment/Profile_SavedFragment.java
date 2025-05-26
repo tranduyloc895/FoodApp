@@ -48,14 +48,12 @@ public class Profile_SavedFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         recyclerView = view.findViewById(R.id.rv_saved_profile);
         titleTextView = view.findViewById(R.id.titleTextView);
-        // Check if loading overlay exists in the layout
         loadingOverlay = view.findViewById(R.id.loading_overlay);
 
         savedRecipes = new ArrayList<>();
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         if (extractToken()) {
-            // Show loading if available
             if (loadingOverlay != null) {
                 loadingOverlay.setVisibility(View.VISIBLE);
             }
@@ -76,7 +74,7 @@ public class Profile_SavedFragment extends Fragment {
     }
 
     private void fetchUserProfile() {
-        showLoading(); // Hiển thị overlay trước khi gửi request
+        showLoading();
 
         ApiService apiService = RetrofitClient.getApiService();
         Call<ModelResponse.UserResponse> call = apiService.getUserInfo("Bearer " + token);
@@ -86,9 +84,9 @@ public class Profile_SavedFragment extends Fragment {
             public void onResponse(@NonNull Call<ModelResponse.UserResponse> call, @NonNull Response<ModelResponse.UserResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     currentUserId = response.body().getData().getUser().getId();
-                    fetchSavedRecipes(); // Tiếp tục gọi API khác
+                    fetchSavedRecipes();
                 } else {
-                    hideLoading(); // Ẩn overlay nếu lỗi xảy ra
+                    hideLoading();
                     Toast.makeText(requireContext(), "Failed to load profile", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -102,7 +100,7 @@ public class Profile_SavedFragment extends Fragment {
     }
 
     private void fetchSavedRecipes() {
-        showLoading(); // Hiển thị overlay trước khi bắt đầu tải
+        showLoading();
 
         ApiService apiService = RetrofitClient.getApiService();
         Call<ModelResponse.RecipeResponse> call = apiService.getSavedRecipes("Bearer " + token);
@@ -117,7 +115,7 @@ public class Profile_SavedFragment extends Fragment {
                         hideLoading();
                         Toast.makeText(requireContext(), "Bạn chưa lưu bất kỳ công thức nào.", Toast.LENGTH_SHORT).show();
                     } else {
-                        fetchRatingsForRecipes(savedRecipes); // Gọi API lấy đánh giá trước khi cập nhật UI
+                        fetchRatingsForRecipes(savedRecipes);
                     }
                 } else {
                     hideLoading();
@@ -164,12 +162,10 @@ public class Profile_SavedFragment extends Fragment {
 
                             ModelResponse.getRatingResponse.Data ratingData = response.body().getData();
 
-                            // Log the rating values for debugging
                             Log.d(TAG, "Recipe: " + recipe.getTitle() +
                                     " - Average Rating: " + ratingData.getAverageRating() +
                                     " - Total Ratings: " + ratingData.getTotalRatings());
 
-                            // Update recipe with rating information
                             recipe.setAverageRating(ratingData.getAverageRating());
                         } else {
                             Log.e(TAG, "Failed to get ratings for recipe: " + recipe.getTitle());
@@ -177,7 +173,6 @@ public class Profile_SavedFragment extends Fragment {
                     } catch (Exception e) {
                         Log.e(TAG, "Error processing rating response: " + e.getMessage());
                     } finally {
-                        // If all ratings have been fetched (or failed), update the UI
                         if (pendingRatings.decrementAndGet() <= 0) {
                             updateUI();
                         }
@@ -188,7 +183,6 @@ public class Profile_SavedFragment extends Fragment {
                 public void onFailure(@NonNull Call<ModelResponse.getRatingResponse> call, @NonNull Throwable t) {
                     Log.e(TAG, "API Call Failed (Ratings) - Recipe: " + recipe.getTitle() + ", Error: " + t.getMessage());
 
-                    // If all ratings have been fetched (or failed), update the UI
                     if (pendingRatings.decrementAndGet() <= 0) {
                         updateUI();
                     }
@@ -207,7 +201,6 @@ public class Profile_SavedFragment extends Fragment {
                 adapter = new Profile_SavedAdapter(getContext(), savedRecipes, token);
                 recyclerView.setAdapter(adapter);
 
-                // Set up click listeners if needed
                 adapter.setOnItemClickListener((int position) -> {
                     if (position < 0 || position >= savedRecipes.size()) return;
 
@@ -225,7 +218,6 @@ public class Profile_SavedFragment extends Fragment {
     public void onResume() {
         super.onResume();
         if (token != null && !token.isEmpty()) {
-            // Show loading if available
             if (loadingOverlay != null) {
                 loadingOverlay.setVisibility(View.VISIBLE);
             }

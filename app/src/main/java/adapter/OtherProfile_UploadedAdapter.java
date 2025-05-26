@@ -101,7 +101,6 @@ public class OtherProfile_UploadedAdapter extends RecyclerView.Adapter<OtherProf
     }
 
     private void fetchRecipeRating(String token, String id, ViewHolder holder) {
-        // Increment loading counter
         loadingCounter.incrementAndGet();
 
         ApiService apiService = RetrofitClient.getApiService();
@@ -111,7 +110,6 @@ public class OtherProfile_UploadedAdapter extends RecyclerView.Adapter<OtherProf
             @Override
             public void onResponse(@NonNull Call<ModelResponse.getRatingResponse> call,
                                    @NonNull Response<ModelResponse.getRatingResponse> response) {
-                // Decrement loading counter
                 checkAndUpdateLoadingState();
 
                 if (response.isSuccessful() && response.body() != null &&
@@ -119,11 +117,9 @@ public class OtherProfile_UploadedAdapter extends RecyclerView.Adapter<OtherProf
 
                     ModelResponse.getRatingResponse.Data ratingData = response.body().getData();
 
-                    // Cập nhật rating
                     averageRating = ratingData.getAverageRating();
                     Log.d(TAG, "Received rating data: average=" + averageRating);
 
-                    // Truyền holder vào UI update
                     updateRatingUI(holder);
                 } else {
                     Log.e(TAG, "Failed to get rating info: " +
@@ -134,7 +130,6 @@ public class OtherProfile_UploadedAdapter extends RecyclerView.Adapter<OtherProf
 
             @Override
             public void onFailure(@NonNull Call<ModelResponse.getRatingResponse> call, @NonNull Throwable t) {
-                // Decrement loading counter
                 checkAndUpdateLoadingState();
                 Log.e(TAG, "Network error fetching rating: " + t.getMessage());
             }

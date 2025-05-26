@@ -54,7 +54,6 @@ public class OtherProfile_SavedFragment extends Fragment {
         if (extractToken() && getArguments() != null) {
             List<String> savedRecipeIds = getArguments().getStringArrayList("saved_recipe_ids");
 
-            // Thêm log kiểm tra dữ liệu nhận được từ Bundle
             if (savedRecipeIds != null) {
                 Log.d(TAG, "Received saved recipe IDs count in Fragment: " + savedRecipeIds.size());
                 for (String recipeId : savedRecipeIds) {

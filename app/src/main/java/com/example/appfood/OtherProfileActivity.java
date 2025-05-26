@@ -91,7 +91,7 @@ public class OtherProfileActivity extends AppCompatActivity {
 
     private void fetchUserProfile() {
         ApiService apiService = RetrofitClient.getApiService();
-        Call<ModelResponse.UserResponse> call = apiService.getUserById("Bearer " + token, currentUserId); // Gọi API với author_id
+        Call<ModelResponse.UserResponse> call = apiService.getUserById("Bearer " + token, currentUserId);
 
         call.enqueue(new Callback<ModelResponse.UserResponse>() {
             @Override
@@ -147,7 +147,7 @@ public class OtherProfileActivity extends AppCompatActivity {
 
                     Log.d(TAG, "Uploaded Recipe IDs: " + uploadedRecipeIds);
 
-                    isUploadedRecipesFetched = true; // Đánh dấu API đã hoàn thành
+                    isUploadedRecipesFetched = true;
                     checkAndSetupViewPager();
                 }
             }
@@ -176,7 +176,7 @@ public class OtherProfileActivity extends AppCompatActivity {
                     Log.d(TAG, "Saved recipes count: " + savedRecipeIds.size());
                     tvNumberSavedRecipes.setText(String.valueOf(savedRecipeIds.size()));
 
-                    isSavedRecipesFetched = true; // Đánh dấu API đã hoàn thành
+                    isSavedRecipesFetched = true;
                     checkAndSetupViewPager();
                 } else {
                     Toast.makeText(OtherProfileActivity.this, "Không thể tải số lượng công thức đã lưu.", Toast.LENGTH_SHORT).show();

@@ -95,7 +95,7 @@ public class OtherProfile_SavedAdapter extends RecyclerView.Adapter<OtherProfile
             public void onResponse(@NonNull Call<ModelResponse.UserResponse> call, @NonNull Response<ModelResponse.UserResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     String username = response.body().getData().getUser().getName();
-                    authorCache.put(userId, username); // Lưu vào cache
+                    authorCache.put(userId, username);
                     tvAuthor.setText("by " + username);
                 } else {
                     tvAuthor.setText("by Unknown");
@@ -120,7 +120,6 @@ public class OtherProfile_SavedAdapter extends RecyclerView.Adapter<OtherProfile
             @Override
             public void onResponse(@NonNull Call<ModelResponse.getRatingResponse> call,
                                    @NonNull Response<ModelResponse.getRatingResponse> response) {
-                // Decrement loading counter
                 checkAndUpdateLoadingState();
 
                 if (response.isSuccessful() && response.body() != null &&
@@ -128,11 +127,9 @@ public class OtherProfile_SavedAdapter extends RecyclerView.Adapter<OtherProfile
 
                     ModelResponse.getRatingResponse.Data ratingData = response.body().getData();
 
-                    // Cập nhật rating
                     averageRating = ratingData.getAverageRating();
                     Log.d(TAG, "Received rating data: average=" + averageRating);
 
-                    // Truyền holder vào UI update
                     updateRatingUI(holder);
                 } else {
                     Log.e(TAG, "Failed to get rating info: " +
@@ -143,7 +140,6 @@ public class OtherProfile_SavedAdapter extends RecyclerView.Adapter<OtherProfile
 
             @Override
             public void onFailure(@NonNull Call<ModelResponse.getRatingResponse> call, @NonNull Throwable t) {
-                // Decrement loading counter
                 checkAndUpdateLoadingState();
                 Log.e(TAG, "Network error fetching rating: " + t.getMessage());
             }

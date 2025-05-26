@@ -64,7 +64,6 @@ public class AddRecipeActivity extends AppCompatActivity {
 
         initViews();
 
-        // Receive token from HomeActivity
         token = getIntent().getStringExtra("token");
 
         if (token == null || token.isEmpty()) {
@@ -87,7 +86,6 @@ public class AddRecipeActivity extends AppCompatActivity {
         ibBack = findViewById(R.id.ib_add_recipe_back);
         tvRecipeImage = findViewById(R.id.tv_add_recipe_image);
 
-        // Initialize progress dialog
         progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Submitting recipe...");
         progressDialog.setCancelable(false);
@@ -161,7 +159,6 @@ public class AddRecipeActivity extends AppCompatActivity {
         String time = etTime.getText().toString().trim();
         String instructionsText = etInstructions.getText().toString().trim();
 
-        // Validate input
         if (title.isEmpty()) {
             Toast.makeText(this, "Please enter a title", Toast.LENGTH_SHORT).show();
             return;
@@ -182,11 +179,9 @@ public class AddRecipeActivity extends AppCompatActivity {
             return;
         }
 
-        // Show progress dialog
         progressDialog.show();
 
         try {
-            // Split instructions into a list by new lines
             List<String> instructionsList = new ArrayList<>();
             for (String instruction : instructionsText.split("\\n")) {
                 if (!instruction.trim().isEmpty()) {
@@ -194,26 +189,21 @@ public class AddRecipeActivity extends AppCompatActivity {
                 }
             }
 
-            // Convert to JSON strings
             String ingredientsJson = new Gson().toJson(ingredientsList);
             String instructionsJson = new Gson().toJson(instructionsList);
 
             Log.d(TAG, "Ingredients JSON: " + ingredientsJson);
             Log.d(TAG, "Instructions JSON: " + instructionsJson);
 
-            // Create a map of parts for the multipart request
             Map<String, RequestBody> partMap = new HashMap<>();
 
-            // Add text parts properly with Multipart encoding
             partMap.put("title", createPartFromString(title));
             partMap.put("time", createPartFromString(time));
             partMap.put("ingredients", createPartFromString(ingredientsJson));
             partMap.put("instructions", createPartFromString(instructionsJson));
 
-            // Create MultipartBody.Part for image
             MultipartBody.Part imagePart = prepareImagePart("imageRecipe", imageUri);
 
-            // Call API service
             ApiService apiService = RetrofitClient.getApiService();
             Call<ModelResponse.RecipeDetailResponse> call = apiService.addRecipeWithParts(
                     "Bearer " + token,
@@ -268,19 +258,15 @@ public class AddRecipeActivity extends AppCompatActivity {
      */
     private MultipartBody.Part prepareImagePart(String partName, Uri imageUri) {
         try {
-            // Create a file from the URI
             File imageFile = createFileFromUri(imageUri);
 
-            // Get MIME type
             String mimeType = getContentResolver().getType(imageUri);
             if (mimeType == null) {
-                mimeType = "image/jpeg"; // Default if can't determine type
+                mimeType = "image/jpeg";
             }
 
-            // Create RequestBody instance from file
             RequestBody requestFile = RequestBody.create(MediaType.parse(mimeType), imageFile);
 
-            // Create MultipartBody.Part using file name
             return MultipartBody.Part.createFormData(partName, imageFile.getName(), requestFile);
         } catch (Exception e) {
             Log.e(TAG, "Error preparing image", e);

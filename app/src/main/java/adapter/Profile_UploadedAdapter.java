@@ -26,7 +26,6 @@ public class Profile_UploadedAdapter extends RecyclerView.Adapter<Profile_Upload
     private final List<ModelResponse.RecipeResponse.Recipe> recipeList;
     private final Context context;
     private final String token;
-    // Add this field to store the listener
     private OnItemClickListener onItemClickListener;
 
     public Profile_UploadedAdapter(Context context, List<ModelResponse.RecipeResponse.Recipe> recipeList, String token) {
@@ -59,11 +58,9 @@ public class Profile_UploadedAdapter extends RecyclerView.Adapter<Profile_Upload
                 .into(holder.imgRecipe);
 
         holder.itemView.setOnClickListener(v -> {
-            // Use the listener if available
             if (onItemClickListener != null) {
                 onItemClickListener.onItemClick(holder.getAdapterPosition());
             } else {
-                // Fall back to direct intent if no listener
                 Intent intent = new Intent(context, MainRecipe.class);
                 intent.putExtra("recipe_id", recipe.getId());
                 intent.putExtra("token", token);

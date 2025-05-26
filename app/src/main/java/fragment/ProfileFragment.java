@@ -136,7 +136,6 @@ public class ProfileFragment extends Fragment {
 
                     int uploadedCount = 0;
                     for (ModelResponse.RecipeResponse.Recipe recipe : allRecipes) {
-                        // Log giá trị để kiểm tra đúng user ID
                         Log.d(TAG, "Recipe Author ID: " + recipe.getAuthor());
                         Log.d(TAG, "Current User ID: " + currentUserId);
 

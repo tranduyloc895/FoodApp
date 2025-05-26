@@ -48,14 +48,12 @@ public class Profile_UploadedFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         recyclerView = view.findViewById(R.id.rv_uploaded_profile);
         titleTextView = view.findViewById(R.id.titleTextView);
-        // Check if loading overlay exists in the layout
         loadingOverlay = view.findViewById(R.id.loading_overlay);
 
         uploadedRecipes = new ArrayList<>();
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         if (extractToken()) {
-            // Show loading if available
             if (loadingOverlay != null) {
                 loadingOverlay.setVisibility(View.VISIBLE);
             }
@@ -76,7 +74,7 @@ public class Profile_UploadedFragment extends Fragment {
     }
 
     private void fetchUserProfile() {
-        showLoading(); // Hiển thị overlay loading trước khi tải dữ liệu
+        showLoading();
 
         ApiService apiService = RetrofitClient.getApiService();
         Call<ModelResponse.UserResponse> call = apiService.getUserInfo("Bearer " + token);
@@ -88,7 +86,7 @@ public class Profile_UploadedFragment extends Fragment {
                     currentUserId = response.body().getData().getUser().getId();
                     fetchUploadedRecipes();
                 } else {
-                    hideLoading(); // Ẩn overlay nếu API lỗi
+                    hideLoading();
                     Toast.makeText(requireContext(), "Failed to load profile", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -122,7 +120,6 @@ public class Profile_UploadedFragment extends Fragment {
                         hideLoading();
                         Toast.makeText(requireContext(), "Bạn chưa đăng tải bất kỳ công thức nào.", Toast.LENGTH_SHORT).show();
                     } else {
-                        // Fetch ratings for each recipe before displaying
                         fetchRatingsForRecipes(uploadedRecipes);
                     }
                 } else {
@@ -170,12 +167,10 @@ public class Profile_UploadedFragment extends Fragment {
 
                             ModelResponse.getRatingResponse.Data ratingData = response.body().getData();
 
-                            // Log the rating values for debugging
                             Log.d(TAG, "Recipe: " + recipe.getTitle() +
                                     " - Average Rating: " + ratingData.getAverageRating() +
                                     " - Total Ratings: " + ratingData.getTotalRatings());
 
-                            // Update recipe with rating information
                             recipe.setAverageRating(ratingData.getAverageRating());
                         } else {
                             Log.e(TAG, "Failed to get ratings for recipe: " + recipe.getTitle());
@@ -183,7 +178,6 @@ public class Profile_UploadedFragment extends Fragment {
                     } catch (Exception e) {
                         Log.e(TAG, "Error processing rating response: " + e.getMessage());
                     } finally {
-                        // If all ratings have been fetched (or failed), update the UI
                         if (pendingRatings.decrementAndGet() <= 0) {
                             updateUI();
                         }
@@ -194,7 +188,6 @@ public class Profile_UploadedFragment extends Fragment {
                 public void onFailure(@NonNull Call<ModelResponse.getRatingResponse> call, @NonNull Throwable t) {
                     Log.e(TAG, "API Call Failed (Ratings) - Recipe: " + recipe.getTitle() + ", Error: " + t.getMessage());
 
-                    // If all ratings have been fetched (or failed), update the UI
                     if (pendingRatings.decrementAndGet() <= 0) {
                         updateUI();
                     }
@@ -213,7 +206,6 @@ public class Profile_UploadedFragment extends Fragment {
                 adapter = new Profile_UploadedAdapter(getContext(), uploadedRecipes, token);
                 recyclerView.setAdapter(adapter);
 
-                // Set up click listeners if needed
                 adapter.setOnItemClickListener((int position ) -> {
                     if (position < 0 || position >= uploadedRecipes.size()) return;
 
@@ -249,7 +241,6 @@ public class Profile_UploadedFragment extends Fragment {
     public void onResume() {
         super.onResume();
         if (token != null && !token.isEmpty()) {
-            // Show loading if available
             if (loadingOverlay != null) {
                 loadingOverlay.setVisibility(View.VISIBLE);
             }
