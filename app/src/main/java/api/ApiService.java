@@ -228,4 +228,12 @@ public interface ApiService {
             @retrofit2.http.Header("Authorization") String token,
             @Path("notificationId") String notificationId
     );
+
+    // AI search
+    @Multipart
+    @POST("ai/search-image")
+    Call<ModelResponse.searchImageResponse> searchImage(
+            @retrofit2.http.Header("Authorization") String token,
+            @Part MultipartBody.Part image
+    );
 }

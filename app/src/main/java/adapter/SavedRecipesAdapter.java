@@ -133,7 +133,7 @@ public class SavedRecipesAdapter extends RecyclerView.Adapter<SavedRecipesAdapte
     public static class SavedRecipeViewHolder extends RecyclerView.ViewHolder {
         ImageView recipeImage;
         TextView recipeName, recipeAuthor, recipeTime, recipeRating;
-        ImageButton saveButton;
+        public ImageButton saveButton;
 
         public SavedRecipeViewHolder(@NonNull View itemView) {
             super(itemView);
