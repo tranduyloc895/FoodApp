@@ -1,12 +1,7 @@
 package fragment;
 
 import android.app.AlertDialog;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -15,8 +10,6 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -26,9 +19,7 @@ import com.example.appfood.MainRecipe;
 import com.example.appfood.R;
 import com.google.android.material.tabs.TabLayout;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import adapter.NotificationAdapter;
 
 import api.ModelResponse;
@@ -40,6 +31,8 @@ import api.ApiService;
 
 import android.os.Handler;
 import android.os.Looper;
+
+import services.NotificationService;
 
 public class NotificationsFragment extends Fragment implements NotificationAdapter.OnNotificationClickListener {
 
@@ -53,13 +46,7 @@ public class NotificationsFragment extends Fragment implements NotificationAdapt
     private boolean isAutoRefreshEnabled = true;
     private long refreshInterval = 10000; // 10 seconds refresh interval
 
-    // Notification channel ID
-    private static final String CHANNEL_ID = "new_notifications_channel";
-    private static final int NOTIFICATION_ID = 1001;
-
-    // Store notification IDs to track new ones
-    private Set<String> knownNotificationIds = new HashSet<>();
-
+    private NotificationService notificationService;
     String token;
 
     @Override
@@ -70,25 +57,8 @@ public class NotificationsFragment extends Fragment implements NotificationAdapt
             token = getArguments().getString("token");
         }
 
-        // Create notification channel for Android 8.0+
-        createNotificationChannel();
-    }
-
-    /**
-     * Creates a notification channel for Android 8.0+
-     */
-    private void createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            CharSequence name = "New Notifications";
-            String description = "Notifications about new updates in your feed";
-            int importance = NotificationManager.IMPORTANCE_DEFAULT;
-            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
-            channel.setDescription(description);
-
-            // Register the channel with the system
-            NotificationManager notificationManager = requireActivity().getSystemService(NotificationManager.class);
-            notificationManager.createNotificationChannel(channel);
-        }
+        // Initialize notification service
+        notificationService = NotificationService.getInstance(requireContext());
     }
 
     @Override
@@ -207,8 +177,10 @@ public class NotificationsFragment extends Fragment implements NotificationAdapt
                                 List<ModelResponse.NotificationsResponse.Notification> newNotifications =
                                         notificationsResponse.getData().getNotifications();
 
-                                // Check for new notifications and send device notification if needed
-                                checkForNewNotificationsAndNotify(newNotifications);
+                                // Update known notification IDs to keep them in sync with the service
+                                for (ModelResponse.NotificationsResponse.Notification notification : newNotifications) {
+                                    notificationService.markNotificationAsKnown(notification.getId());
+                                }
 
                                 // Check if notifications have changed
                                 if (notificationsHaveChanged(allNotifications, newNotifications)) {
@@ -226,67 +198,6 @@ public class NotificationsFragment extends Fragment implements NotificationAdapt
                         Log.e("NotificationsFragment", "Background refresh failed", t);
                     }
                 });
-    }
-
-    /**
-     * Checks for new notifications and sends a device notification if new ones are found
-     */
-    private void checkForNewNotificationsAndNotify(List<ModelResponse.NotificationsResponse.Notification> newNotifications) {
-        if (newNotifications == null || newNotifications.isEmpty()) {
-            return;
-        }
-
-        boolean hasNewNotifications = false;
-        int newNotificationCount = 0;
-
-        // Find notifications that we haven't seen before
-        for (ModelResponse.NotificationsResponse.Notification notification : newNotifications) {
-            if (!knownNotificationIds.contains(notification.getId())) {
-                if (!notification.isRead()) {  // Only consider unread ones as "new"
-                    hasNewNotifications = true;
-                    newNotificationCount++;
-                }
-
-                // Add to our known list so we don't notify for it again
-                knownNotificationIds.add(notification.getId());
-            }
-        }
-
-        // If we found new notifications, show a device notification
-        if (hasNewNotifications && isAdded()) {
-            showNewNotification(newNotificationCount);
-        }
-    }
-
-    /**
-     * Shows a simple notification with a static message
-     */
-    private void showNewNotification(int newCount) {
-        // Create an intent that opens the app
-        Intent intent = requireActivity().getPackageManager()
-                .getLaunchIntentForPackage(requireActivity().getPackageName());
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-
-        // Create a PendingIntent that will launch the app when the notification is tapped
-        PendingIntent pendingIntent = PendingIntent.getActivity(requireContext(), 0, intent,
-                PendingIntent.FLAG_IMMUTABLE);
-
-        // Create the notification with a simple static message
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(requireContext(), CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_notification)  // Make sure this icon exists in your drawable folder
-                .setContentTitle("New Notifications")
-                .setContentText("You have new notifications!")
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .setContentIntent(pendingIntent)
-                .setAutoCancel(true);  // Removes the notification when tapped
-
-        // Show the notification
-        try {
-            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(requireContext());
-            notificationManager.notify(NOTIFICATION_ID, builder.build());
-        } catch (SecurityException e) {
-            Log.e("NotificationsFragment", "Notification permission missing", e);
-        }
     }
 
     // Helper method to detect changes in notifications
@@ -339,14 +250,9 @@ public class NotificationsFragment extends Fragment implements NotificationAdapt
                                 List<ModelResponse.NotificationsResponse.Notification> newNotifications =
                                         notificationsResponse.getData().getNotifications();
 
-                                // Initial load - record IDs but don't notify
-                                if (allNotifications.isEmpty()) {
-                                    for (ModelResponse.NotificationsResponse.Notification notification : newNotifications) {
-                                        knownNotificationIds.add(notification.getId());
-                                    }
-                                } else {
-                                    // Not initial load - check for new notifications
-                                    checkForNewNotificationsAndNotify(newNotifications);
+                                // Mark all notifications as known in the service
+                                for (ModelResponse.NotificationsResponse.Notification notification : newNotifications) {
+                                    notificationService.markNotificationAsKnown(notification.getId());
                                 }
 
                                 // Save all notifications
@@ -613,7 +519,7 @@ public class NotificationsFragment extends Fragment implements NotificationAdapt
         startActivity(intent);
     }
 
-    // Add this method to support checking for new notifications periodically
+    // Method to check for new notifications from outside
     public void checkForNewNotifications() {
         fetchNotifications();
     }
@@ -638,11 +544,10 @@ public class NotificationsFragment extends Fragment implements NotificationAdapt
         }
     }
 
-    // Clear notification tracking when fragment is destroyed
     @Override
     public void onDestroy() {
         super.onDestroy();
-        knownNotificationIds.clear();
+        // We don't clear notification IDs anymore since they're managed by the service
     }
 
     public static NotificationsFragment newInstance(String token) {
@@ -655,8 +560,5 @@ public class NotificationsFragment extends Fragment implements NotificationAdapt
         return fragment;
     }
 
-    // Interface for token retrieval from activity
-    public interface TokenProvider {
-        String getToken();
-    }
+    // No need for TokenProvider interface since we get token directly from arguments
 }
