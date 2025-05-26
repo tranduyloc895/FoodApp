@@ -76,6 +76,8 @@ public class Profile_SavedFragment extends Fragment {
     }
 
     private void fetchUserProfile() {
+        showLoading(); // Hiển thị overlay trước khi gửi request
+
         ApiService apiService = RetrofitClient.getApiService();
         Call<ModelResponse.UserResponse> call = apiService.getUserInfo("Bearer " + token);
 
@@ -84,9 +86,9 @@ public class Profile_SavedFragment extends Fragment {
             public void onResponse(@NonNull Call<ModelResponse.UserResponse> call, @NonNull Response<ModelResponse.UserResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     currentUserId = response.body().getData().getUser().getId();
-                    fetchSavedRecipes();
+                    fetchSavedRecipes(); // Tiếp tục gọi API khác
                 } else {
-                    hideLoading();
+                    hideLoading(); // Ẩn overlay nếu lỗi xảy ra
                     Toast.makeText(requireContext(), "Failed to load profile", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -100,6 +102,8 @@ public class Profile_SavedFragment extends Fragment {
     }
 
     private void fetchSavedRecipes() {
+        showLoading(); // Hiển thị overlay trước khi bắt đầu tải
+
         ApiService apiService = RetrofitClient.getApiService();
         Call<ModelResponse.RecipeResponse> call = apiService.getSavedRecipes("Bearer " + token);
 
@@ -113,8 +117,7 @@ public class Profile_SavedFragment extends Fragment {
                         hideLoading();
                         Toast.makeText(requireContext(), "Bạn chưa lưu bất kỳ công thức nào.", Toast.LENGTH_SHORT).show();
                     } else {
-                        // Fetch ratings for each recipe before displaying
-                        fetchRatingsForRecipes(savedRecipes);
+                        fetchRatingsForRecipes(savedRecipes); // Gọi API lấy đánh giá trước khi cập nhật UI
                     }
                 } else {
                     hideLoading();
@@ -218,14 +221,6 @@ public class Profile_SavedFragment extends Fragment {
         }
     }
 
-    private void hideLoading() {
-        if (loadingOverlay != null && isAdded()) {
-            requireActivity().runOnUiThread(() -> {
-                loadingOverlay.setVisibility(View.GONE);
-            });
-        }
-    }
-
     @Override
     public void onResume() {
         super.onResume();
@@ -235,6 +230,24 @@ public class Profile_SavedFragment extends Fragment {
                 loadingOverlay.setVisibility(View.VISIBLE);
             }
             fetchUserProfile();
+        }
+    }
+
+    /**
+     * Show loading overlay
+     */
+    private void showLoading() {
+        if (loadingOverlay != null) {
+            loadingOverlay.setVisibility(View.VISIBLE);
+        }
+    }
+
+    /**
+     * Hide loading overlay
+     */
+    private void hideLoading() {
+        if (loadingOverlay != null && isAdded()) {
+            loadingOverlay.setVisibility(View.GONE);
         }
     }
 }

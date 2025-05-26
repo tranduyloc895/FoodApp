@@ -76,6 +76,8 @@ public class Profile_UploadedFragment extends Fragment {
     }
 
     private void fetchUserProfile() {
+        showLoading(); // Hiển thị overlay loading trước khi tải dữ liệu
+
         ApiService apiService = RetrofitClient.getApiService();
         Call<ModelResponse.UserResponse> call = apiService.getUserInfo("Bearer " + token);
 
@@ -86,7 +88,7 @@ public class Profile_UploadedFragment extends Fragment {
                     currentUserId = response.body().getData().getUser().getId();
                     fetchUploadedRecipes();
                 } else {
-                    hideLoading();
+                    hideLoading(); // Ẩn overlay nếu API lỗi
                     Toast.makeText(requireContext(), "Failed to load profile", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -101,7 +103,7 @@ public class Profile_UploadedFragment extends Fragment {
 
     private void fetchUploadedRecipes() {
         ApiService apiService = RetrofitClient.getApiService();
-        Call<ModelResponse.RecipeResponse> call = apiService.getRecipeLatest("Bearer " + token);
+        Call<ModelResponse.RecipeResponse> call = apiService.getAllRecipes("Bearer " + token);
 
         call.enqueue(new Callback<ModelResponse.RecipeResponse>() {
             @Override
@@ -225,11 +227,21 @@ public class Profile_UploadedFragment extends Fragment {
         }
     }
 
+    /**
+     * Show loading overlay
+     */
+    private void showLoading() {
+        if (loadingOverlay != null) {
+            loadingOverlay.setVisibility(View.VISIBLE);
+        }
+    }
+
+    /**
+     * Hide loading overlay
+     */
     private void hideLoading() {
         if (loadingOverlay != null && isAdded()) {
-            requireActivity().runOnUiThread(() -> {
-                loadingOverlay.setVisibility(View.GONE);
-            });
+            loadingOverlay.setVisibility(View.GONE);
         }
     }
 

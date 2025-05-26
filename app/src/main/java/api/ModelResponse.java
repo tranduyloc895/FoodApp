@@ -248,7 +248,7 @@ public class ModelResponse {
         }
     }
 
-    public class RecipeResponse {
+    public static class RecipeResponse {
         private String status;
         private int results;
         private Data data;
@@ -277,7 +277,7 @@ public class ModelResponse {
             this.data = data;
         }
 
-        public class Data {
+        public static class Data {
             private List<Recipe> recipes;
 
             public List<Recipe> getRecipes() {
@@ -289,7 +289,7 @@ public class ModelResponse {
             }
         }
 
-        public class Recipe {
+        public static class Recipe {
             private String id;
             private String title;
             private String author;

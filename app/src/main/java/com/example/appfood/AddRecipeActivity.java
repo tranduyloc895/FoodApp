@@ -84,7 +84,7 @@ public class AddRecipeActivity extends AppCompatActivity {
         rvIngredients = findViewById(R.id.rv_add_recipe_ingredients);
         etTime = findViewById(R.id.et_add_recipe_time);
         ivRecipeImage = findViewById(R.id.iv_add_recipe_image);
-        ibBack = findViewById(R.id.ib_add_recip_back);
+        ibBack = findViewById(R.id.ib_add_recipe_back);
         tvRecipeImage = findViewById(R.id.tv_add_recipe_image);
 
         // Initialize progress dialog

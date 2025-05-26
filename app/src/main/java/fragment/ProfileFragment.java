@@ -36,6 +36,7 @@ public class ProfileFragment extends Fragment {
     private TextView tvProfileName, tvNumberUploadedRecipes, tvNumberSavedRecipes, tvCountry, tvLevel;
     private String token, currentUserId;
     private ImageView ivProfileImage;
+    private View loadingOverlay;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -47,6 +48,7 @@ public class ProfileFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         tvProfileName = view.findViewById(R.id.tv_profile_name);
+        tvProfileName.setSelected(true);
         tvNumberUploadedRecipes = view.findViewById(R.id.tv_number_uploaded_recipes);
         tvNumberSavedRecipes = view.findViewById(R.id.tv_number_saved_recipes);
         tvCountry = view.findViewById(R.id.tv_country_code);
@@ -54,6 +56,7 @@ public class ProfileFragment extends Fragment {
         ivProfileImage = view.findViewById(R.id.iv_profile_picture);
         TabLayout tabLayout = view.findViewById(R.id.tl_category);
         ViewPager2 viewPager = view.findViewById(R.id.vp_category);
+        loadingOverlay = view.findViewById(R.id.loading_overlay);
 
         ProfilePagerAdapter adapter = new ProfilePagerAdapter(this);
         viewPager.setAdapter(adapter);
@@ -123,7 +126,7 @@ public class ProfileFragment extends Fragment {
 
     private void fetchUploadedRecipesCount() {
         ApiService apiService = RetrofitClient.getApiService();
-        Call<ModelResponse.RecipeResponse> call = apiService.getRecipeLatest("Bearer " + token);
+        Call<ModelResponse.RecipeResponse> call = apiService.getAllRecipes("Bearer " + token);
 
         call.enqueue(new Callback<ModelResponse.RecipeResponse>() {
             @Override

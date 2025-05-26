@@ -3,6 +3,7 @@ package adapter;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.example.appfood.R;
+import com.example.appfood.OtherProfileActivity;
 
 import java.util.HashMap;
 import java.util.List;
@@ -179,6 +181,13 @@ public class NewRecipeAdapter extends RecyclerView.Adapter<NewRecipeAdapter.View
             if (listener != null) {
                 listener.onRecipeClick(recipe.getId());
             }
+        });
+
+        holder.ivAuthorAvatar.setOnClickListener(v -> {
+            Intent intent = new Intent(context, OtherProfileActivity.class);
+            intent.putExtra("author_id", recipe.getAuthor());
+            intent.putExtra("token", token);
+            context.startActivity(intent);
         });
     }
 
