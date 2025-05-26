@@ -1380,4 +1380,145 @@ public class ModelResponse {
             this.message = message;
         }
     }
+
+    public class searchImageResponse {
+        private boolean success;
+        private Data data;
+
+        public boolean isSuccess() {
+            return success;
+        }
+
+        public void setSuccess(boolean success) {
+            this.success = success;
+        }
+
+        public Data getData() {
+            return data;
+        }
+
+        public void setData(Data data) {
+            this.data = data;
+        }
+
+        public class Data {
+            private List<String> suggested_dishes;
+            private List<String> extracted_ingredients;
+            private RecipesResult recipes;
+
+            public List<String> getSuggestedDishes() {
+                return suggested_dishes;
+            }
+
+            public void setSuggestedDishes(List<String> suggested_dishes) {
+                this.suggested_dishes = suggested_dishes;
+            }
+
+            public List<String> getExtractedIngredients() {
+                return extracted_ingredients;
+            }
+
+            public void setExtractedIngredients(List<String> extracted_ingredients) {
+                this.extracted_ingredients = extracted_ingredients;
+            }
+
+            public RecipesResult getRecipes() {
+                return recipes;
+            }
+
+            public void setRecipes(RecipesResult recipes) {
+                this.recipes = recipes;
+            }
+        }
+
+        public class RecipesResult {
+            private List<Recipe> recipes;
+            private SearchMetadata search_metadata;
+
+            public List<Recipe> getRecipes() {
+                return recipes;
+            }
+
+            public void setRecipes(List<Recipe> recipes) {
+                this.recipes = recipes;
+            }
+
+            public SearchMetadata getSearchMetadata() {
+                return search_metadata;
+            }
+
+            public void setSearchMetadata(SearchMetadata search_metadata) {
+                this.search_metadata = search_metadata;
+            }
+        }
+
+        public class Recipe {
+            private String id;
+            private String title;
+            private String author;
+            private double similarity;
+
+            public String getId() {
+                return id;
+            }
+
+            public void setId(String id) {
+                this.id = id;
+            }
+
+            public String getTitle() {
+                return title;
+            }
+
+            public void setTitle(String title) {
+                this.title = title;
+            }
+
+            public String getAuthor() {
+                return author;
+            }
+
+            public void setAuthor(String author) {
+                this.author = author;
+            }
+
+            public double getSimilarity() {
+                return similarity;
+            }
+
+            public void setSimilarity(double similarity) {
+                this.similarity = similarity;
+            }
+        }
+
+        public class SearchMetadata {
+            private int total_found;
+            private double avg_similarity;
+            private int search_time_ms;
+
+            public int getTotalFound() {
+                return total_found;
+            }
+
+            public void setTotalFound(int total_found) {
+                this.total_found = total_found;
+            }
+
+            public double getAvgSimilarity() {
+                return avg_similarity;
+            }
+
+            public void setAvgSimilarity(double avg_similarity) {
+                this.avg_similarity = avg_similarity;
+            }
+
+            public int getSearchTimeMs() {
+                return search_time_ms;
+            }
+
+            public void setSearchTimeMs(int search_time_ms) {
+                this.search_time_ms = search_time_ms;
+            }
+        }
+    }
 }
