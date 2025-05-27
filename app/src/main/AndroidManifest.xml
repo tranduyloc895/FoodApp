@@ -22,7 +22,7 @@
             android:name=".ImageSearchResultsActivity"
             android:exported="false" />
         <activity
-            android:name=".ChatBot"
+            android:name=".ChatBotActivity"
             android:exported="false" />
 
         <meta-data

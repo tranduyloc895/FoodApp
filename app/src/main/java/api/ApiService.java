@@ -236,4 +236,11 @@ public interface ApiService {
             @retrofit2.http.Header("Authorization") String token,
             @Part MultipartBody.Part image
     );
+
+    @FormUrlEncoded
+    @POST("ai/search-recipe-by-prompt")
+    Call<ModelResponse.SearchRecipeResponse> searchRecipeByPrompt(
+            @retrofit2.http.Header("Authorization") String token,
+            @Field("prompt") String prompt
+    );
 }

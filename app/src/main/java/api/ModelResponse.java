@@ -1521,4 +1521,154 @@ public class ModelResponse {
             }
         }
     }
+
+    public class SearchRecipeResponse {
+        private boolean success;
+        private SearchQuery searchQuery;
+        private Data data;
+
+        public boolean isSuccess() {
+            return success;
+        }
+
+        public void setSuccess(boolean success) {
+            this.success = success;
+        }
+
+        public SearchQuery getSearchQuery() {
+            return searchQuery;
+        }
+
+        public void setSearchQuery(SearchQuery searchQuery) {
+            this.searchQuery = searchQuery;
+        }
+
+        public Data getData() {
+            return data;
+        }
+
+        public void setData(Data data) {
+            this.data = data;
+        }
+
+        public class SearchQuery {
+            private String title;
+            private List<String> ingredients;
+            private List<String> instructions;
+
+            public String getTitle() {
+                return title;
+            }
+
+            public void setTitle(String title) {
+                this.title = title;
+            }
+
+            public List<String> getIngredients() {
+                return ingredients;
+            }
+
+            public void setIngredients(List<String> ingredients) {
+                this.ingredients = ingredients;
+            }
+
+            public List<String> getInstructions() {
+                return instructions;
+            }
+
+            public void setInstructions(List<String> instructions) {
+                this.instructions = instructions;
+            }
+        }
+
+        public class Data {
+            private List<Recipe> recipes;
+            private SearchMetadata search_metadata;
+
+            public List<Recipe> getRecipes() {
+                return recipes;
+            }
+
+            public void setRecipes(List<Recipe> recipes) {
+                this.recipes = recipes;
+            }
+
+            public SearchMetadata getSearchMetadata() {
+                return search_metadata;
+            }
+
+            public void setSearchMetadata(SearchMetadata search_metadata) {
+                this.search_metadata = search_metadata;
+            }
+        }
+
+        public class Recipe {
+            private String id;
+            private String title;
+            private String author;
+            private double similarity;
+
+            public String getId() {
+                return id;
+            }
+
+            public void setId(String id) {
+                this.id = id;
+            }
+
+            public String getTitle() {
+                return title;
+            }
+
+            public void setTitle(String title) {
+                this.title = title;
+            }
+
+            public String getAuthor() {
+                return author;
+            }
+
+            public void setAuthor(String author) {
+                this.author = author;
+            }
+
+            public double getSimilarity() {
+                return similarity;
+            }
+
+            public void setSimilarity(double similarity) {
+                this.similarity = similarity;
+            }
+        }
+
+        public class SearchMetadata {
+            private int total_found;
+            private double avg_similarity;
+            private int search_time_ms;
+
+            public int getTotalFound() {
+                return total_found;
+            }
+
+            public void setTotalFound(int total_found) {
+                this.total_found = total_found;
+            }
+
+            public double getAvgSimilarity() {
+                return avg_similarity;
+            }
+
+            public void setAvgSimilarity(double avg_similarity) {
+                this.avg_similarity = avg_similarity;
+            }
+
+            public int getSearchTimeMs() {
+                return search_time_ms;
+            }
+
+            public void setSearchTimeMs(int search_time_ms) {
+                this.search_time_ms = search_time_ms;
+            }
+        }
+    }
 }

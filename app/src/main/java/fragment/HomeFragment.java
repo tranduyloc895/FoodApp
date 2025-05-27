@@ -1,5 +1,7 @@
     package fragment;
 
+    import static android.app.Activity.RESULT_OK;
+
     import android.content.Context;
     import android.content.Intent;
     import android.os.Bundle;
@@ -29,6 +31,7 @@
     import com.bumptech.glide.Glide;
     import com.bumptech.glide.request.RequestOptions;
     import com.example.appfood.AddRecipeActivity;
+    import com.example.appfood.ChatBotActivity;
     import com.example.appfood.ImageSearchResultsActivity;
     import com.example.appfood.MainActivity;
     import com.example.appfood.MainRecipe;
@@ -80,6 +83,7 @@
         private static final String TAG = "HomeFragment";
         private static final String BEARER_PREFIX = "Bearer ";
         private static final int MAX_RECIPES_TO_DISPLAY = 10;
+        private static final int CHATBOT_REQUEST_CODE = 1001;
 
         // UI Components
         private RecyclerView rvCommonRecipes, rvNewRecipes, rvSearchResults;
@@ -90,6 +94,7 @@
         private EditText etSearch;
         private View nestedScrollView, searchResultsContainer;
         private TextView tvNoResults;
+        private View btnAI;
 
         // Data
         private List<ModelResponse.RecipeResponse.Recipe> commonRecipeList, newRecipeList, searchResultsList;
@@ -193,10 +198,25 @@
                 searchResultsContainer.setVisibility(View.GONE); // Hide initially
             }
 
+            // Setup AI button
+            btnAI = view.findViewById(R.id.btn_ai);
+            if (btnAI != null) {
+                btnAI.setOnClickListener(v -> navigateToChatBot());
+            }
+
             setupProfileUI();
             setupScrollListener(view);
             setupAddRecipeButton();
             setupCameraButton();
+        }
+
+        /**
+         * Navigates to the ChatBot activity
+         */
+        private void navigateToChatBot() {
+            Intent intent = new Intent(requireContext(), ChatBotActivity.class);
+            intent.putExtra("token", token);
+            startActivity(intent);
         }
 
         /**
