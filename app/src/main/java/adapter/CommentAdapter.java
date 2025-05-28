@@ -38,9 +38,12 @@ import retrofit2.Response;
  */
 public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentViewHolder> {
     private static final String TAG = "CommentAdapter";
-    private static final String DATE_FORMAT_INPUT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
-    private static final String DATE_FORMAT_OUTPUT = "MMMM d, yyyy - HH:mm";
-    private static final String DEFAULT_DATE = "June 12, 2020 - ";
+    private static final String[] INPUT_FORMATS = {
+            "yyyy-MM-dd'T'HH:mm:ss.SSSX",
+            "yyyy-MM-dd HH:mm:ss.SSSX"
+    };
+    private static final String DATE_FORMAT_OUTPUT = "dd/MM/yyyy";
+    private static final String DEFAULT_DATE = "12/06/2020";
 
     private final Context context;
     private final List<ModelResponse.CommentResponse.Comment> commentList;
@@ -287,24 +290,21 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
             return "";
         }
 
-        try {
-            SimpleDateFormat inputFormat = new SimpleDateFormat(DATE_FORMAT_INPUT, Locale.US);
-            inputFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        for (String format : INPUT_FORMATS) {
+            try {
+                SimpleDateFormat inputFormat = new SimpleDateFormat(format, Locale.US);
+                inputFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 
-            SimpleDateFormat outputFormat = new SimpleDateFormat(DATE_FORMAT_OUTPUT, Locale.US);
-            Date date = inputFormat.parse(dateTimeStr);
-            return date != null ? outputFormat.format(date) : "";
-        } catch (ParseException e) {
-            // If parsing fails, return a simpler format
-            if (dateTimeStr.contains("T")) {
-                String[] parts = dateTimeStr.split("T");
-                if (parts.length > 1) {
-                    String timePart = parts[1].split("\\.")[0];
-                    return DEFAULT_DATE + timePart;
-                }
+                SimpleDateFormat outputFormat = new SimpleDateFormat(DATE_FORMAT_OUTPUT, Locale.US);
+                Date date = inputFormat.parse(dateTimeStr);
+                return date != null ? outputFormat.format(date) : "";
+            } catch (ParseException e) {
+                Log.e(TAG, "Date parsing error for format " + format + ": " + e.getMessage());
             }
-            return dateTimeStr;
         }
+
+        Log.e(TAG, "Failed to parse date: " + dateTimeStr);
+        return DEFAULT_DATE;
     }
 
     /**

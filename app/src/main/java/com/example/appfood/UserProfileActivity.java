@@ -2,6 +2,7 @@ package com.example.appfood;
 
 import android.Manifest;
 import android.app.DatePickerDialog;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -22,6 +23,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -78,13 +80,17 @@ public class UserProfileActivity extends AppCompatActivity {
     private boolean isDataLoading = false;
     private String token;
     private TextView tvDeleteAccount;
-
+    private ActivityResultLauncher<Intent> imagePickerLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setupWindowAndContentView();
         initViews();
+
+        // Register image picker launcher
+        registerImagePicker();
+
         setupListeners();
 
         token = getIntent().getStringExtra("token");
@@ -95,6 +101,23 @@ public class UserProfileActivity extends AppCompatActivity {
             etName.setText("Token is missing.");
             showLoading(false);
         }
+    }
+
+    /**
+     * Registers the image picker launcher
+     */
+    private void registerImagePicker() {
+        imagePickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        Uri selectedImageUri = result.getData().getData();
+                        if (selectedImageUri != null) {
+                            handleSelectedImage(selectedImageUri);
+                        }
+                    }
+                }
+        );
     }
 
     /**
@@ -153,11 +176,18 @@ public class UserProfileActivity extends AppCompatActivity {
             navigateToVerifyOTP(email);
         });
 
-        tvChangePicture.setOnClickListener(v -> changeProfilePicture());
+        tvChangePicture.setOnClickListener(v -> openImagePicker());
 
-        tvDeleteAccount.setOnClickListener(v -> {
-            showDeleteAccountConfirmationDialog();
-        });
+        tvDeleteAccount.setOnClickListener(v -> showDeleteAccountConfirmationDialog());
+    }
+
+    /**
+     * Opens the image picker - using the same approach as HomeFragment
+     */
+    private void openImagePicker() {
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        intent.setType("image/*");
+        imagePickerLauncher.launch(intent);
     }
 
     /**
@@ -394,75 +424,6 @@ public class UserProfileActivity extends AppCompatActivity {
     }
 
     /**
-     * Handles function to change profile picture with proper permission checking.
-     */
-    private void changeProfilePicture() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            // For Android 13+ (API 33+)
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES)
-                    != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.READ_MEDIA_IMAGES},
-                        STORAGE_PERMISSION_CODE);
-            } else {
-                openImagePicker();
-            }
-        } else {
-            // For Android 12 and below
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
-                    != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                        STORAGE_PERMISSION_CODE);
-            } else {
-                openImagePicker();
-            }
-        }
-    }
-
-    /**
-     * Opens the image picker after permissions are granted.
-     */
-    private void openImagePicker() {
-        Intent intent;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
-        } else {
-            intent = new Intent(Intent.ACTION_PICK);
-            intent.setType("image/*");
-        }
-        imagePicker.launch(intent);
-    }
-
-    /**
-     * Handle permission request results
-     */
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        if (requestCode == STORAGE_PERMISSION_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                openImagePicker();
-            } else {
-                Toast.makeText(this, "Storage permission is required to change profile picture",
-                        Toast.LENGTH_LONG).show();
-            }
-        }
-    }
-
-    private final androidx.activity.result.ActivityResultLauncher<Intent> imagePicker =
-            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                    Uri imageUri = result.getData().getData();
-                    if (imageUri != null) {
-                        handleSelectedImage(imageUri);
-                    }
-                }
-            });
-
-    /**
      * Handle the selected image for upload
      */
     private void handleSelectedImage(Uri imageUri) {
@@ -476,7 +437,64 @@ public class UserProfileActivity extends AppCompatActivity {
                 .into(ivProfilePicture);
 
         uploadProfilePicture(imageUri, token);
-        Toast.makeText(this, "Image selected, uploading...", Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * Converts Uri to File - similar to HomeFragment's method
+     */
+    private File getFileFromUri(Uri uri) {
+        try {
+            ContentResolver contentResolver = getContentResolver();
+            String fileName = getFileNameFromUri(contentResolver, uri);
+
+            // Create temporary file
+            File outputDir = getCacheDir();
+            File outputFile = File.createTempFile("profile_", ".jpg", outputDir);
+
+            // Copy data to file
+            InputStream inputStream = contentResolver.openInputStream(uri);
+            FileOutputStream outputStream = new FileOutputStream(outputFile);
+
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+
+            outputStream.close();
+            inputStream.close();
+
+            return outputFile;
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting file from uri: " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Gets filename from Uri
+     */
+    private String getFileNameFromUri(ContentResolver contentResolver, Uri uri) {
+        String result = null;
+        if (uri.getScheme().equals("content")) {
+            Cursor cursor = contentResolver.query(uri, null, null, null, null);
+            try {
+                if (cursor != null && cursor.moveToFirst()) {
+                    int nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+                    if (nameIndex >= 0) {
+                        result = cursor.getString(nameIndex);
+                    }
+                }
+            } finally {
+                if (cursor != null) {
+                    cursor.close();
+                }
+            }
+        }
+        if (result == null) {
+            result = uri.getLastPathSegment();
+        }
+        return result;
     }
 
     /**
@@ -484,44 +502,36 @@ public class UserProfileActivity extends AppCompatActivity {
      */
     private void uploadProfilePicture(Uri imageUri, String token) {
         try {
-            // Create a temporary file from the URI using ContentResolver
-            InputStream inputStream = getContentResolver().openInputStream(imageUri);
-            if (inputStream != null) {
-                File tempFile = File.createTempFile("profile_picture", ".jpg", getCacheDir());
-                FileOutputStream fos = new FileOutputStream(tempFile);
+            // Get file from Uri using the same approach as HomeFragment
+            File imageFile = getFileFromUri(imageUri);
+            if (imageFile == null) {
+                Toast.makeText(this, "Failed to process image", Toast.LENGTH_SHORT).show();
+                showLoading(false);
+                return;
+            }
 
-                byte[] buffer = new byte[1024];
-                int bytesRead;
-                while ((bytesRead = inputStream.read(buffer)) != -1) {
-                    fos.write(buffer, 0, bytesRead);
+            // Create multipart request
+            RequestBody requestFile = RequestBody.create(MediaType.parse("image/*"), imageFile);
+            MultipartBody.Part avatarPart = MultipartBody.Part.createFormData(
+                    "avatar", imageFile.getName(), requestFile);
+
+            // Call API
+            ApiService apiService = RetrofitClient.getApiService();
+            Call<ModelResponse.UserResponse> call = apiService.uploadAvatar(BEARER_PREFIX + token, avatarPart);
+
+            call.enqueue(new Callback<ModelResponse.UserResponse>() {
+                @Override
+                public void onResponse(Call<ModelResponse.UserResponse> call,
+                                       Response<ModelResponse.UserResponse> response) {
+                    handleAvatarUploadResponse(response);
                 }
 
-                inputStream.close();
-                fos.close();
-
-                // Create MultipartBody.Part from the temp file
-                RequestBody requestFile = RequestBody.create(MediaType.parse("image/*"), tempFile);
-                MultipartBody.Part avatarPart = MultipartBody.Part.createFormData(
-                        "avatar", tempFile.getName(), requestFile);
-
-                // Call API
-                ApiService apiService = RetrofitClient.getApiService();
-                Call<ModelResponse.UserResponse> call = apiService.uploadAvatar(BEARER_PREFIX + token, avatarPart);
-
-                call.enqueue(new Callback<ModelResponse.UserResponse>() {
-                    @Override
-                    public void onResponse(Call<ModelResponse.UserResponse> call,
-                                           Response<ModelResponse.UserResponse> response) {
-                        handleAvatarUploadResponse(response);
-                    }
-
-                    @Override
-                    public void onFailure(Call<ModelResponse.UserResponse> call, Throwable t) {
-                        handleAvatarUploadFailure(t);
-                    }
-                });
-            }
-        } catch (IOException e) {
+                @Override
+                public void onFailure(Call<ModelResponse.UserResponse> call, Throwable t) {
+                    handleAvatarUploadFailure(t);
+                }
+            });
+        } catch (Exception e) {
             handleImageProcessingError(e);
         }
     }

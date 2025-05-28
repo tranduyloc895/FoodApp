@@ -416,11 +416,11 @@ public class ChatBotActivity extends AppCompatActivity implements MessageAdapter
      */
     private void displayRecipeResults(List<ModelResponse.RecipeResponse.Recipe> recipes, String searchQuery) {
         if (recipes.isEmpty()) {
-            addBotMessage("I couldn't find any recipes matching your request. Please try a different search.");
+            addBotMessage("Tôi không tìm thấy công thức nào phù hợp với yêu cầu của bạn: " + searchQuery);
             return;
         }
 
-        String message = String.format("Here are some %s recipes I found for you:", searchQuery);
+        String message = String.format("Đây là một vài công thức tôi tìm thấy phù hợp với yêu cầu của bạn:", searchQuery);
         addBotMessageWithRecipes(message, recipes);
     }
 

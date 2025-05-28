@@ -1,225 +1,278 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:layout_height="match_parent">
 
-    <LinearLayout
+    <!-- Main content -->
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="10dp"
-        android:orientation="vertical"
-        android:background="@color/background_home">
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/fl_profile_top"
-            android:layout_width="match_parent"
-            android:layout_height="75dp"
-            android:orientation="horizontal">
-
-            <ImageButton
-                android:id="@+id/ib_other_profile_back"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="16dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Back"
-                android:src="@drawable/ic_back"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
-            </ImageButton>
-
-            <TextView
-                android:id="@+id/tv_author_profile_title"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:text="Author's Profile"
-                android:gravity="center"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent">
-            </TextView>
-        </androidx.constraintlayout.widget.ConstraintLayout>
+        android:layout_height="match_parent"
+        android:fillViewport="true">
 
         <LinearLayout
-            android:id="@+id/ll_profile_info"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:paddingTop="5dp"
-            android:paddingBottom="5dp">
+            android:padding="10dp"
+            android:orientation="vertical"
+            android:background="@color/background_home">
 
-            <ImageView
-                android:id="@+id/iv_profile_picture"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:layout_gravity="center_horizontal"
-                android:src="@drawable/ic_profile"
-                android:contentDescription="Profile Picture"
-                android:background="@drawable/rounded_iv"
-                android:backgroundTint="@color/black"
-                android:focusable="true"
-                android:clickable="true">
-            </ImageView>
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/fl_profile_top"
+                android:layout_width="match_parent"
+                android:layout_height="75dp"
+                android:orientation="horizontal">
 
-            <LinearLayout
-                android:id="@+id/ll_number_uploaded_recipes"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:orientation="vertical"
-                android:layout_weight="1"
-                android:gravity="center">
+                <ImageButton
+                    android:id="@+id/ib_other_profile_back"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="16dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Back"
+                    android:src="@drawable/ic_back"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
+                </ImageButton>
 
                 <TextView
-                    android:id="@+id/tv_uploaded_recipes"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Uploaded"
-                    android:textSize="20sp"
-                    android:layout_gravity="center"
-                    android:textColor="@color/gray">
-                </TextView>
-
-                <TextView
-                    android:id="@+id/tv_number_uploaded_recipes"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0"
+                    android:id="@+id/tv_author_profile_title"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:text="Author's Profile"
+                    android:gravity="center"
                     android:textSize="20sp"
                     android:textStyle="bold"
-                    android:layout_gravity="center">
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent">
                 </TextView>
-            </LinearLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
             <LinearLayout
-                android:id="@+id/ll_number_saved_recipes"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:orientation="vertical"
-                android:layout_weight="1"
-                android:gravity="center">
-
-                <TextView
-                    android:id="@+id/tv_saved_recipes"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Saved"
-                    android:textSize="20sp"
-                    android:layout_gravity="center"
-                    android:textColor="@color/gray">
-                </TextView>
-
-                <TextView
-                    android:id="@+id/tv_number_saved_recipes"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    android:layout_gravity="center">
-                </TextView>
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/ll_country"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:orientation="vertical"
-                android:layout_weight="1"
-                android:gravity="center">
-
-                <TextView
-                    android:id="@+id/tv_country"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Country"
-                    android:textSize="20sp"
-                    android:layout_gravity="center"
-                    android:textColor="@color/gray">
-                </TextView>
-
-                <TextView
-                    android:id="@+id/tv_country_code"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="VIE"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    android:layout_gravity="center">
-                </TextView>
-            </LinearLayout>
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/tv_profile_name"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="User Name"
-            android:textSize="20dp"
-            android:textStyle="bold"
-            android:paddingTop="5dp"
-            android:paddingBottom="5dp">
-        </TextView>
-
-        <TextView
-            android:id="@+id/tv_profile_level"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Level"
-            android:textColor="@color/gray"
-            android:paddingTop="5dp"
-            android:paddingBottom="5dp">
-        </TextView>
-
-        <TextView
-            android:id="@+id/tv_description"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingTop="20dp"
-            android:paddingBottom="5dp"
-            android:text="Chào mừng bạn đến với không gian tuyệt vời nhất! Nơi mà sự sáng tạo không có giới hạn và mọi câu chuyện đều trở nên đặc biệt.\nMU vô địch – niềm tự hào của người hâm mộ!">
-        </TextView>
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <com.google.android.material.tabs.TabLayout
-                android:id="@+id/tl_category"
+                android:id="@+id/ll_profile_info"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.0"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:tabBackground="@drawable/tab_selector"
-                android:backgroundTint="@color/background_home"
-                app:tabIndicatorHeight="0dp"
-                app:tabRippleColor="@null"
-                app:tabSelectedTextColor="@android:color/white"
-                app:tabTextColor="@color/green">
-            </com.google.android.material.tabs.TabLayout>
+                android:orientation="horizontal"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp">
 
-            <androidx.viewpager2.widget.ViewPager2
-                android:id="@+id/vp_category"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                app:layout_constraintTop_toBottomOf="@id/tl_category"
-                app:layout_constraintBottom_toTopOf="@id/btm_view">
-            </androidx.viewpager2.widget.ViewPager2>
+                <ImageView
+                    android:id="@+id/iv_profile_picture"
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    android:layout_gravity="center_horizontal"
+                    android:src="@drawable/ic_profile"
+                    android:contentDescription="Profile Picture"
+                    android:background="@drawable/rounded_iv"
+                    android:backgroundTint="@color/black"
+                    android:focusable="true"
+                    android:clickable="true">
+                </ImageView>
 
-            <View
-                android:id="@+id/btm_view"
+                <LinearLayout
+                    android:id="@+id/ll_number_uploaded_recipes"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:layout_weight="1"
+                    android:gravity="center">
+
+                    <TextView
+                        android:id="@+id/tv_uploaded_recipes"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Uploaded"
+                        android:ellipsize="marquee"
+                        android:focusable="true"
+                        android:clickable="true"
+                        android:singleLine="true"
+                        android:textSize="20sp"
+                        android:layout_gravity="center"
+                        android:marqueeRepeatLimit="marquee_forever"
+                        android:textColor="@color/gray">
+                    </TextView>
+
+                    <TextView
+                        android:id="@+id/tv_number_uploaded_recipes"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:layout_gravity="center">
+                    </TextView>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/ll_number_saved_recipes"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:layout_weight="1"
+                    android:gravity="center">
+
+                    <TextView
+                        android:id="@+id/tv_saved_recipes"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Saved"
+                        android:textSize="20sp"
+                        android:layout_gravity="center"
+                        android:textColor="@color/gray">
+                    </TextView>
+
+                    <TextView
+                        android:id="@+id/tv_number_saved_recipes"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:layout_gravity="center">
+                    </TextView>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/ll_country"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:layout_weight="1"
+                    android:gravity="center">
+
+                    <TextView
+                        android:id="@+id/tv_country"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Country"
+                        android:textSize="20sp"
+                        android:layout_gravity="center"
+                        android:textColor="@color/gray">
+                    </TextView>
+
+                    <TextView
+                        android:id="@+id/tv_country_code"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="VIE"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:layout_gravity="center">
+                    </TextView>
+                </LinearLayout>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tv_profile_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="User Name"
+                android:textSize="20dp"
+                android:textStyle="bold"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp">
+            </TextView>
+
+            <TextView
+                android:id="@+id/tv_profile_level"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Level"
+                android:textColor="@color/gray"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp">
+            </TextView>
+
+            <TextView
+                android:id="@+id/tv_description"
                 android:layout_width="match_parent"
-                android:layout_height="40dp"
-                app:layout_constraintBottom_toBottomOf="parent">
-            </View>
-        </androidx.constraintlayout.widget.ConstraintLayout>
-    </LinearLayout>
-</ScrollView>
+                android:layout_height="wrap_content"
+                android:paddingTop="20dp"
+                android:paddingBottom="5dp"
+                android:text="Chào mừng bạn đến với không gian tuyệt vời nhất! Nơi mà sự sáng tạo không có giới hạn và mọi câu chuyện đều trở nên đặc biệt.\nMU vô địch – niềm tự hào của người hâm mộ!">
+            </TextView>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <com.google.android.material.tabs.TabLayout
+                    android:id="@+id/tl_category"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.0"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:tabBackground="@drawable/tab_selector"
+                    android:backgroundTint="@color/background_home"
+                    app:tabIndicatorHeight="0dp"
+                    app:tabRippleColor="@null"
+                    app:tabSelectedTextColor="@android:color/white"
+                    app:tabTextColor="@color/green">
+                </com.google.android.material.tabs.TabLayout>
+
+                <androidx.viewpager2.widget.ViewPager2
+                    android:id="@+id/vp_category"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    app:layout_constraintTop_toBottomOf="@id/tl_category"
+                    app:layout_constraintBottom_toTopOf="@id/btm_view">
+                </androidx.viewpager2.widget.ViewPager2>
+
+                <View
+                    android:id="@+id/btm_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    app:layout_constraintBottom_toBottomOf="parent">
+                </View>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Loading Overlay -->
+    <FrameLayout
+        android:id="@+id/loading_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#99000000"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone"
+        android:elevation="10dp">
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_gravity="center"
+            app:cardBackgroundColor="@color/white"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ProgressBar
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:indeterminate="true"
+                    android:indeterminateTint="#00C853" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Loading..."
+                    android:textColor="#333333"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+    </FrameLayout>
+</FrameLayout>

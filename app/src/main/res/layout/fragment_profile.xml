@@ -12,27 +12,38 @@
         android:background="#99000000"
         android:clickable="true"
         android:focusable="true"
-        android:visibility="gone">
+        android:visibility="gone"
+        android:elevation="10dp">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:orientation="vertical">
+        <androidx.cardview.widget.CardView
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_gravity="center"
+            app:cardBackgroundColor="@color/white"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp">
 
-            <ProgressBar
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:indeterminate="true"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Loading..."
-                android:textColor="@android:color/white"
-                android:textSize="18sp"
-                android:paddingTop="10dp"/>
-        </LinearLayout>
+                <ProgressBar
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:indeterminate="true"
+                    android:indeterminateTint="#00C853" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Loading..."
+                    android:textColor="#333333"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
     </FrameLayout>
 
     <ScrollView
@@ -89,6 +100,7 @@
                     android:clickable="true">
                 </ImageView>
 
+                <!-- Uploaded Column -->
                 <LinearLayout
                     android:id="@+id/ll_number_uploaded_recipes"
                     android:layout_width="0dp"
@@ -103,7 +115,15 @@
                         android:layout_height="wrap_content"
                         android:text="Uploaded"
                         android:textSize="20sp"
+                        android:singleLine="true"
+                        android:ellipsize="marquee"
+                        android:autoSizeTextType="uniform"
+                        android:autoSizeMinTextSize="12sp"
+                        android:autoSizeMaxTextSize="20sp"
                         android:layout_gravity="center"
+                        android:marqueeRepeatLimit="marquee_forever"
+                        android:focusable="true"
+                        android:clickable="true"
                         android:textColor="@color/gray">
                     </TextView>
 
@@ -113,11 +133,13 @@
                         android:layout_height="wrap_content"
                         android:text="0"
                         android:textSize="20sp"
+                        android:singleLine="true"
                         android:textStyle="bold"
                         android:layout_gravity="center">
                     </TextView>
                 </LinearLayout>
 
+                <!-- Saved Column -->
                 <LinearLayout
                     android:id="@+id/ll_number_saved_recipes"
                     android:layout_width="0dp"
@@ -132,6 +154,11 @@
                         android:layout_height="wrap_content"
                         android:text="Saved"
                         android:textSize="20sp"
+                        android:singleLine="true"
+                        android:ellipsize="end"
+                        android:autoSizeTextType="uniform"
+                        android:autoSizeMinTextSize="12sp"
+                        android:autoSizeMaxTextSize="20sp"
                         android:layout_gravity="center"
                         android:textColor="@color/gray">
                     </TextView>
@@ -142,11 +169,13 @@
                         android:layout_height="wrap_content"
                         android:text="0"
                         android:textSize="20sp"
+                        android:singleLine="true"
                         android:textStyle="bold"
                         android:layout_gravity="center">
                     </TextView>
                 </LinearLayout>
 
+                <!-- Country Column -->
                 <LinearLayout
                     android:id="@+id/ll_country"
                     android:layout_width="0dp"
@@ -161,6 +190,11 @@
                         android:layout_height="wrap_content"
                         android:text="Country"
                         android:textSize="20sp"
+                        android:singleLine="true"
+                        android:ellipsize="end"
+                        android:autoSizeTextType="uniform"
+                        android:autoSizeMinTextSize="12sp"
+                        android:autoSizeMaxTextSize="20sp"
                         android:layout_gravity="center"
                         android:textColor="@color/gray">
                     </TextView>
@@ -171,6 +205,7 @@
                         android:layout_height="wrap_content"
                         android:text="VIE"
                         android:textSize="20sp"
+                        android:singleLine="true"
                         android:textStyle="bold"
                         android:layout_gravity="center">
                     </TextView>

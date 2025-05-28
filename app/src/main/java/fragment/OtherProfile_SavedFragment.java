@@ -68,6 +68,9 @@ public class OtherProfile_SavedFragment extends Fragment {
                 fetchRecipeDetails(savedRecipeIds);
             } else {
                 Toast.makeText(requireContext(), "Không có công thức nào được lưu.", Toast.LENGTH_SHORT).show();
+                savedRecipes = new ArrayList<>();
+                adapter = new OtherProfile_SavedAdapter(getContext(), savedRecipes, token);
+                recyclerView.setAdapter(adapter);
             }
         }
     }
